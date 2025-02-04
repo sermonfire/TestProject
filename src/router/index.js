@@ -1,13 +1,37 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-const routes =  [
+const routes = [
   {
     path: '/',
-    name: 'home',
-    alias: ['/index', '/home'],
+    name: 'index',
+    alias: ['/index'],
     component: () => import('@/views/index.vue'),
     children: [
-      
+      {
+        path: '',
+        name: 'home',
+        component: () => import('@/views/Home/Home.vue'),
+      },
+      {
+        path: 'favorites',
+        name: 'favorites',
+        component: () => import('@/views/Favorites/Favorites.vue'),
+      },
+      {
+        path: 'explore',
+        name: 'explore',
+        component: () => import('@/views/Explore/Explore.vue'),
+      },
+      {
+        path: 'about',
+        name: 'about',
+        component: () => import('@/views/About/About.vue'),
+      },
+      {
+        path: 'userInfo',
+        name: 'userInfo',
+        component: () => import('@/views/userInfo/userInfo.vue'),
+      },
     ],
   },
   {

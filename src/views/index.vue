@@ -1,11 +1,14 @@
 <template>
-    这是首页-------->
-    <router-link to="/login">点击跳转到登录页</router-link>
+    <view class="SiderBar">
+        <view class="logo-area">
+            <img src="@/static/logo/favicon.ico" alt="logo" class="logo">
+            <view class="logo-name">TravelRec</view>
+        </view>
+    </view>
+    <router-view></router-view>
 </template>
-    
+
 <script setup>
 </script>
-    
-<style lang="scss" scoped>
-    
-</style>
+
+<style lang="scss" scoped></style>
