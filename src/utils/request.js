@@ -1,11 +1,13 @@
+import axios from 'axios';
 import { useUserStore } from '@/stores/userstore.js';
+import { ElMessage } from 'element-plus';
 import { ErrorMessage } from './errorHandler.js';
 
 // 基础配置
 const DEFAULT_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',  // 从环境变量获取基础URL
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 60000,
-  header: {
+  headers: {
     'Content-Type': 'application/json'
   }
 };
@@ -17,9 +19,9 @@ const DEFAULT_OPTIONS = {
   showErrorToast: true,
   needToken: true,
   isPublic: false,
-  retryTimes: 3,  // 请求重试次数
-  retryDelay: 1000,  // 重试延迟时间(ms)
-  header: {}  // 添加默认的header对象
+  retryTimes: 3,
+  retryDelay: 1000,
+  headers: {}
 };
 
 // 请求拦截器
@@ -28,10 +30,9 @@ const requestInterceptors = [
     name: 'addToken',
     success: (config) => {
       const userStore = useUserStore();
-      // console.debug('Token in interceptor:', userStore.token);
       if (config.needToken && userStore.token) {
-        config.header = config.header || {};
-        config.header.Authorization = userStore.token;
+        config.headers = config.headers || {};
+        config.headers.Authorization = userStore.token;
       }
       return config;
     }
@@ -39,10 +40,9 @@ const requestInterceptors = [
   {
     name: 'addTimestamp',
     success: (config) => {
-      // 为GET请求添加时间戳，避免缓存
       if (config.method.toUpperCase() === 'GET') {
-        config.data = {
-          ...config.data,
+        config.params = {
+          ...config.params,
           _t: Date.now()
         };
       }
@@ -56,12 +56,9 @@ const responseInterceptors = [
   {
     name: 'handleStatus',
     success: (response) => {
-      const { statusCode, data } = response;
+      const { status, data } = response;
       
-      console.debug('Response status:', statusCode);
-      console.debug('Response data:', data);
-      
-      if (statusCode === 200 && data) {
+      if (status === 200 && data) {
         return {
           code: data.code || 0,
           data: data.data,
@@ -69,39 +66,35 @@ const responseInterceptors = [
         };
       }
       
-      // 只对需要token的内部API请求进行401处理
-      if (statusCode === 401 && response.config.needToken && !response.config.isPublic) {
+      if (status === 401 && response.config.needToken && !response.config.isPublic) {
         const userStore = useUserStore();
         userStore.clear();
-        // 显示提示
-        uni.showToast({
-          title: '登录已过期，请重新登录',
-          icon: 'none',
-          duration: 1500
+        
+        ElMessage({
+          message: '登录已过期，请重新登录',
+          type: 'warning'
         });
-        // 确保清除所有登录相关的存储
-        uni.removeStorageSync('rememberMe');
-        uni.removeStorageSync('savedPhone');
-        uni.removeStorageSync('savedPassword');
-        // 延迟跳转
+        
+        localStorage.removeItem('rememberMe');
+        localStorage.removeItem('savedPhone');
+        localStorage.removeItem('savedPassword');
+        
         setTimeout(() => {
-          uni.reLaunch({
-            url: '/pages/login/login'
-          });
+          window.location.href = '/login';
         }, 1500);
+        
         return Promise.reject({ code: 401, message: '登录已过期，请重新登录' });
       }
       
-      // 其他错误直接抛出,由调用方处理
       throw { 
-        code: statusCode,
-        message: data.message || ErrorMessage[statusCode] 
+        code: status,
+        message: data.message || ErrorMessage[status] 
       };
     },
     error: (error) => {
       return Promise.reject({
-        code: error.statusCode || 500,
-        message: error.errMsg || '网络请求失败'
+        code: error.response?.status || 500,
+        message: error.message || '网络请求失败'
       });
     }
   }
@@ -147,14 +140,15 @@ class RequestQueue {
   }
 }
 
-// 创建请求实例的工厂函数
+// 创建axios实例的工厂函数
 export const createRequest = (customConfig = {}) => {
   const config = { ...DEFAULT_CONFIG, ...customConfig };
   const requestQueue = new RequestQueue();
+  const axiosInstance = axios.create(config);
 
-  // 执行请求拦截器
-  const executeRequestInterceptors = async (options) => {
-    let currentConfig = { ...options };
+  // 添加请求拦截器
+  axiosInstance.interceptors.request.use(async (config) => {
+    let currentConfig = { ...config };
     for (const interceptor of requestInterceptors) {
       try {
         currentConfig = await interceptor.success(currentConfig);
@@ -164,49 +158,37 @@ export const createRequest = (customConfig = {}) => {
       }
     }
     return currentConfig;
-  };
+  });
 
-  // 执行响应拦截器
-  const executeResponseInterceptors = async (response) => {
-    let currentResponse = response;
-    for (const interceptor of responseInterceptors) {
-      try {
-        currentResponse = await interceptor.success(currentResponse);
-      } catch (error) {
-        if (interceptor.error) {
-          return interceptor.error(error);
+  // 添加响应拦截器
+  axiosInstance.interceptors.response.use(
+    async (response) => {
+      let currentResponse = response;
+      for (const interceptor of responseInterceptors) {
+        try {
+          currentResponse = await interceptor.success(currentResponse);
+        } catch (error) {
+          if (interceptor.error) {
+            return interceptor.error(error);
+          }
+          throw error;
         }
-        throw error;
       }
-    }
-    return currentResponse;
-  };
-
-  // 重试机制
-  const retryRequest = async (options, retryTimes) => {
-    try {
-      const response = await uni.request(options);
-      return response;
-    } catch (error) {
-      if (retryTimes > 0) {
-        await new Promise(resolve => setTimeout(resolve, options.retryDelay));
-        return retryRequest(options, retryTimes - 1);
-      }
-      throw error;
-    }
-  };
+      return currentResponse;
+    },
+    error => Promise.reject(error)
+  );
 
   return async (options) => {
     const mergedOptions = {
       ...DEFAULT_OPTIONS,
       ...options,
-      header: {
-        ...config.header,
+      headers: {
+        ...config.headers,
         ...options.headers
       }
     };
 
-    // 检查是否需要token
     if (!mergedOptions.isPublic && mergedOptions.needToken) {
       const userStore = useUserStore();
       if (!userStore.token) {
@@ -214,40 +196,19 @@ export const createRequest = (customConfig = {}) => {
       }
     }
 
-    // 请求频率限制
     const requestKey = `${mergedOptions.url}_${mergedOptions.method}_${JSON.stringify(mergedOptions.data)}`;
     if (!requestQueue.check(requestKey)) {
       return Promise.reject(new Error('请求过于频繁'));
     }
 
     try {
-      // 执行请求拦截器
-      const interceptedOptions = await executeRequestInterceptors(mergedOptions);
-      
-      // 构建最终请求配置
-      const requestConfig = {
-        url: config.baseURL + interceptedOptions.url,
-        method: interceptedOptions.method,
-        header: {
-          ...config.header,
-          ...interceptedOptions.header
-        },
-        data: interceptedOptions.data,
-        timeout: config.timeout
-      };
-
-      // 发送请求（带重试机制）
-      const response = await retryRequest(requestConfig, mergedOptions.retryTimes);
-      
-      // 执行响应拦截器
-      const result = await executeResponseInterceptors(response);
-      
-      return result;
+      const response = await axiosInstance(mergedOptions);
+      return response;
     } catch (error) {
       if (mergedOptions.showErrorToast) {
-        uni.showToast({
-          title: error.message || '请求失败',
-          icon: 'none'
+        ElMessage({
+          message: error.message || '请求失败',
+          type: 'error'
         });
       }
       return Promise.reject(error);

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/userstore'
 
 const routes = [
   {
@@ -53,10 +54,28 @@ const routes = [
   }
 ]
 
-
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+})
+
+// 全局前置守卫
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  
+  // 判断该路由是否需要登录权限
+  if (to.meta.requiresAuth) {
+    if (userStore.token) {
+      next()
+    } else {
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

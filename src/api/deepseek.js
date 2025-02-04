@@ -66,19 +66,12 @@ export const sendChatMessage = async (messages) => {
     }
     
   } catch (error) {
-    console.error('Deepseek API Error:', {
-      message: error.message,
-      response: error.response,
-      status: error.status
-    });
+    console.error('Deepseek API Error:', error);
     
-    // 根据具体错误类型返回友好的错误信息
-    if (error.status === 401) {
-      throw new Error('API 密钥无效或已过期');
-    } else if (error.status === 429) {
-      throw new Error('请求过于频繁，请稍后再试');
-    } else {
-      throw new Error(error.message || '请求失败，请稍后重试');
-    }
+    const errorMessage = error.response?.status === 401 ? 'API 密钥无效或已过期' :
+                        error.response?.status === 429 ? '请求过于频繁，请稍后再试' :
+                        error.message || '请求失败，请稍后重试';
+                        
+    throw new Error(errorMessage);
   }
 }; 

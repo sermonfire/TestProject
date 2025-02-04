@@ -38,7 +38,7 @@ export const getUserInfoAPI = () => {
 		url: 'dev-api/ClientUser/userInfo',
 		method: 'GET',
 		needToken: true,
-		header: {
+		headers: {
 			'Content-Type': 'application/json'
 		}
 	})
@@ -51,7 +51,7 @@ export const updateUserInfoAPI = (params) => {
 		method: 'PUT',
 		data: params,
 		needToken: true,
-		header: {
+		headers: {
 			'Content-Type': 'application/json'
 		}
 	})
@@ -67,7 +67,7 @@ export const uploadAvatarAPI = (file) => {
 		method: 'POST',
 		data: formData,
 		needToken: true,
-		header: {
+		headers: {
 			'Content-Type': 'multipart/form-data'
 		}
 	});
@@ -134,7 +134,7 @@ export const getSeasonalRecommendationsAPI = () => {
 		url: 'dev-api/recommend/seasonal',
 		method: 'GET',
 		needToken: true,
-		header: {
+		headers: {
 			'Content-Type': 'application/json'
 		}
 	})
@@ -146,7 +146,7 @@ export const getPopularThemesAPI = () => {
 		url: 'dev-api/recommend/themes',
 		method: 'GET',
 		needToken: true,
-		header: {
+		headers: {
 			'Content-Type': 'application/json'
 		}
 	})

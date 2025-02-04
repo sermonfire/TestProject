@@ -1,3 +1,5 @@
+import { ElMessage } from 'element-plus';
+
 export const ErrorCode = {
   SUCCESS: 0,
   TOKEN_INVALID: 401,
@@ -12,8 +14,8 @@ export const ErrorMessage = {
 };
 
 export const handleError = (code, message) => {
-  uni.showToast({
-    title: message || ErrorMessage[code] || '操作失败',
-    icon: 'none'
+  ElMessage({
+    message: message || ErrorMessage[code] || '操作失败',
+    type: 'error'
   });
 }; 
