@@ -130,9 +130,6 @@ const onScroll = (e) => {
     }, 200);
 };
 
-// ... (继续下一部分)
-// ... (接上一部分)
-
 const sendMessage = async () => {
     const message = inputText.value.trim();
     if (!message) return;
@@ -302,7 +299,18 @@ const closeClearConfirm = () => {
 };
 
 const clearMessages = () => {
-    messages.value = [];
+    messages.value = [{
+        type: 'system',
+        content: '👋 你好！我是你的专业旅行助手。我可以帮你：\n' +
+            '• 推荐适合的旅行目的地\n' +
+            '• 制定详细的行程计划\n' +
+            '• 提供交通住宿建议\n' +
+            '• 推荐当地特色美食\n' +
+            '• 分享实用旅行贴士\n\n' +
+            '请告诉我你的旅行偏好，比如预算、时间、喜好等，我会为你量身定制完美的旅行计划！',
+        isNew: true,
+        isSystemMessage: true
+    }];
     emit('clear-messages');
     closeClearConfirm();
 
