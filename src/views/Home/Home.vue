@@ -1,5 +1,5 @@
 <template>
-	home
+		
 </template>
 	
 <script setup>
