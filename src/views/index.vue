@@ -107,6 +107,6 @@ const navItems = [
 ]
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/index.scss';
+<style lang="scss">
+@use '@/styles/index.scss';
 </style>
