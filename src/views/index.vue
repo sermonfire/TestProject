@@ -16,7 +16,7 @@
           v-slot="{ isExactActive }">
           <div class="nav-item-content" :class="{ 'active': isExactActive }">
             <div class="nav-item-icon">
-              <el-icon :size="24" :color="isExactActive ? '#ffff00' : '#ffffff'">
+              <el-icon :size="28" :color="isExactActive ? '#ffff00' : '#ffffff'">
                 <component :is="item.icon" />
               </el-icon>
             </div>
@@ -32,11 +32,11 @@
       <!-- 用户信息 -->
       <router-link to="/userInfo" class="nav-item userinfo" v-slot="{ isExactActive }">
         <div class="nav-item-content" :class="{ 'active': isExactActive }">
-          <div class="nav-item-icon">
+          <div class="user-info-container">
             <img class="avatar" :src="defaultAvatar" alt="avatar">
-          </div>
-          <div :class="['nav-item-text', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
-            未登录
+            <div :class="['user-name', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
+                未登录
+            </div>
           </div>
         </div>
       </router-link>
@@ -60,10 +60,11 @@
 <script setup>
 import { ref } from 'vue'
 import { Star, Compass, InfoFilled, User, House, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import defaultAvatarImg from '@/static/default_avatar/avatar(unlogin).png'
 
 const isCollapsed = ref(false)
 const isExpanding = ref(false)
-const defaultAvatar = '@/static/default_avatar/avatar(unlogin).png'
+const defaultAvatar = defaultAvatarImg
 
 const toggleSidebar = () => {
   if (!isCollapsed.value) {
@@ -159,6 +160,7 @@ const navItems = [
   .nav-items {
     .nav-item {
       text-decoration: none;
+      display: block;
       
       .nav-item-content {
         display: flex;
@@ -166,6 +168,9 @@ const navItems = [
         height: 60px;
         color: #ffffff;
         transition: background-color 0.3s ease;
+        margin: 0;
+        padding: 0;
+        width: 100%;
 
         &:hover {
           background-color: rgba(255, 255, 255, 0.2);
@@ -199,6 +204,7 @@ const navItems = [
 
   .nav-item-text {
     flex: 1;
+    font-size: 20px;
     padding-left: 10px;
     white-space: nowrap;
     transition: opacity 0.1s ease;
@@ -217,10 +223,68 @@ const navItems = [
   }
 
   .userinfo {
+    .nav-item-content {
+      padding: 0 16px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      
+      &.active {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+        position: relative;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background-color: #ffff00 !important;
+        }
+      }
+    }
+
+    .user-info-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+    }
+
     .avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+      object-fit: cover;
+      background-color: #ffffff;
+      margin-left: 5px;
+      
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.9);
+        transform: scale(1.05);
+      }
+    }
+
+    .user-name {
+      color: #ffffff;
+      font-size: 20px;
+      white-space: nowrap;
+      transition: opacity 0.3s ease;
+      padding-left: 12px;
+      
+      &.hide {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+      }
+      
+      &.fade-in {
+        animation: fadeIn 0.3s ease-in;
+      }
     }
   }
 
