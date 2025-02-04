@@ -30,7 +30,8 @@ const breadcrumbItems = ref([])
 const routeMap = {
   home: { title: '首页', icon: House },
   explore: { title: '探索' },
-  exploreDetail: { title: '探索详情' },
+  exploredetail: { title: '探索详情1' },
+  exploredetail2: { title: '探索详情2' },
   favorites: { title: '偏好设置' },
   about: { title: '关于' },
   userInfo: { title: '用户信息' }
