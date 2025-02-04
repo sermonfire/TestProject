@@ -5,9 +5,9 @@
 			:effect="'coverflow'"
 			:grabCursor="true"
 			:centeredSlides="true"
-			:slidesPerView="'auto'"
+			:slidesPerView="3"
 			:coverflowEffect="{
-				rotate: 50,
+				rotate: 30,
 				stretch: 0,
 				depth: 100,
 				modifier: 1,
@@ -81,8 +81,14 @@
 		padding: 20px 0;
 		
 		.swiper-slide {
-			width: 250px;
+			width: 300px;
 			height: 250px;
+			opacity: 0.4;
+			transition: opacity 0.3s ease;
+			
+			&-active {
+				opacity: 1;
+			}
 			
 			.slide-content {
 				display: flex;
