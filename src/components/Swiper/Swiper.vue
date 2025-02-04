@@ -88,13 +88,13 @@
 		.swiper-slide {
 			width: 300px;
 			height: 250px;
-			opacity: 0.4;
-			transition: opacity 0.8s ease, transform 0.8s ease;
+			opacity: 0;
+			transition: all 0.8s ease;
 			transform-origin: center center;
-			visibility: hidden;
+			visibility: visible;
 			
 			&-visible {
-				visibility: visible;
+				opacity: 0.4;
 			}
 			
 			&-active {
