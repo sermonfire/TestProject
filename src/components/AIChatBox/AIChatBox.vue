@@ -369,13 +369,12 @@ onMounted(() => {
     width: 100%;
     position: relative;
     padding: 20px;
-    // margin-bottom: 80px;
     background-color: transparent;
     z-index: 2;
     transition: all 0.3s ease-in-out;
 
     &.full-height {
-        min-height: calc(100vh - 60px);
+        min-height: calc(100vh - 96px);
     }
 }
 
@@ -413,17 +412,40 @@ onMounted(() => {
     overflow-y: auto;
     padding: 20px;
     margin-bottom: 0;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 280px);
+    min-height: 300px;
+    max-height: calc(100vh - 280px);
     scroll-behavior: smooth;
     background-color: transparent;
+    border-radius: 8px;
+    position: relative;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        
+        &:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+    }
 }
 
 .message-list {
     display: flex;
     flex-direction: column-reverse;
     gap: 16px;
-    min-height: 100%;
+    min-height: min-content;
     background-color: transparent;
+    padding-right: 10px;
 }
 
 .message {
@@ -550,7 +572,7 @@ onMounted(() => {
 
 .chat-input-container {
     width: 100%;
-    margin-top: 10px;
+    margin-top: 6px;
     max-width: 760px;
     background: white;
     border-radius: 12px 12px 0 0;
@@ -681,9 +703,10 @@ onMounted(() => {
     }
 }
 
-// 响应式适配
 @media screen and (max-width: 768px) {
-    .chat-container {
+    .chat-messages {
+        height: calc(100vh - 240px);
+        max-height: calc(100vh - 240px);
         padding: 10px;
     }
 
