@@ -361,7 +361,7 @@ onMounted(() => {
     width: 100%;
     position: relative;
     padding: 20px;
-    margin-bottom: 80px;
+    // margin-bottom: 80px;
     background-color: transparent;
     z-index: 2;
     transition: all 0.3s ease-in-out;
@@ -541,11 +541,8 @@ onMounted(() => {
 }
 
 .chat-input-container {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
     width: 100%;
+    margin-top: 10px;
     max-width: 760px;
     background: white;
     border-radius: 12px 12px 0 0;

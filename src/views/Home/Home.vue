@@ -65,7 +65,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .home-container {
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     background-color: #f5f7fa;
@@ -77,7 +77,7 @@ onMounted(() => {
     margin: 0 auto;
     width: 100%;
     background-color: #f5f7fa;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - 96px);
 
     @media screen and (max-width: 1400px) {
         max-width: 1000px;
