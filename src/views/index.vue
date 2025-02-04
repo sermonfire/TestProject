@@ -307,8 +307,10 @@ const navItems = [
   flex: 1;
   margin-left: 240px;
   min-height: 100vh;
-  padding: 24px;
   transition: all 0.3s ease;
+  background-color: #f5f5f5;
+  overflow-y: auto;
+  position: relative;
 }
 
 .content-expanded {
