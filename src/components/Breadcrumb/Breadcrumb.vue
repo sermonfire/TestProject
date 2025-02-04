@@ -7,7 +7,7 @@
         :to="item.path"
       >
         <el-icon v-if="item.icon" class="breadcrumb-icon">
-          <component :is="item.icon" />
+          <component :is="markRaw(item.icon)" />
         </el-icon>
         {{ item.title }}
       </el-breadcrumb-item>
@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { House } from '@element-plus/icons-vue'
 
@@ -28,7 +28,7 @@ const breadcrumbItems = ref([])
 
 // 路由映射表
 const routeMap = {
-  home: { title: '首页', icon: House },
+  home: { title: '首页', icon: markRaw(House) },
   explore: { title: '探索' },
   exploredetail: { title: '探索详情1' },
   exploredetail2: { title: '探索详情2' },
@@ -45,7 +45,7 @@ watch(() => route.matched, (newMatched) => {
   items.push({
     title: '首页',
     path: '/',
-    icon: House
+    icon: markRaw(House)
   })
   
   // 添加其他路由层级
@@ -56,7 +56,7 @@ watch(() => route.matched, (newMatched) => {
         items.push({
           title: routeInfo.title,
           path: match.path,
-          icon: routeInfo.icon
+          icon: routeInfo.icon ? markRaw(routeInfo.icon) : undefined
         })
       }
     }

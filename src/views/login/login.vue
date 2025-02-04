@@ -50,16 +50,16 @@
 
 				<div class="checkbox_1">
 					<el-checkbox-group v-model="checkbox_1" @change="handleCheckboxChange">
-						<el-checkbox :label="1" :disabled="!password || !PASSWORD_REGEX.test(password)">
+						<el-checkbox :value="1" :disabled="!password || !PASSWORD_REGEX.test(password)">
 							记住密码
 						</el-checkbox>
-						<el-checkbox :label="2">立即注册</el-checkbox>
+						<el-checkbox :value="2">立即注册</el-checkbox>
 					</el-checkbox-group>
 				</div>
 
 				<div class="checkbox_2">
 					<el-checkbox-group v-model="checkbox_2" @change="handleAgreementChange">
-						<el-checkbox :label="0">
+						<el-checkbox :value="0">
 							我已阅读并同意《用户协议》和《隐私政策》
 						</el-checkbox>
 					</el-checkbox-group>
