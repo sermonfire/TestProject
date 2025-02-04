@@ -1,8 +1,11 @@
 <template>
 	<div class="index">
 		<div class="layout">
-			<div class="bg">
-				<div class="lbg"></div>
+			<div class="lbg">
+				<img src="@/static/背景（左）.png" alt="">
+			</div>
+			<div class="rbg">
+				<img src="@/static/背景（底）.jpg" alt="">
 			</div>
 			<div class="login">
 				<div class="title_container">
@@ -20,41 +23,26 @@
 				</div>
 
 				<div class="input-container">
-					<el-input 
-						v-model="phone" 
-						placeholder="请输入手机号" 
-						maxlength="11"
-						:prefix-icon="Phone"
-						@input="loginChange"
-					>
+					<el-input v-model="phone" placeholder="请输入手机号" maxlength="11" :prefix-icon="Phone"
+						@input="loginChange">
 						<template #append>
-							<el-tooltip
-								v-if="phone.length > 0"
-								content="请输入中国大陆手机号"
-								placement="top"
-							>
-								<el-icon><InfoFilled /></el-icon>
+							<el-tooltip v-if="phone.length > 0" content="请输入中国大陆手机号" placement="top">
+								<el-icon>
+									<InfoFilled />
+								</el-icon>
 							</el-tooltip>
 						</template>
 					</el-input>
 				</div>
 
 				<div class="input-container">
-					<el-input
-						v-model="password"
-						type="password"
-						placeholder="请输入密码"
-						maxlength="16"
-						:prefix-icon="Lock"
-						@input="loginChange"
-					>
+					<el-input v-model="password" type="password" placeholder="请输入密码" maxlength="16" :prefix-icon="Lock"
+						@input="loginChange">
 						<template #append>
-							<el-tooltip
-								v-if="password.length > 0"
-								content="密码必须为8-16位，且包含数字和字母"
-								placement="top"
-							>
-								<el-icon><InfoFilled /></el-icon>
+							<el-tooltip v-if="password.length > 0" content="密码必须为8-16位，且包含数字和字母" placement="top">
+								<el-icon>
+									<InfoFilled />
+								</el-icon>
 							</el-tooltip>
 						</template>
 					</el-input>
@@ -62,10 +50,7 @@
 
 				<div class="checkbox_1">
 					<el-checkbox-group v-model="checkbox_1" @change="handleCheckboxChange">
-						<el-checkbox 
-							:label="1"
-							:disabled="!password || !PASSWORD_REGEX.test(password)"
-						>
+						<el-checkbox :label="1" :disabled="!password || !PASSWORD_REGEX.test(password)">
 							记住密码
 						</el-checkbox>
 						<el-checkbox :label="2">立即注册</el-checkbox>
@@ -80,23 +65,14 @@
 					</el-checkbox-group>
 				</div>
 
-				<el-button 
-					type="primary" 
-					class="login-button" 
-					:loading="isLoading"
-					@click="clientLogin"
-				>
+				<el-button type="primary" class="login-button" :loading="isLoading" @click="clientLogin">
 					{{ isLoading ? '登录中...' : '点击登录' }}
 				</el-button>
 			</div>
 		</div>
 	</div>
 
-	<el-dialog
-		v-model="showDialog"
-		title="通知"
-		width="30%"
-	>
+	<el-dialog v-model="showDialog" title="通知" width="30%">
 		<span>请勾选协议!</span>
 		<template #footer>
 			<span class="dialog-footer">
@@ -188,7 +164,7 @@ const clearError = () => {
 // Event Handlers
 const loginChange = () => {
 	clearError();
-	
+
 	if (checkbox_1.value.includes(1) && (!password.value || !PASSWORD_REGEX.test(password.value))) {
 		checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
 		nextTick(() => {
@@ -361,7 +337,7 @@ const clearStoredCredentials = () => {
 		localStorage.removeItem('rememberMe');
 		localStorage.removeItem('savedPhone');
 		localStorage.removeItem('savedPassword');
-		
+
 		// 移除复选框的选中状态
 		checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
 	} catch (error) {
@@ -409,7 +385,7 @@ const saveCredentials = () => {
 				});
 				return;
 			}
-			
+
 			// 验证手机号格式
 			if (!phone.value || !PHONE_REGEX.test(phone.value)) {
 				checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
@@ -454,6 +430,22 @@ watch([password, phone], ([newPassword, newPhone]) => {
 </script>
 
 <style lang="scss" scoped>
+.index {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.layout {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	border-radius: 10px;
+	overflow: hidden;
+}
+
 .login-error {
 	text-align: center;
 	height: 16px;
@@ -512,40 +504,6 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	margin-top: 20px;
 	width: 250px;
 	height: 37px;
-}
-
-.index {
-	width: 100%;
-	height: 100vh;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-}
-
-.layout {
-	position: relative;
-	width: 1536px;
-	height: 862px;
-	border-radius: 10px;
-	overflow: hidden;
-}
-
-.bg {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-image: url(@/static/背景（底）.jpg);
-}
-
-.lbg {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 894px;
-	height: 862px;
-	background-image: url(@/static/背景（左）.png);
 }
 
 .input-container {
