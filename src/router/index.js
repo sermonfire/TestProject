@@ -7,16 +7,7 @@ const routes =  [
     alias: ['/index', '/home'],
     component: () => import('@/views/index.vue'),
     children: [
-      {
-        path: '',
-        name: 'content1',
-        component: () => import('@/views/layout/content1.vue'),
-      },
-      {
-        path: 'content2',
-        name: 'content2',
-        component: () => import('@/views/layout/content2.vue'),
-      }
+      
     ],
   },
 ]
