@@ -440,10 +440,37 @@ watch([password, phone], ([newPassword, newPhone]) => {
 
 .layout {
 	position: relative;
-	width: 100%;
-	height: 100%;
+	width: 85%;
+	height: 95%;
 	border-radius: 10px;
 	overflow: hidden;
+}
+
+.rbg {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+	
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.lbg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	z-index: 1;
+	
+	img {
+		height: 100%;
+		width: auto;
+		object-fit: contain;
+	}
 }
 
 .login-error {
@@ -502,14 +529,14 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	position: absolute;
 	bottom: 60px;
 	margin-top: 20px;
-	width: 250px;
-	height: 37px;
+	width: 300px;
+	height: 50px;
 }
 
 .input-container {
 	display: flex;
 	align-items: center;
-	width: 80%;
+	width: 100%;
 	max-width: 250px;
 	margin-top: 20px;
 }
@@ -520,8 +547,8 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	left: 80%;
 	transform: translate(-50%, -50%);
 	background-color: #fff;
-	width: 350px;
-	height: 450px;
+	width: 450px;
+	height: 550px;
 	border-radius: 10px;
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 	z-index: 1;
@@ -534,7 +561,7 @@ watch([password, phone], ([newPassword, newPhone]) => {
 .title_1 {
 	margin: 0;
 	padding: 0;
-	font-size: 24px;
+	font-size: 26px;
 	font-weight: bold;
 }
 
@@ -542,7 +569,7 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	margin: 0;
 	padding: 0;
 	margin-top: 5px;
-	font-size: 16px;
+	font-size: 18px;
 	color: #666;
 }
 
