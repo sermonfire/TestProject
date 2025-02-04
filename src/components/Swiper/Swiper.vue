@@ -26,6 +26,7 @@
 				disableOnInteraction: false,
 				pauseOnMouseEnter: true
 			}"
+			:speed="800"
 			:spaceBetween="10"
 			class="mySwiper"
 			@swiper="onSwiperInit"
@@ -62,7 +63,7 @@
 	import 'swiper/css/navigation';
 
 	const modules = [EffectCoverflow, Pagination, Navigation, Autoplay];
-	const slides = ref(['Slide 1', 'Slide 2', 'Slide 3', 'Slide 4', 'Slide 5']);
+	const slides = ref(['Slide 1', 'Slide 2', 'Slide 3', 'Slide 4', 'Slide 5', 'Slide 6']);
 	let swiperInstance = null;
 
 	const onSwiperInit = (swiper) => {
@@ -88,7 +89,7 @@
 			width: 300px;
 			height: 250px;
 			opacity: 0.4;
-			transition: opacity 0.3s ease;
+			transition: opacity 0.8s ease, transform 0.8s ease;
 			transform-origin: center center;
 			visibility: hidden;
 			
