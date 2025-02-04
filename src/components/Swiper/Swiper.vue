@@ -19,12 +19,14 @@
 			}"
 			:navigation="true"
 			:loop="true"
+			:loopedSlides="3"
+			:watchSlidesProgress="true"
 			:autoplay="{
 				delay: 3000,
 				disableOnInteraction: false,
 				pauseOnMouseEnter: true
 			}"
-			:spaceBetween="30"
+			:spaceBetween="10"
 			class="mySwiper"
 			@swiper="onSwiperInit"
 		>
@@ -74,17 +76,25 @@
 		margin: 0 auto;
 		padding: 10px 0 40px;
 		position: relative;
+		overflow: hidden;
 	}
 
 	:deep(.swiper) {
 		width: 100%;
 		padding: 20px 0;
+		overflow: hidden;
 		
 		.swiper-slide {
 			width: 300px;
 			height: 250px;
 			opacity: 0.4;
 			transition: opacity 0.3s ease;
+			transform-origin: center center;
+			visibility: hidden;
+			
+			&-visible {
+				visibility: visible;
+			}
 			
 			&-active {
 				opacity: 1;
