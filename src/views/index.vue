@@ -52,7 +52,10 @@
 
     <!-- 主内容区 -->
     <div class="main-content" :class="{ 'content-expanded': isCollapsed }">
-      <router-view></router-view>
+      <Breadcrumb />
+      <div class="page-content">
+        <router-view></router-view>
+      </div>
     </div>
   </div>
 </template>
@@ -61,6 +64,7 @@
 import { ref } from 'vue'
 import { Star, Compass, InfoFilled, User, House, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import defaultAvatarImg from '@/static/default_avatar/avatar(unlogin).png'
+import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 
 const isCollapsed = ref(false)
 const isExpanding = ref(false)
@@ -307,14 +311,25 @@ const navItems = [
   flex: 1;
   margin-left: 240px;
   min-height: 100vh;
+  width: calc(100vw - 240px);
   transition: all 0.3s ease;
   background-color: #f5f5f5;
   overflow-y: auto;
   position: relative;
+  padding: 0;
+  
+  .page-content {
+    background: white;
+    border-radius: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    min-height: calc(100vh - 100px);
+    padding: 16px 24px;
+  }
 }
 
 .content-expanded {
   margin-left: 80px;
+  width: calc(100vw - 80px);
 }
 
 @keyframes fadeIn {
