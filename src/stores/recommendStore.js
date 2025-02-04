@@ -1,6 +1,6 @@
 // 在 src/stores 下新建 recommendStore.js
 import { defineStore } from 'pinia'
-import { saveUserPreferencesAPI, getUserPreferencesAPI, getRecommendationsAPI } from '@/api/api'
+import { saveUserPreferencesAPI, getUserPreferencesAPI, getRecommendationsAPI, getDestinationsAPI } from '@/api/api'
 
 export const useRecommendStore = defineStore('recommend', {
   state: () => ({
@@ -128,6 +128,17 @@ export const useRecommendStore = defineStore('recommend', {
       return scoredDestinations
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10)
+    },
+
+    // 获取目的地数据
+    async fetchDestinations() {
+      try {
+        const response = await getDestinationsAPI()
+        return response.data
+      } catch (error) {
+        console.error('获取目的地数据失败:', error)
+        return []
+      }
     }
   }
 })

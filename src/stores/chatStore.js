@@ -41,22 +41,30 @@ export const useChatStore = defineStore('chat', {
       }
     },
     
-    addMessage(message) {
-      const conversation = this.currentConversation
-      if (!conversation) return
+    async addMessage(message) {
+      const conversation = this.currentConversation;
+      if (!conversation) return;
       
-      conversation.messages.push(message)
-      // 根据消息内容更新对话标题
-      if (message.type === 'user' && conversation.title === '新对话') {
-        conversation.title = message.content.slice(0, 20) + (message.content.length > 20 ? '...' : '')
+      try {
+        // 先添加消息到UI
+        conversation.messages.push({...message, status: 'sending'});
+        
+        // 发送消息到服务器
+        await sendMessageAPI(message);
+        
+        // 更新消息状态
+        const msgIndex = conversation.messages.findIndex(m => m.id === message.id);
+        if (msgIndex !== -1) {
+          conversation.messages[msgIndex].status = 'sent';
+        }
+      } catch (error) {
+        // 处理发送失败
+        const msgIndex = conversation.messages.findIndex(m => m.id === message.id);
+        if (msgIndex !== -1) {
+          conversation.messages[msgIndex].status = 'failed';
+        }
+        throw error;
       }
-      
-      // 保持最多10条消息
-      if (conversation.messages.length > 10) {
-        conversation.messages = conversation.messages.slice(-10)
-      }
-      
-      this.hasActiveChat = true
     },
     
     clearCurrentConversation() {
