@@ -26,12 +26,6 @@ export const sendChatMessage = async (messages) => {
       ...messages
     ];
 
-    // console.log('Sending request to Deepseek API:', {
-    //   url: '/chat/completions',
-    //   messages: messageHistory,
-    //   model: DEEPSEEK_API_CONFIG.model
-    // });
-
     const response = await deepseekRequest({
       url: '/chat/completions',
       method: 'POST',
@@ -48,12 +42,9 @@ export const sendChatMessage = async (messages) => {
         max_tokens: DEEPSEEK_API_CONFIG.max_tokens
       }
     });
-
-    // console.log('Deepseek API response:', response);
     
     // 检查响应格式并构造标准格式的返回值
     if (response.code === 0) {
-      // 如果 API 返回成功但没有 data，构造一个模拟的 choices 结构
       return {
         choices: [{
           message: {
@@ -66,8 +57,6 @@ export const sendChatMessage = async (messages) => {
     }
     
   } catch (error) {
-    console.error('Deepseek API Error:', error);
-    
     const errorMessage = error.response?.status === 401 ? 'API 密钥无效或已过期' :
                         error.response?.status === 429 ? '请求过于频繁，请稍后再试' :
                         error.message || '请求失败，请稍后重试';

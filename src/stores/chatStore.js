@@ -87,13 +87,5 @@ export const useChatStore = defineStore('chat', {
         }
       }
     }
-  },
-  
-  persist: {
-    enabled: true,
-    strategies: [{
-      key: 'chat-store',
-      storage: localStorage,
-    }]
   }
 }) 
