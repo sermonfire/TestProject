@@ -21,6 +21,13 @@ const routes = [
         path: 'explore',
         name: 'explore',
         component: () => import('@/views/Explore/Explore.vue'),
+        children: [
+          {
+            path: 'exploreDetail',
+            name: 'exploreDetail',
+            component: () => import('@/views/Explore/ExploreDetail/ExploreDetail.vue'),
+          },
+        ],
       },
       {
         path: 'about',
