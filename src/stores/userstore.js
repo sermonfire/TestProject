@@ -4,32 +4,32 @@ import {
 
 export const useUserStore = defineStore('user', {
 	state: () => ({
-		token: uni.getStorageSync('token') || '',
-		userInfo: uni.getStorageSync('userInfo') || null,
+		token: localStorage.getItem('token') || '',
+		userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
 	}),
 	actions: {
 		setToken(token) {
 			if (!token) return;
 			this.token = token;
-			uni.setStorageSync('token', token);
+			localStorage.setItem('token', token);
 			// console.log('Token set:', token);
 		},
 		removeToken() {
 			this.token = '';
 			this.userInfo = null;
-			uni.removeStorageSync('token');
+			localStorage.removeItem('token');
 		},
 		updateUserInfo(userInfo) {
 			if (!userInfo) return;
 			this.userInfo = userInfo;
-			uni.setStorageSync('userInfo', userInfo);
+			localStorage.setItem('userInfo', JSON.stringify(userInfo));
 			// console.log('UserInfo updated:', userInfo);
 		},
 		clear() {
 			this.token = '';
 			this.userInfo = null;
-			uni.removeStorageSync('token');
-			uni.removeStorageSync('userInfo');
+			localStorage.removeItem('token');
+			localStorage.removeItem('userInfo');
 			// console.log('Store cleared');
 		}
 	},

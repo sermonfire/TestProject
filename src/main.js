@@ -9,10 +9,15 @@ import router from './router'
 
 import TDesign from 'tdesign-vue-next';
 import 'tdesign-vue-next/es/style/index.css';
+
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+
 const app = createApp(App)
 
 app.use(createPinia().use(createPersistedState()))
 app.use(router)
 app.use(TDesign)
+app.use(ElementPlus)
 
 app.mount('#app')
