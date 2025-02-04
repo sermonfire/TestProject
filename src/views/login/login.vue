@@ -525,42 +525,43 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	position: relative;
 
 	:deep(.el-checkbox) {
+
 		// 调整复选框大小
 		.el-checkbox__input {
-			transform: scale(1.4);  // 增大复选框的整体大小
+			transform: scale(1.4); // 增大复选框的整体大小
 
 			// 调整选中状态的样式
 			&.is-checked {
 				.el-checkbox__inner {
-					background-color: #409EFF;  // 选中时的背景色
-					border-color: #409EFF;      // 选中时的边框色
+					background-color: #409EFF; // 选中时的背景色
+					border-color: #409EFF; // 选中时的边框色
 				}
 			}
 
 			// 调整复选框本身的样式
 			.el-checkbox__inner {
 				// border-width: 2px;             // 增加边框宽度
-				border-color: #DCDFE6;         // 默认边框颜色
-				border-radius: 4px;            // 圆角大小
-				transition: all 0.3s;          // 添加过渡效果
+				border-color: #DCDFE6; // 默认边框颜色
+				border-radius: 4px; // 圆角大小
+				transition: all 0.3s; // 添加过渡效果
 
 				&:hover {
-					border-color: #409EFF;     // 悬停时的边框颜色
+					border-color: #409EFF; // 悬停时的边框颜色
 				}
 			}
 		}
 
 		// 调整文字大小和样式
 		.el-checkbox__label {
-			font-size: 16px;                   // 文字大小
-			padding-left: 12px;                // 文字和复选框的间距
-			line-height: 1.5;                  // 行高
-			color: #333;                       // 文字颜色
-			font-weight: 500;                  // 文字粗细
-			margin-right: 0 !important;        // 移除右侧边距
-			
+			font-size: 16px; // 文字大小
+			padding-left: 12px; // 文字和复选框的间距
+			line-height: 1.5; // 行高
+			color: #333; // 文字颜色
+			font-weight: 500; // 文字粗细
+			margin-right: 0 !important; // 移除右侧边距
+
 			&:hover {
-				color: #409EFF;               // 悬停时文字颜色
+				color: #409EFF; // 悬停时文字颜色
 			}
 		}
 
@@ -572,9 +573,10 @@ watch([password, phone], ([newPassword, newPhone]) => {
 					border-color: #E4E7ED;
 				}
 			}
+
 			.el-checkbox__label {
 				color: #C0C4CC;
-				margin-right: 0 !important;    // 确保禁用状态下也没有右边距
+				margin-right: 0 !important; // 确保禁用状态下也没有右边距
 			}
 		}
 	}
@@ -582,9 +584,9 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	// 修改复选框组的布局
 	:deep(.el-checkbox-group) {
 		display: flex;
-		justify-content: space-between;  // 将复选框分布在两端
-		width: 100%;                     // 确保占满容器宽度
-		align-items: center;             // 垂直居中对齐
+		justify-content: space-between; // 将复选框分布在两端
+		width: 100%; // 确保占满容器宽度
+		align-items: center; // 垂直居中对齐
 
 		.el-checkbox {
 			margin-right: 0 !important;
@@ -606,31 +608,32 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	width: 80%;
 	max-width: 300px;
 	margin-top: 20px;
-	
+
 	:deep(.el-input) {
 		.el-input__wrapper {
 			height: 45px;
-			
+
 			// 调整输入框内的文字大小
 			input {
-				font-size: 19px;  // 调整输入文字大小
+				font-size: 19px; // 调整输入文字大小
+
 				&::placeholder {
-					font-size: 17px;  // 调整placeholder文字大小
-					color: #999;  // 可选：调整placeholder颜色
+					font-size: 17px; // 调整placeholder文字大小
+					color: #999; // 可选：调整placeholder颜色
 				}
 			}
 
 			// 调整所有输入框相关图标的大小
 			.el-icon,
 			.el-input__icon {
-				font-size: 20px;  // 增大图标尺寸
+				font-size: 20px; // 增大图标尺寸
 			}
 		}
 
 		// 调整后缀图标容器和图标大小
 		.el-input-group__append {
 			.el-icon {
-				font-size: 27px;  // 调整后缀图标大小
+				font-size: 27px; // 调整后缀图标大小
 			}
 		}
 	}
@@ -673,5 +676,4 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	margin-bottom: 24px;
 	margin-top: 40px;
 }
-
 </style>

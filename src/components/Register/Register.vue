@@ -234,162 +234,174 @@ const closeOverlay = () => {
 </script>
 
 <style lang="scss" scoped>
-	.register-error {
-		text-align: center;
-		height: 16px;
-		line-height: 16px;
-		
-		&-msg {
-			font-size: 12px;
-			color: red;
-		}
-	}
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 999;
+	opacity: 0;
+	animation: fadeIn 0.5s ease-out forwards;
+}
 
-	.title {
-		&_1 {
-			margin: 0;
-			padding: 0;
-			font-size: 24px;
-		}
+.register {
+	position: relative;
+	background-color: #fff;
+	width: 450px;
+	height: 550px;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	opacity: 0;
+	transform: translateY(20px);
+	animation: slideUp 0.5s ease-out 0.3s forwards;
 
-		&_2 {
-			margin: 5px 0 0;
-			padding: 0;
-			font-size: 16px;
-		}
-
-		&_container {
-			text-align: center;
-			margin: 40px 0 20px;
-		}
-	}
-
-	.layout {
+	&_form {
 		width: 100%;
 		height: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		position: relative;
-	}
-
-	.register-button {
-		position: absolute;
-		bottom: 20px;
-		width: 250px;
-		height: 37px;
-		border-radius: 5px;
-		
-		&:active {
-			transform: scale(0.95);
-		}
-	}
-
-	.verfy {
-		position: relative;
-		display: flex;
-		width: 80%;
-		margin: 20px 0 0 10px;
-		max-width: 250px;
-		align-items: center;
-	}
-
-	.input-container {
-		display: flex;
-		align-items: center;
-		width: 85%;
-		padding-left: 10px;
-		gap: 5px;
-	}
-
-	.input-field {
-		:deep(.el-input__wrapper) {
-			padding-left: 5px;
-		}
-	}
-
-	.register {
-		&_form {
-			width: 350px;
-			height: 450px;
-			padding: 20px;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-		}
-	}
-
-	.overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		z-index: 999;
-		opacity: 0;
-		animation: fadeIn 0.5s ease-out forwards;
-	}
-
-	.register {
-		position: relative;
-		background-color: #fff;
-		width: 350px;
-		height: 450px;
-		border-radius: 10px;
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-		padding: 20px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+}
+
+.close-btn {
+	position: absolute;
+	top: 0;
+	right: -45px;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-color: rgba(255, 255, 255, 0.3);
+	border: none;
+	color: #fff;
+	font-size: 24px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+	z-index: 1000;
+
+	&:hover {
+		background-color: rgba(255, 255, 255, 0.5);
+	}
+
+	&:focus {
+		outline: none;
+	}
+}
+
+.title {
+	&_container {
+		text-align: center;
+		margin: 20px 0 20px;
+	}
+
+	&_1 {
+		margin: 0;
+		font-size: 24px;
+		font-weight: bold;
+	}
+
+	&_2 {
+		margin: 5px 0 0;
+		font-size: 18px;
+	}
+}
+
+.register-error {
+	text-align: center;
+	height: 20px;
+	line-height: 20px;
+
+	&-msg {
+		font-size: 15px;
+		color: red;
+	}
+}
+
+.verfy {
+	position: relative;
+	display: flex;
+	width: 250px;
+	margin-top: 20px;
+	align-items: center;
+}
+
+.input-container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: 8px;
+
+	:deep(.el-tooltip__trigger) {
+		.el-icon {
+			font-size: 22px;
+			color: #909399;
+			cursor: pointer;
+			
+			&:hover {
+				color: #409EFF;
+			}
+		}
+	}
+}
+
+.input-field {
+	:deep(.el-input__wrapper) {
+		padding-left: 5px;
+		height: 45px;
+		line-height: 45px;
+	}
+	
+	:deep(.el-input__inner) {
+		font-size: 18px;
+	}
+	
+	:deep(.el-input__prefix) {
+		margin-right: 4px;
+		
+		.el-icon {
+			font-size: 20px;
+			vertical-align: middle;
+		}
+	}
+}
+
+.register-button {
+	position: absolute;
+	bottom: 40px;
+	width: 280px;
+	height: 45px;
+	border-radius: 5px;
+
+	&:active {
+		transform: scale(0.95);
+	}
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes slideUp {
+	from {
 		opacity: 0;
 		transform: translateY(20px);
-		animation: slideUp 0.5s ease-out 0.3s forwards;
 	}
-
-	.close-btn {
-		position: absolute;
-		top: 0px;
-		right: -45px;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.3);
-		border: none;
-		color: #fff;
-		font-size: 24px;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-		z-index: 1000;
-
-		&:hover {
-			background-color: rgba(255, 255, 255, 0.5);
-		}
-
-		&:focus {
-			outline: none;
-		}
+	to {
+		opacity: 1;
+		transform: translateY(0);
 	}
-
-	@keyframes fadeIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-
-	@keyframes slideUp {
-		from {
-			opacity: 0;
-			transform: translateY(20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
+}
 </style>
