@@ -55,7 +55,12 @@
             <div class="button-container">
                 <button class="send-button" :disabled="!inputText.trim() || isLoading" @click="sendMessageWithRetry"
                     :class="{ 'button-loading': isLoading }">
-                    <i :class="[isLoading ? 'el-icon-loading' : 'el-icon-s-promotion', { 'icon-spin': isLoading }]"></i>
+                    <span class="send-icon" v-if="!isLoading">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M3 20.5L21 12L3 3.5L3 8.5L17 12L3 15.5L3 20.5z"/>
+                        </svg>
+                    </span>
+                    <i v-else class="el-icon-loading"></i>
                 </button>
             </div>
         </div>
@@ -469,7 +474,8 @@ onMounted(() => {
         }
     }
 
-    &.assistant .message-bubble {
+    &.assistant .message-bubble,
+    &.system .message-bubble {
         background-color: white;
         border-radius: 20px 20px 20px 4px;
         margin-right: 12px;
@@ -477,11 +483,13 @@ onMounted(() => {
     }
 
     &.system {
-        align-self: center;
-        background-color: rgba(240, 244, 249, 0.8);
-        padding: 12px 20px;
-        border-radius: 12px;
+        align-self: flex-start;
         max-width: 90%;
+
+        .message-content {
+            display: flex;
+            align-items: flex-start;
+        }
 
         .message-text {
             color: #4a5568;
@@ -610,33 +618,69 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #1a73e8;
+    background: linear-gradient(135deg, #007AFF, #00C6FF);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     padding: 0;
     margin: 0;
     color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+
+    .send-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        transform: rotate(-25deg) translateX(1px) translateY(-1px);
+        transition: all 0.3s ease;
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    }
 
     &:hover:not(:disabled) {
-        background-color: #1557b0;
-        transform: scale(1.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+
+        .send-icon {
+            transform: rotate(-25deg) translateX(2px) translateY(-1px);
+        }
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
     }
 
     &:disabled {
-        background-color: #a0aec0;
+        background: linear-gradient(135deg, #a0aec0, #cbd5e0);
         cursor: not-allowed;
+        box-shadow: none;
+        opacity: 0.7;
     }
 
     i {
         font-size: 20px;
+        position: relative;
+        z-index: 1;
+        transition: transform 0.3s ease;
     }
 }
 
 .button-loading {
     opacity: 0.8;
-    transform: scale(0.95);
+    
+    i {
+        animation: pulse 1.5s ease-in-out infinite;
+        font-size: 20px;
+    }
 }
 
 .fade-in {
@@ -700,6 +744,18 @@ onMounted(() => {
 
     100% {
         background-position: 0% 50%;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
     }
 }
 
