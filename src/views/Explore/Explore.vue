@@ -189,6 +189,16 @@ onMounted(() => {
 	&::-webkit-scrollbar {
 		display: none;
 	}
+
+	// 添加内容区域的过渡效果
+	transition: all 0.3s ease;
+	max-width: 1600px;
+	margin: 0 auto;
+
+	// 添加响应式内边距
+	@media (max-width: 768px) {
+		padding: 16px 10px;
+	}
 }
 
 // 加载和错误状态
@@ -221,5 +231,11 @@ onMounted(() => {
 	to {
 		transform: rotate(360deg);
 	}
+}
+
+// 添加响应式容器
+.recommendations-container {
+	transition: all 0.3s ease;
+	width: 100%;
 }
 </style>

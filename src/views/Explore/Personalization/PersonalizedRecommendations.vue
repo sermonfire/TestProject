@@ -80,7 +80,7 @@ const handleDestinationClick = (destination) => {
 
 .recommendations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   transition: all 0.3s ease;
 
@@ -89,9 +89,15 @@ const handleDestinationClick = (destination) => {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                width 0.3s ease,
+                transform 0.3s ease;
     cursor: pointer;
     will-change: transform;
+    width: 100%;
+    min-width: 300px;
+    max-width: 450px;
+    margin: 0 auto;
 
     &:hover {
       transform: translateY(-8px);
