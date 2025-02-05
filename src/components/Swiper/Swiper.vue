@@ -6,6 +6,9 @@
 			:grabCursor="true"
 			:centeredSlides="true"
 			:slidesPerView="3"
+			:preloadImages="false"
+			:lazy="true"
+			:watchSlidesVisibility="true"
 			:coverflowEffect="{
 				rotate: 30,
 				stretch: 0,
@@ -32,7 +35,7 @@
 			@swiper="onSwiperInit"
 		>
 			<swiper-slide v-for="(slide, index) in slides" :key="index">
-				<div class="slide-content">{{ slide }}</div>
+				<div class="slide-content" :data-swiper-parallax="300">{{ slide }}</div>
 			</swiper-slide>
 		</swiper>
 	</div>
@@ -67,8 +70,17 @@
 	let swiperInstance = null;
 
 	const onSwiperInit = (swiper) => {
+		if (!swiper) return;
+		
 		swiperInstance = swiper;
+		swiper.$el?.classList?.add('swiper-initialized');
 	};
+
+	onMounted(() => {
+		if (swiperInstance?.$el) {
+			swiperInstance.$el.classList.add('swiper-initialized');
+		}
+	});
 </script>
 
 <style scoped lang="scss">
@@ -89,16 +101,23 @@
 			width: 300px;
 			height: 250px;
 			opacity: 0;
-			transition: all 0.8s ease;
+			transition: opacity 0.8s ease;
 			transform-origin: center center;
-			visibility: visible;
+			pointer-events: none;
+			will-change: transform, opacity;
 			
-			&-visible {
+			&.swiper-slide-visible {
 				opacity: 0.4;
+				pointer-events: auto;
 			}
 			
-			&-active {
+			&.swiper-slide-active {
 				opacity: 1;
+				pointer-events: auto;
+			}
+			
+			&.swiper-slide-initialized {
+				opacity: 0;
 			}
 			
 			.slide-content {
