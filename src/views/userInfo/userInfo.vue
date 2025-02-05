@@ -183,6 +183,8 @@ const fetchUserInfo = async () => {
 			setTimeout(() => {
 				router.push('/login')
 			}, 1000)
+		}else if(error.message == '请求过于频繁'){
+			ElMessage.error('请求过于频繁,请稍后再尝试')
 		}else{
 			ElMessage.error('获取用户信息失败')
 		}

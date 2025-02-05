@@ -211,11 +211,6 @@ const userStore = useUserStore()
 
 // 获取用户偏好
 const fetchUserPreferences = async () => {
-	const loadingInstance = ElLoading.service({
-		lock: true,
-		text: '加载中...',
-		background: 'rgba(0, 0, 0, 0.7)'
-	});
 
 	try {
 		const res = await getUserPreferencesAPI();
@@ -234,11 +229,11 @@ const fetchUserPreferences = async () => {
 			setTimeout(() => {
 				router.push('/login');
 			}, 1000)
+		}else if(err.message == '请求过于频繁' ){
+			ElMessage.error('请求过于频繁，请稍后再试');
 		} else {
 			ElMessage.error('获取偏好设置失败');
 		}
-	} finally {
-		loadingInstance.close();
 	}
 };
 
