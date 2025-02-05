@@ -583,7 +583,7 @@ onMounted(() => {
     margin-top: 6px;
     max-width: 760px;
     background: white;
-    border-radius: 12px 12px 0 0;
+    border-radius: 12px;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     padding: 16px;
     z-index: 100;
@@ -604,6 +604,14 @@ onMounted(() => {
     resize: none;
     transition: all 0.2s ease-in-out;
     font-family: inherit;
+
+    &::-webkit-scrollbar {
+        width: 0;
+        display: none;
+    }
+    
+    -ms-overflow-style: none;  /* IE 和 Edge */
+    scrollbar-width: none;  /* Firefox */
 
     &:focus {
         outline: none;

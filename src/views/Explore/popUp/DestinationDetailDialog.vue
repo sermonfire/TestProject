@@ -138,6 +138,13 @@ const handleClose = () => {
 };
 
 const handleSimilarClick = (destination) => {
+  // 获取 detail-content 元素并滚动到顶部
+  const detailContent = document.querySelector('.detail-content');
+  detailContent?.scrollTo({
+    top: 0,
+    behavior: 'smooth' // 使用平滑滚动效果
+  });
+  
   emit('similar-click', destination);
 };
 </script>
@@ -151,6 +158,14 @@ const handleSimilarClick = (destination) => {
   .detail-content {
     max-height: 70vh;
     overflow-y: auto;
+    
+    &::-webkit-scrollbar {
+      width: 0;
+      display: none;
+    }
+    
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 
     .detail-image {
       width: 100%;
