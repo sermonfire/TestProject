@@ -462,7 +462,7 @@ onMounted(() => {
 		// 如果没有保存的登录信息，聚焦到手机号输入框
 		if (!savedPhone || !savedPassword) {
 			// 使用el-input的focus方法聚焦
-			phoneInput.value?.focus();
+			phoneInput.value?.input?.focus();
 			// console.log('聚焦到手机号输入框'); // 添加调试日志
 		} else {
 			// 如果有保存的登录信息，聚焦到整个组件以支持回车登录
