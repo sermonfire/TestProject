@@ -48,13 +48,13 @@
 				<el-form-item label="性别">
 					<el-select v-if="isEditing" v-model="editForm.gender" class="gender-select">
 						<el-option
-							v-for="(option, index) in genderOptions"
-							:key="index"
-							:label="option"
-							:value="index"
+							v-for="option in genderOptions"
+							:key="option.value"
+							:label="option.label"
+							:value="option.value"
 						/>
 					</el-select>
-					<span v-else class="value">{{ genderOptions[userInfo.gender] }}</span>
+					<span v-else class="value">{{ genderOptions.find(opt => opt.value === Number(userInfo.gender))?.label || '未知' }}</span>
 				</el-form-item>
 			</el-form>
 		</div>
@@ -157,7 +157,11 @@ const passwordForm = ref({
 	confirmPassword: ''
 })
 
-const genderOptions = ['未知', '男', '女']
+const genderOptions = [
+	{ label: '未知', value: 0 },
+	{ label: '男', value: 1 },
+	{ label: '女', value: 2 }
+]
 
 // 获取用户信息
 const fetchUserInfo = async () => {
@@ -165,7 +169,10 @@ const fetchUserInfo = async () => {
 		const res = await getUserInfoAPI()
 		if (res.code === 0) {
 			userInfo.value = res.data
-			editForm.value = { ...res.data }
+			editForm.value = {
+				...res.data,
+				gender: Number(res.data.gender)
+			}
 		}
 	} catch (error) {
 		// 401 登录过期
@@ -185,12 +192,14 @@ const fetchUserInfo = async () => {
 // 更新用户信息
 const updateUserInfo = async () => {
 	try {
+		// console.log('更新前的表单数据:', editForm.value)
 		const updateData = {
 			id: editForm.value.id,
 			username: editForm.value.username,
-			gender: editForm.value.gender,
+			gender: Number(editForm.value.gender),
 			userPic: editForm.value.userPic
 		}
+		// console.log('发送到后端的数据:', updateData)
 		
 		const res = await updateUserInfoAPI(updateData)
 		if (res.code === 0) {
@@ -293,7 +302,11 @@ const handleUpdatePassword = async () => {
 			router.push('/login')
 		}
 	} catch (error) {
-		passwordError.value = '更新失败，请重试'
+		if(error.message){
+			passwordError.value = error.message
+		}else{
+			passwordError.value = '更新失败，请重试'
+		}
 	}
 }
 
@@ -313,6 +326,10 @@ const cancelEdit = () => {
 		isEditing.value = false
 		editForm.value = { ...userInfo.value }
 		ElMessage.info('已取消编辑')
+	}).catch((err) => {
+		if (err !== 'cancel') {
+			ElMessage.error('操作失败')
+		}
 	})
 }
 
@@ -321,6 +338,27 @@ const toggleEdit = () => {
 }
 
 const cancelUpdatePassword = () => {
+	// 如果表单有输入内容才显示确认弹窗
+	if (passwordForm.value.oldPassword || passwordForm.value.newPassword || passwordForm.value.confirmPassword) {
+		ElMessageBox.confirm('确定要取消修改密码吗？已输入的内容将丢失', '提示', {
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning'
+		}).then(() => {
+			resetPasswordForm()
+			ElMessage.info('已取消修改密码')
+		}).catch((err) => {
+			if (err !== 'cancel') {
+				ElMessage.error('操作失败')
+			}
+		})
+	} else {
+		resetPasswordForm()
+	}
+}
+
+// 重置密码表单
+const resetPasswordForm = () => {
 	showPasswordForm.value = false
 	passwordForm.value = {
 		oldPassword: '',
@@ -339,6 +377,10 @@ const logout = () => {
 		userStore.clear()
 		ElMessage.success('已退出登录')
 		router.push('/login')
+	}).catch((err) => {
+		if (err !== 'cancel') {
+			ElMessage.error('操作失败')
+		}
 	})
 }
 
