@@ -168,7 +168,17 @@ const fetchUserInfo = async () => {
 			editForm.value = { ...res.data }
 		}
 	} catch (error) {
-		ElMessage.error('获取用户信息失败')
+		// 401 登录过期
+		if(error.status === 401) {
+			ElMessage.error('登录已过期，请重新登录')
+			userStore.clear()
+			//0.5s后
+			setTimeout(() => {
+				router.push('/login')
+			}, 500)
+		}else{
+			ElMessage.error('获取用户信息失败')
+		}
 	}
 }
 

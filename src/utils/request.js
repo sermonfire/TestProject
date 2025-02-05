@@ -181,17 +181,6 @@ export const createRequest = (customConfig = {}) => {
       }
     };
 
-    if (!mergedOptions.isPublic && mergedOptions.needToken) {
-      const userStore = useUserStore();
-      if (!userStore.token) {
-        ElMessage({
-          message: '请先登录',
-          type: 'warning'
-        });
-        return Promise.reject(new Error('请先登录'));
-      }
-    }
-
     const requestKey = `${mergedOptions.url}_${mergedOptions.method}_${JSON.stringify(mergedOptions.data)}`;
     if (!requestQueue.check(requestKey)) {
       return Promise.reject(new Error('请求过于频繁'));
@@ -201,12 +190,6 @@ export const createRequest = (customConfig = {}) => {
       const response = await axiosInstance(mergedOptions);
       return response;
     } catch (error) {
-      if (mergedOptions.showErrorToast) {
-        ElMessage({
-          message: error.message || '请求失败',
-          type: 'error'
-        });
-      }
       return Promise.reject(error);
     } finally {
       requestQueue.clean();
