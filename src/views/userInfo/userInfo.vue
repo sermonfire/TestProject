@@ -168,7 +168,7 @@ const fetchUserInfo = async () => {
 			editForm.value = { ...res.data }
 		}
 	} catch (error) {
-		ElMessage.error(error.message)
+		ElMessage.error('获取用户信息失败')
 	}
 }
 
