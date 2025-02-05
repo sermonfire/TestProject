@@ -62,7 +62,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Star, Compass, InfoFilled, User, House, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import defaultAvatarImg from '@/static/default_avatar/avatar(unlogin).png'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 
@@ -86,7 +86,7 @@ const toggleSidebar = () => {
 const navItems = [
   {
     path: '/',
-    icon: House,
+    icon: HomeFilled,
     text: '首页'
   },
   {
@@ -96,12 +96,12 @@ const navItems = [
   },
   {
     path: '/favorites',
-    icon: Star,
+    icon: StarFilled,
     text: '偏好设置'
   },
   {
     path: '/about',
-    icon: InfoFilled,
+    icon: HotWater,
     text: '关于'
   }
 ]
