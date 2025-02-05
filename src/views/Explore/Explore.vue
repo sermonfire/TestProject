@@ -1,15 +1,7 @@
 <template>
 	<div class="explore-container">
 		<!-- 搜索栏 -->
-		<div class="search-bar">
-			<div class="search-input-wrapper">
-				<el-icon>
-					<Search />
-				</el-icon>
-				<input type="text" v-model="searchQuery" placeholder="搜索目的地、景点、主题..." class="search-input"
-					@input="handleSearch" />
-			</div>
-		</div>
+		<SearchBar @search="handleSearch" />
 
 		<!-- 内容区域 -->
 		<div class="content-wrapper" v-infinite-scroll="loadMore" :infinite-scroll-disabled="!hasMore || isLoading"
@@ -66,14 +58,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Search, Loading, CircleClose } from '@element-plus/icons-vue';
+import { Loading, CircleClose } from '@element-plus/icons-vue';
 import { getAllRecommendationsAPI, getSimilarDestinations } from '@/api/api';
+import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import PopularDestinations from './Popular/PopularDestinations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
 
 // 基础状态
-const searchQuery = ref('');
 const showDetailDialog = ref(false);
 const hasMore = ref(true);
 const isLoading = ref(false);
@@ -140,9 +132,9 @@ const closeDetailDialog = () => {
 };
 
 // 处理搜索
-const handleSearch = () => {
+const handleSearch = (query) => {
 	// TODO: 实现搜索逻辑
-	console.log('Searching for:', searchQuery.value);
+	console.log('Searching for:', query);
 };
 
 // 加载更多数据
@@ -175,40 +167,10 @@ onMounted(() => {
 	padding-bottom: 50px;
 }
 
-// 搜索栏
-.search-bar {
-	background-color: #fff;
-	padding: 10px 20px;
-	position: sticky;
-	top: 0;
-	z-index: 10;
-
-	.search-input-wrapper {
-		background-color: #f5f5f5;
-		border-radius: 20px;
-		padding: 10px 15px;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-
-		.search-input {
-			flex: 1;
-			border: none;
-			background: transparent;
-			font-size: 16px;
-			outline: none;
-
-			&::placeholder {
-				color: #999;
-			}
-		}
-	}
-}
-
 // 内容区域
 .content-wrapper {
 	padding: 20px;
-	height: calc(100vh - 140px);
+	// height: calc(100vh - 140px);
 	overflow-y: auto;
 
 	&::-webkit-scrollbar {
