@@ -29,18 +29,6 @@ const routes = [
         meta: {
           requiresAuth: true,
         },
-        children: [
-          {
-            path: 'exploredetail',
-            name: 'exploredetail',
-            component: () => import('@/views/Explore/ExploreDetail/ExploreDetail.vue'),
-          },
-          {
-            path: 'exploredetail2',
-            name: 'exploredetail2',
-            component: () => import('@/views/Explore/ExploreDetail/ExploreDetail2.vue'),
-          },
-        ],
       },
       {
         path: 'about',
