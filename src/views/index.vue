@@ -35,7 +35,7 @@
           <div class="user-info-container">
             <img class="avatar" :src="userStore.getUserAvatar" alt="avatar">
             <div :class="['user-name', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
-              {{ userStore.getDisplayName }}
+              {{ userStore.getDisplayPhone }}
             </div>
           </div>
         </div>

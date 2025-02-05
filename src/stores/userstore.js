@@ -61,9 +61,9 @@ export const useUserStore = defineStore('user', {
 			if (!state.isLogin) return state.defaultUnloginAvatar;
 			return state.userInfo?.userPic || state.defaultLoginAvatar;
 		},
-		getDisplayName: (state) => {
+		getDisplayPhone: (state) => {
 			if (!state.isLogin) return '未登录';
-			return state.userInfo?.username || '未登录';
+			return state.userInfo?.phone || state.userInfo?.username;
 		}
 	}
 });
