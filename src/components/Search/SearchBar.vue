@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar">
     <div class="search-input-wrapper">
-      <el-icon>
+      <el-icon class="search-icon">
         <Search />
       </el-icon>
       <input
@@ -33,15 +33,29 @@ const handleSearch = () => {
 <style lang="scss" scoped>
 .search-bar {
   background-color: #fff;
-  padding: 10px 20px;
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   .search-input-wrapper {
-    background-color: #f5f5f5;
-    border-radius: 20px;
-    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 25px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+
+    &:hover, &:focus-within {
+      background-color: #fff;
+      border-color: var(--el-color-primary);
+      box-shadow: 0 0 10px rgba(var(--el-color-primary-rgb), 0.1);
+    }
+
+    .search-icon {
+      color: var(--el-color-primary);
+      font-size: 18px;
+    }
 
     .search-input {
       flex: 1;
@@ -49,9 +63,11 @@ const handleSearch = () => {
       background: transparent;
       font-size: 16px;
       outline: none;
+      color: #333;
 
       &::placeholder {
         color: #999;
+        font-weight: 300;
       }
     }
   }
