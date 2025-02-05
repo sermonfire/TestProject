@@ -229,12 +229,11 @@ const fetchUserPreferences = async () => {
 		}
 	} catch (err) {
 		if (err.response?.status === 401) {
-			ElMessage.error('登录已过期，请重新登录');
+			ElMessage.error('登录已过期，即将前往登录页');
 			userStore.clear()
-			//0.5s后
 			setTimeout(() => {
 				router.push('/login');
-			}, 500)
+			}, 1000)
 		} else {
 			ElMessage.error('获取偏好设置失败');
 		}

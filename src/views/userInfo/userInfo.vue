@@ -178,12 +178,11 @@ const fetchUserInfo = async () => {
 	} catch (error) {
 		// 401 登录过期
 		if(error.status === 401) {
-			ElMessage.error('登录已过期，请重新登录')
+			ElMessage.error('登录已过期，即将前往登录页')
 			userStore.clear()
-			//0.5s后
 			setTimeout(() => {
 				router.push('/login')
-			}, 500)
+			}, 1000)
 		}else{
 			ElMessage.error('获取用户信息失败')
 		}
