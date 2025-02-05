@@ -155,6 +155,11 @@ const range_2 = [{
 	value: 0
 }];
 
+// 添加常量定义
+const STORAGE_KEY_PHONE = 'savedPhone';
+const STORAGE_KEY_PASSWORD = 'savedPassword';
+const STORAGE_KEY_REMEMBER = 'rememberMe';
+
 // Helper Functions
 const setError = (message) => {
 	loginError.value = true;
@@ -247,11 +252,14 @@ const clientLogin = async () => {
 				return;
 			}
 
-			// 如果勾选了记住密码
-			if (checkbox_1.value.includes(1)) {
-				saveCredentials();
+			// 登录成功后，根据记住密码选项保存密码
+			if (rememberMe.value) {
+				localStorage.setItem(STORAGE_KEY_PHONE, phone.value);
+				localStorage.setItem(STORAGE_KEY_PASSWORD, encryptPassword(password.value));
 			} else {
-				clearStoredCredentials();
+				// 如果未选中记住密码，清除保存的密码
+				localStorage.removeItem(STORAGE_KEY_PHONE);
+				localStorage.removeItem(STORAGE_KEY_PASSWORD);
 			}
 
 			// 立即验证登录状态
@@ -307,12 +315,44 @@ const handleAgreementChange = (value) => {
 	checkbox_2.value = value;
 };
 
+// 清除存储凭证的辅助函数
+const clearStoredCredentials = () => {
+	try {
+		localStorage.removeItem(STORAGE_KEY_REMEMBER);
+		localStorage.removeItem(STORAGE_KEY_PHONE);
+		localStorage.removeItem(STORAGE_KEY_PASSWORD);
+		
+		// 移除复选框的选中状态
+		checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
+	} catch (error) {
+		console.error('清除存储数据失败:', error);
+		ElMessage({
+			message: '清除存储数据失败',
+			type: 'error'
+		});
+	}
+};
+
 const handleCheckboxChange = (value) => {
 	const currentValues = value;
+	const previousValues = checkbox_1.value;
+	
+	// 更新状态
+	checkbox_1.value = currentValues;
 	isRegister.value = currentValues.includes(2);
 
-	const wasRememberPasswordChecked = checkbox_1.value.includes(1);
+	// 处理记住密码选项的变化
+	const wasRememberPasswordChecked = previousValues.includes(1);
 	const isRememberPasswordChecked = currentValues.includes(1);
+
+	if (!isRememberPasswordChecked && wasRememberPasswordChecked) {
+		// 取消勾选记住密码
+		clearStoredCredentials();
+		ElMessage({
+			message: '已取消记住密码',
+			type: 'info'
+		});
+	}
 
 	if (isRememberPasswordChecked && !wasRememberPasswordChecked) {
 		if (!password.value || !PASSWORD_REGEX.test(password.value)) {
@@ -333,29 +373,6 @@ const handleCheckboxChange = (value) => {
 				type: 'success'
 			});
 		}
-	} else if (!isRememberPasswordChecked && wasRememberPasswordChecked) {
-		ElMessage({
-			message: '已取消记住密码',
-			type: 'info'
-		});
-	}
-};
-
-// 清除存储凭证的辅助函数
-const clearStoredCredentials = () => {
-	try {
-		localStorage.removeItem('rememberMe');
-		localStorage.removeItem('savedPhone');
-		localStorage.removeItem('savedPassword');
-
-		// 移除复选框的选中状态
-		checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
-	} catch (error) {
-		console.error('清除存储数据失败:', error);
-		ElMessage({
-			message: '清除存储数据失败',
-			type: 'error'
-		});
 	}
 };
 
@@ -395,7 +412,7 @@ const saveCredentials = () => {
 				});
 				return;
 			}
-
+			
 			// 验证手机号格式
 			if (!phone.value || !PHONE_REGEX.test(phone.value)) {
 				checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
@@ -407,9 +424,9 @@ const saveCredentials = () => {
 			}
 
 			const encryptedPassword = encryptPassword(password.value);
-			localStorage.setItem('rememberMe', 'true');
-			localStorage.setItem('savedPhone', phone.value);
-			localStorage.setItem('savedPassword', encryptedPassword);
+			localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
+			localStorage.setItem(STORAGE_KEY_PHONE, phone.value);
+			localStorage.setItem(STORAGE_KEY_PASSWORD, encryptedPassword);
 		} else {
 			clearStoredCredentials();
 		}
@@ -454,27 +471,36 @@ const phoneInput = ref(null);
 
 // 修改mounted钩子，处理自动聚焦逻辑
 onMounted(() => {
-	// 给整个组件添加tabindex属性以便可以接收键盘事件
-	const indexElement = document.querySelector('.index');
-	indexElement?.setAttribute('tabindex', '0');
-	
-	// 延迟执行以确保组件完全渲染
-	nextTick(() => {
-		// 检查是否存在已保存的登录信息
-		const savedPhone = localStorage.getItem('savedPhone');
-		const savedPassword = localStorage.getItem('savedPassword');
-		
-		// 如果没有保存的登录信息，聚焦到手机号输入框
-		if (!savedPhone || !savedPassword) {
-			// 使用el-input的focus方法聚焦
-			phoneInput.value?.input?.focus();
-			// console.log('聚焦到手机号输入框'); // 添加调试日志
-		} else {
-			// 如果有保存的登录信息，聚焦到整个组件以支持回车登录
-			indexElement?.focus();
-			// console.log('聚焦到整个组件'); // 添加调试日志
+	try {
+		// 检查是否有保存的登录信息
+		const rememberMe = localStorage.getItem(STORAGE_KEY_REMEMBER);
+		const savedPhone = localStorage.getItem(STORAGE_KEY_PHONE);
+		const savedPassword = localStorage.getItem(STORAGE_KEY_PASSWORD);
+
+		if (rememberMe && savedPhone && savedPassword) {
+			try {
+				const decryptedPassword = decryptPassword(savedPassword);
+				if (decryptedPassword) {
+					phone.value = savedPhone;
+					password.value = decryptedPassword;
+					checkbox_1.value = [1]; // 自动勾选记住密码
+
+					ElMessage({
+						message: '已自动填充保存的账号',
+						type: 'info'
+					});
+				} else {
+					clearStoredCredentials();
+				}
+			} catch (decryptError) {
+				console.error('密码解密失败:', decryptError);
+				clearStoredCredentials();
+			}
 		}
-	});
+	} catch (error) {
+		console.error('读取存储数据失败:', error);
+		clearStoredCredentials();
+	}
 });
 </script>
 
