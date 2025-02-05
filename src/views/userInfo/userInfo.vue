@@ -16,7 +16,7 @@
 			</div>
 			<div class="basic-info">
 				<span class="username">{{ userInfo.username }}</span>
-				<span class="user-id">ID: {{ userInfo.id }}</span>
+				<span class="user-id">UID: {{ userInfo.id }}</span>
 			</div>
 		</div>
 
@@ -168,7 +168,7 @@ const fetchUserInfo = async () => {
 			editForm.value = { ...res.data }
 		}
 	} catch (error) {
-		ElMessage.error('获取用户信息失败')
+		ElMessage.error(error.message)
 	}
 }
 
