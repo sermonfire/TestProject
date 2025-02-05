@@ -383,6 +383,8 @@ const closeOverlay = () => {
 	width: 280px;
 	height: 45px;
 	border-radius: 5px;
+	font-size: 18px;  // 增大字体大小
+	font-weight: 500; // 适当加粗
 
 	&:active {
 		transform: scale(0.95);

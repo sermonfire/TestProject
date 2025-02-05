@@ -600,6 +600,11 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	margin-top: 20px;
 	width: 300px;
 	height: 50px;
+	font-size: 18px;  // 增大字体大小
+	font-weight: 500; // 适当加粗
+	&:active {
+		transform: scale(0.95);
+	}
 }
 
 .input-container {
