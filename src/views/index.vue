@@ -109,4 +109,19 @@ const navItems = [
 
 <style lang="scss">
 @use '@/styles/index.scss';
+
+/* 添加以下样式 */
+.name,
+.nav-item-text,
+.user-name,
+.logo,
+.avatar {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  /* 只保留有效的拖拽防止属性 */
+  -webkit-user-drag: none;
+}
 </style>
