@@ -90,6 +90,7 @@
 		padding: 10px 0 40px;
 		position: relative;
 		overflow: hidden;
+		user-select: none;
 	}
 
 	:deep(.swiper) {

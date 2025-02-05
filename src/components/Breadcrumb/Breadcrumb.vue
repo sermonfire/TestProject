@@ -73,11 +73,13 @@ watch(() => route.matched, (newMatched) => {
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
+  user-select: none;
   
   :deep(.el-breadcrumb__item) {
     .el-breadcrumb__inner {
       display: flex;
       align-items: center;
+      user-select: none;
       
       &:hover {
         color: #409EFF;
@@ -89,5 +91,7 @@ watch(() => route.matched, (newMatched) => {
 .breadcrumb-icon {
   margin-right: 4px;
   font-size: 16px;
+  pointer-events: none;
+  user-select: none;
 }
 </style> 
