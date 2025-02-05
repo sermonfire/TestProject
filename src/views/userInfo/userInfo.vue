@@ -1,132 +1,199 @@
 <template>
 	<div class="user-info-container">
-		<!-- 头像区域 -->
-		<div class="avatar-section">
-			<el-upload
-				class="avatar-uploader"
-				:show-file-list="false"
-				:before-upload="beforeAvatarUpload"
-				:http-request="handleAvatarUpload"
-			>
-				<img v-if="userInfo.avatar" :src="userInfo.avatar" class="avatar" />
-				<el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-			</el-upload>
-			<p class="upload-tip">点击更换头像</p>
-		</div>
-
-		<!-- 用户信息表单 -->
-		<div class="info-form">
-			<el-form
-				ref="formRef"
-				:model="userInfo"
-				:rules="rules"
-				label-width="80px"
-				class="user-form"
-			>
-				<el-form-item label="用户名" prop="username">
-					<el-input v-model="userInfo.username" placeholder="请输入用户名" />
-				</el-form-item>
-
-				<el-form-item label="手机号" prop="phone">
-					<el-input v-model="userInfo.phone" placeholder="请输入手机号" />
-				</el-form-item>
-
-				<el-form-item label="邮箱" prop="email">
-					<el-input v-model="userInfo.email" placeholder="请输入邮箱" />
-				</el-form-item>
-
-				<el-form-item label="性别" prop="gender">
-					<el-radio-group v-model="userInfo.gender">
-						<el-radio :value="1">男</el-radio>
-						<el-radio :value="2">女</el-radio>
-						<el-radio :value="0">保密</el-radio>
-					</el-radio-group>
-				</el-form-item>
-
-				<el-form-item label="生日" prop="birthday">
-					<el-date-picker
-						v-model="userInfo.birthday"
-						type="date"
-						placeholder="选择生日"
-						format="YYYY-MM-DD"
-						value-format="YYYY-MM-DD"
-					/>
-				</el-form-item>
-
-				<el-form-item label="个性签名" prop="signature">
-					<el-input
-						v-model="userInfo.signature"
-						type="textarea"
-						:rows="3"
-						placeholder="写点什么吧..."
-						maxlength="200"
-						show-word-limit
-					/>
-				</el-form-item>
-			</el-form>
-
-			<!-- 操作按钮 -->
-			<div class="button-group">
-				<el-button type="primary" @click="handleSave" :loading="loading">
-					保存修改
-				</el-button>
-				<el-button @click="handleReset">重置</el-button>
+		<!-- 个人资料头部 -->
+		<div class="profile-header">
+			<div class="avatar-section">
+				<el-upload
+					class="avatar-uploader"
+					:show-file-list="false"
+					:before-upload="beforeAvatarUpload"
+					:http-request="handleAvatarUpload"
+				>
+					<img v-if="userInfo.userPic" :src="userInfo.userPic" class="avatar" />
+					<img v-else :src="DEFAULT_AVATAR_LOGIN" class="avatar" />
+				</el-upload>
+				<span class="change-avatar-text">点击更换头像</span>
+			</div>
+			<div class="basic-info">
+				<span class="username">{{ userInfo.username }}</span>
+				<span class="user-id">ID: {{ userInfo.id }}</span>
 			</div>
 		</div>
+
+		<!-- 个人信息卡片 -->
+		<div class="info-card">
+			<div class="card-header">
+				<span class="card-title">个人信息</span>
+				<div class="button-group" v-if="isEditing">
+					<el-button @click="cancelEdit">取消</el-button>
+					<el-button type="primary" @click="updateUserInfo">保存</el-button>
+				</div>
+				<el-button v-else type="primary" @click="toggleEdit">编辑</el-button>
+			</div>
+
+			<el-form :model="editForm" label-width="80px" class="info-form">
+				<el-form-item label="用户名">
+					<el-input v-if="isEditing" v-model="editForm.username" />
+					<span v-else class="value">{{ userInfo.username }}</span>
+				</el-form-item>
+
+				<el-form-item label="手机号">
+					<span class="value">{{ userInfo.phone }}</span>
+				</el-form-item>
+
+				<el-form-item label="邮箱">
+					<span class="value">{{ userInfo.email || '未设置' }}</span>
+				</el-form-item>
+
+				<el-form-item label="性别">
+					<el-select v-if="isEditing" v-model="editForm.gender" class="gender-select">
+						<el-option
+							v-for="(option, index) in genderOptions"
+							:key="index"
+							:label="option"
+							:value="index"
+						/>
+					</el-select>
+					<span v-else class="value">{{ genderOptions[userInfo.gender] }}</span>
+				</el-form-item>
+			</el-form>
+		</div>
+
+		<!-- 账号信息卡片 -->
+		<div class="info-card">
+			<div class="card-header">
+				<span class="card-title">账号信息</span>
+			</div>
+			<div class="info-list">
+				<div class="info-item">
+					<span class="label">注册时间</span>
+					<span class="value">{{ formatDate(userInfo.createTime) }}</span>
+				</div>
+				<div class="info-item">
+					<span class="label">最后更新</span>
+					<span class="value">{{ formatDate(userInfo.updateTime) }}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- 密码管理卡片 -->
+		<div class="info-card">
+			<div class="card-header">
+				<span class="card-title">密码管理</span>
+				<el-button 
+					v-if="!showPasswordForm" 
+					type="primary" 
+					@click="showPasswordForm = true"
+				>
+					修改密码
+				</el-button>
+			</div>
+
+			<el-form 
+				v-if="showPasswordForm" 
+				:model="passwordForm" 
+				class="password-form"
+			>
+				<el-form-item label="原密码">
+					<el-input 
+						v-model="passwordForm.oldPassword" 
+						type="password" 
+						placeholder="请输入原密码"
+					/>
+				</el-form-item>
+
+				<el-form-item label="新密码">
+					<el-input 
+						v-model="passwordForm.newPassword" 
+						type="password" 
+						placeholder="请输入新密码"
+					/>
+				</el-form-item>
+
+				<el-form-item label="确认密码">
+					<el-input 
+						v-model="passwordForm.confirmPassword" 
+						type="password" 
+						placeholder="请再次输入新密码"
+					/>
+				</el-form-item>
+
+				<div v-if="passwordError" class="error-message">
+					{{ passwordError }}
+				</div>
+
+				<div class="button-group">
+					<el-button @click="cancelUpdatePassword">取消</el-button>
+					<el-button type="primary" @click="handleUpdatePassword">确认修改</el-button>
+				</div>
+			</el-form>
+		</div>
+
+		<!-- 退出登录按钮 -->
+		<el-button class="logout-btn" type="danger" @click="logout">退出登录</el-button>
 	</div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/userstore'
-import { getUserInfoAPI, updateUserInfoAPI, uploadAvatarAPI } from '@/api/api'
-import { Plus } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getUserInfoAPI, updateUserInfoAPI, uploadAvatarAPI, updatePasswordAPI } from '@/api/api'
 
+const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
-const loading = ref(false)
+const DEFAULT_AVATAR_LOGIN = '/static/default_avatar/avatar(login).png'
 
-// 表单数据
-const userInfo = reactive({
-	username: '',
-	phone: '',
-	email: '',
-	gender: 0,
-	birthday: '',
-	signature: '',
-	avatar: ''
+const isEditing = ref(false)
+const showPasswordForm = ref(false)
+const passwordError = ref('')
+
+const userInfo = ref({})
+const editForm = ref({})
+const passwordForm = ref({
+	oldPassword: '',
+	newPassword: '',
+	confirmPassword: ''
 })
 
-// 表单验证规则
-const rules = {
-	username: [
-		{ required: true, message: '请输入用户名', trigger: 'blur' },
-		{ min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-	],
-	phone: [
-		{ required: true, message: '请输入手机号', trigger: 'blur' },
-		{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-	],
-	email: [
-		{ required: true, message: '请输入邮箱', trigger: 'blur' },
-		{ type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-	]
-}
+const genderOptions = ['未知', '男', '女']
 
 // 获取用户信息
 const fetchUserInfo = async () => {
 	try {
 		const res = await getUserInfoAPI()
 		if (res.code === 0) {
-			Object.assign(userInfo, res.data)
+			userInfo.value = res.data
+			editForm.value = { ...res.data }
 		}
 	} catch (error) {
 		ElMessage.error('获取用户信息失败')
 	}
 }
 
-// 头像上传前的验证
+// 更新用户信息
+const updateUserInfo = async () => {
+	try {
+		const updateData = {
+			id: editForm.value.id,
+			username: editForm.value.username,
+			gender: editForm.value.gender,
+			userPic: editForm.value.userPic
+		}
+		
+		const res = await updateUserInfoAPI(updateData)
+		if (res.code === 0) {
+			ElMessage.success('修改信息成功')
+			await fetchUserInfo()
+			isEditing.value = false
+		}
+	} catch (error) {
+		ElMessage.error('更新失败')
+	}
+}
+
+// 头像上传前验证
 const beforeAvatarUpload = (file) => {
 	const isImage = ['image/jpeg', 'image/png', 'image/gif'].includes(file.type)
 	const isLt2M = file.size / 1024 / 1024 < 2
@@ -146,44 +213,95 @@ const beforeAvatarUpload = (file) => {
 const handleAvatarUpload = async (options) => {
 	try {
 		const formData = new FormData()
-		formData.append('avatar', options.file)
-		// TODO: 实现文件上传API
+		formData.append('file', options.file)
 		const res = await uploadAvatarAPI(formData)
+		
 		if (res.code === 0) {
-			userInfo.avatar = res.data.url
-			ElMessage.success('头像上传成功')
+			editForm.value.userPic = res.data.url
+			await updateUserInfo()
+			ElMessage.success('头像更新成功')
 		}
 	} catch (error) {
 		ElMessage.error('头像上传失败')
 	}
 }
 
-// 保存用户信息
-const handleSave = async () => {
-	if (!formRef.value) return
+// 密码相关处理
+const validatePassword = (password) => {
+	return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(password)
+}
+
+const handleUpdatePassword = async () => {
+	passwordError.value = ''
 	
+	if (!passwordForm.value.oldPassword) {
+		passwordError.value = '请输入原密码'
+		return
+	}
+	if (!validatePassword(passwordForm.value.newPassword)) {
+		passwordError.value = '新密码必须为8-16位，且包含数字和字母'
+		return
+	}
+	if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+		passwordError.value = '两次输入的新密码不一致'
+		return
+	}
+
 	try {
-		await formRef.value.validate()
-		loading.value = true
-		
-		const res = await updateUserInfoAPI(userInfo)
+		const res = await updatePasswordAPI(passwordForm.value)
 		if (res.code === 0) {
-			ElMessage.success('保存成功')
-			userStore.updateUserInfo(userInfo)
+			ElMessage.success('密码更新成功，请重新登录')
+			userStore.clear()
+			router.push('/login')
 		}
 	} catch (error) {
-		ElMessage.error('保存失败')
-	} finally {
-		loading.value = false
+		passwordError.value = '更新失败，请重试'
 	}
 }
 
-// 重置表单
-const handleReset = () => {
-	if (formRef.value) {
-		formRef.value.resetFields()
-		fetchUserInfo()
+// 其他功能函数
+const formatDate = (dateStr) => {
+	if (!dateStr) return '未知'
+	const date = new Date(dateStr)
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+const cancelEdit = () => {
+	ElMessageBox.confirm('确定要取消编辑吗？未保存的修改将丢失', '提示', {
+		confirmButtonText: '确定',
+		cancelButtonText: '取消',
+		type: 'warning'
+	}).then(() => {
+		isEditing.value = false
+		editForm.value = { ...userInfo.value }
+		ElMessage.info('已取消编辑')
+	})
+}
+
+const toggleEdit = () => {
+	isEditing.value = true
+}
+
+const cancelUpdatePassword = () => {
+	showPasswordForm.value = false
+	passwordForm.value = {
+		oldPassword: '',
+		newPassword: '',
+		confirmPassword: ''
 	}
+	passwordError.value = ''
+}
+
+const logout = () => {
+	ElMessageBox.confirm('确定要退出登录吗？', '确认退出', {
+		confirmButtonText: '确定',
+		cancelButtonText: '取消',
+		type: 'warning'
+	}).then(() => {
+		userStore.clear()
+		ElMessage.success('已退出登录')
+		router.push('/login')
+	})
 }
 
 onMounted(() => {
@@ -193,78 +311,133 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-info-container {
-	max-width: 800px;
-	margin: 20px auto;
 	padding: 20px;
+	background-color: #f5f5f5;
+	min-height: calc(100vh - 60px);
+}
+
+.profile-header {
 	background-color: #fff;
-	border-radius: 8px;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+	border-radius: 12px;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	margin-bottom: 20px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .avatar-section {
-	text-align: center;
-	margin-bottom: 30px;
-
-	.avatar-uploader {
-		:deep(.el-upload) {
-			border: 1px dashed #d9d9d9;
-			border-radius: 50%;
-			cursor: pointer;
-			position: relative;
-			overflow: hidden;
-			transition: border-color 0.3s;
-
-			&:hover {
-				border-color: var(--el-color-primary);
-			}
-		}
-	}
-
-	.avatar-uploader-icon {
-		font-size: 28px;
-		color: #8c939d;
-		width: 120px;
-		height: 120px;
-		line-height: 120px;
-		text-align: center;
-	}
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-right: 20px;
 
 	.avatar {
-		width: 120px;
-		height: 120px;
+		width: 80px;
+		height: 80px;
 		border-radius: 50%;
-		object-fit: cover;
+		margin-bottom: 8px;
+		cursor: pointer;
 	}
 
-	.upload-tip {
-		margin-top: 8px;
+	.change-avatar-text {
+		font-size: 12px;
+		color: #666;
+	}
+}
+
+.basic-info {
+	flex: 1;
+
+	.username {
+		font-size: 24px;
+		font-weight: bold;
+		margin-bottom: 4px;
+		display: block;
+	}
+
+	.user-id {
 		font-size: 14px;
 		color: #666;
 	}
 }
 
-.info-form {
-	max-width: 600px;
-	margin: 0 auto;
+.info-card {
+	background-color: #fff;
+	border-radius: 12px;
+	padding: 20px;
+	margin-bottom: 20px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
-	.user-form {
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		margin-bottom: 20px;
+
+		.card-title {
+			font-size: 18px;
+			font-weight: bold;
+		}
+	}
+}
+
+.info-form {
+	:deep(.el-form-item) {
+		margin-bottom: 16px;
+	}
+}
+
+.value {
+	color: #333;
+	font-size: 14px;
+}
+
+.gender-select {
+	width: 100%;
+}
+
+.info-list {
+	.info-item {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 12px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+}
+
+.password-form {
+	margin-top: 20px;
+
+	.error-message {
+		color: #ff3b30;
+		font-size: 14px;
+		margin: 16px 0;
 	}
 }
 
 .button-group {
-	text-align: center;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.logout-btn {
+	width: 100%;
 	margin-top: 30px;
 }
 
-@media screen and (max-width: 768px) {
-	.user-info-container {
-		margin: 10px;
-		padding: 15px;
-	}
+:deep(.el-upload) {
+	border: none;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+}
 
-	.info-form {
-		padding: 0 10px;
-	}
+:deep(.el-form-item__label) {
+	color: #666;
 }
 </style>
