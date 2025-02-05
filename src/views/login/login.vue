@@ -1,5 +1,5 @@
 <template>
-	<div class="index">
+	<div class="index" @keyup.enter="handleEnterKey">
 		<div class="layout">
 			<div class="lbg">
 				<img src="@/static/背景（左）.png" alt="">
@@ -72,13 +72,13 @@
 		</div>
 	</div>
 
-	<el-dialog v-model="showDialog" title="通知" width="400px" class="dialog_xieyi">
+	<el-dialog v-model="showDialog" title="通知" width="400px" align-center @keyup.enter="dialogConfirm">
 		<span>请勾选协议!</span>
 		<template #footer>
-			<span class="dialog-footer">
+			<div class="dialog-footer">
 				<el-button @click="dialogClose">关闭</el-button>
 				<el-button type="primary" @click="dialogConfirm">同意</el-button>
-			</span>
+			</div>
 		</template>
 	</el-dialog>
 
@@ -427,6 +427,25 @@ watch([password, phone], ([newPassword, newPhone]) => {
 		}
 	}
 });
+
+// 添加处理回车键的函数
+const handleEnterKey = (event) => {
+	if (showDialog.value) {
+		// 如果对话框打开，按回车键触发确认
+		dialogConfirm();
+	} else {
+		// 如果对话框未打开，按回车键触发登录
+		clientLogin();
+	}
+};
+
+// 添加mounted钩子来设置自动聚焦
+onMounted(() => {
+	// 给整个组件添加tabindex属性以便可以接收键盘事件
+	document.querySelector('.index').setAttribute('tabindex', '0');
+	// 自动聚焦
+	document.querySelector('.index').focus();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -436,6 +455,7 @@ watch([password, phone], ([newPassword, newPhone]) => {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	outline: none; // 添加这行以移除focus时的轮廓
 }
 
 .layout {
