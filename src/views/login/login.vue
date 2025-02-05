@@ -222,84 +222,72 @@ const clientLogin = async () => {
 		// 显示加载状态
 		isLoading.value = true;
 
-		// 调用登录接口
-		const res = await clientUserLoginAPI({
+		// 1. 调用登录接口
+		const loginRes = await clientUserLoginAPI({
 			phone: phone.value,
 			password: password.value
 		});
 
 		// 处理登录成功
-		if (res.code === 0) {
-			const { token, userInfo } = res.data;
+		if (loginRes.code === 0) {
+			const { token, userInfo } = loginRes.data;
 
-			// 保存token和用户信息
+			// 2. 保存token和用户信息
 			userStore.setToken(token);
 			userStore.updateUserInfo(userInfo);
 			userStore.setLoginState(true);
 
-			// 立即验证token是否保存成功
+			// 3. 验证token是否保存成功
 			if (!userStore.token) {
 				handleLoginFailure('token保存失败');
 				return;
 			}
 
-			// 登录成功后，根据记住密码选项保存密码
+			// 4. 处理记住密码逻辑
 			if (rememberMe.value) {
-				localStorage.setItem(STORAGE_KEY_PHONE, phone.value);
-				localStorage.setItem(STORAGE_KEY_PASSWORD, encryptPassword(password.value));
-				localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
+				saveCredentials();
 			} else {
-				// 如果未选中记住密码，清除保存的密码
-				localStorage.removeItem(STORAGE_KEY_PHONE);
-				localStorage.removeItem(STORAGE_KEY_PASSWORD);
-				localStorage.removeItem(STORAGE_KEY_REMEMBER);
+				clearStoredCredentials();
 			}
 
-			// 立即验证登录状态
 			try {
+				// 5. 验证登录状态
 				const checkResponse = await checkLoginAPI();
 				if (checkResponse.code !== 0) {
 					throw new Error('登录状态验证失败');
 				}
-			} catch (error) {
-				console.error('登录状态验证失败:', error);
-				handleLoginFailure('登录状态验证失败');
-				return;
-			}
 
-			// 立即获取用户信息
-			try {
+				// 6. 获取最新的用户信息
 				const userInfoResponse = await getUserInfoAPI();
 				if (userInfoResponse.code === 0) {
 					userStore.updateUserInfo(userInfoResponse.data);
+				} else {
+					throw new Error('获取用户信息失败');
 				}
+
+				// 7. 所有接口调用成功后，显示成功提示
+				ElMessage({
+					message: '登录成功',
+					type: 'success'
+				});
+
+				// 8. 最后进行路由跳转
+				const redirect = route.query.redirect;
+				if (redirect) {
+					router.push(redirect);
+				} else {
+					router.push('/');
+				}
+
 			} catch (error) {
-				console.error('获取用户信息失败:', error);
-			}
-
-			// 显示成功提示
-			ElMessage({
-				message: '登录成功',
-				type: 'success'
-			});
-
-			// 在 clientLogin 函数中添加日志
-			console.log('Login response:', res);
-			console.log('Redirect path:', route.query.redirect);
-			console.log('Store state after login:', {
-				isLogin: userStore.isLogin,
-				hasToken: !!userStore.token
-			});
-
-			// 移除 setTimeout，直接进行跳转
-			const redirect = route.query.redirect;
-			if (redirect) {
-				router.push(redirect);
-			} else {
-				router.push('/');
+				console.error('登录后续操作失败:', error);
+				handleLoginFailure(error.message || '登录验证失败');
+				// 清理已保存的状态
+				userStore.clearUserInfo();
+				return;
 			}
 		} else {
-			handleLoginFailure(res.message || '登录失败');
+			handleLoginFailure(loginRes.message || '登录失败');
 		}
 	} catch (error) {
 		console.error('Login error:', error);
