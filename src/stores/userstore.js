@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', {
 	state: () => ({
 		token: localStorage.getItem('token') || '',
 		userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
+		isLogin: false
 	}),
 	actions: {
 		setToken(token) {
@@ -31,6 +32,9 @@ export const useUserStore = defineStore('user', {
 			localStorage.removeItem('token');
 			localStorage.removeItem('userInfo');
 			// console.log('Store cleared');
+		},
+		setLoginState(state) {
+			this.isLogin = state;
 		}
 	},
 	persist: {

@@ -23,12 +23,7 @@
 				</div>
 
 				<div class="input-container">
-					<el-input 
-						ref="phoneInput"
-						v-model="phone" 
-						placeholder="请输入手机号" 
-						maxlength="11" 
-						:prefix-icon="Phone"
+					<el-input ref="phoneInput" v-model="phone" placeholder="请输入手机号" maxlength="11" :prefix-icon="Phone"
 						@input="loginChange">
 						<template #append>
 							<el-tooltip v-if="phone.length > 0" content="请输入中国大陆手机号" placement="top">
@@ -115,9 +110,10 @@ import { encryptPassword, decryptPassword } from '@/utils/encrypt'
 import { clientUserLoginAPI, checkLoginAPI, getUserInfoAPI } from '@/api/api.js';
 import { ElMessage } from 'element-plus';
 import { Phone, Lock, InfoFilled } from '@element-plus/icons-vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 // State
 const phone = ref('');
@@ -234,17 +230,13 @@ const clientLogin = async () => {
 
 		// 处理登录成功
 		if (res.code === 0) {
-			// 保存token前先检查
-			if (!res.data?.token || !res.data?.userInfo) {
-				handleLoginFailure('登录响应数据不完整');
-				return;
-			}
-
 			const { token, userInfo } = res.data;
 
 			// 保存token和用户信息
 			userStore.setToken(token);
 			userStore.updateUserInfo(userInfo);
+			// 显式设置登录状态
+			userStore.setLoginState(true);
 
 			// 立即验证token是否保存成功
 			if (!userStore.token) {
@@ -290,15 +282,21 @@ const clientLogin = async () => {
 				type: 'success'
 			});
 
-			// 延迟跳转
-			setTimeout(() => {
-				const redirect = router.query.redirect;
-				if (redirect) {
-					router.replace(redirect);
-				} else {
-					router.replace('/');
-				}
-			}, 1500);
+			// 在 clientLogin 函数中添加日志
+			console.log('Login response:', res);
+			console.log('Redirect path:', route.query.redirect);
+			console.log('Store state after login:', {
+				isLogin: userStore.isLogin,
+				hasToken: !!userStore.token
+			});
+
+			// 移除 setTimeout，直接进行跳转
+			const redirect = route.query.redirect;
+			if (redirect) {
+				router.push(redirect);
+			} else {
+				router.push('/');
+			}
 		} else {
 			handleLoginFailure(res.message || '登录失败');
 		}
@@ -321,7 +319,7 @@ const clearStoredCredentials = () => {
 		localStorage.removeItem(STORAGE_KEY_REMEMBER);
 		localStorage.removeItem(STORAGE_KEY_PHONE);
 		localStorage.removeItem(STORAGE_KEY_PASSWORD);
-		
+
 		// 移除复选框的选中状态
 		checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
 	} catch (error) {
@@ -336,7 +334,7 @@ const clearStoredCredentials = () => {
 const handleCheckboxChange = (value) => {
 	const currentValues = value;
 	const previousValues = checkbox_1.value;
-	
+
 	// 更新状态
 	checkbox_1.value = currentValues;
 	isRegister.value = currentValues.includes(2);
@@ -412,7 +410,7 @@ const saveCredentials = () => {
 				});
 				return;
 			}
-			
+
 			// 验证手机号格式
 			if (!phone.value || !PHONE_REGEX.test(phone.value)) {
 				checkbox_1.value = checkbox_1.value.filter(item => item !== 1);
@@ -677,8 +675,9 @@ onMounted(() => {
 	margin-top: 20px;
 	width: 300px;
 	height: 50px;
-	font-size: 18px;  // 增大字体大小
+	font-size: 18px; // 增大字体大小
 	font-weight: 500; // 适当加粗
+
 	&:active {
 		transform: scale(0.95);
 	}

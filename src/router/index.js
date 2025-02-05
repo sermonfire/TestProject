@@ -73,11 +73,16 @@ router.beforeEach((to, from, next) => {
     } else {
       next({
         path: '/login',
-        query: { redirect: to.fullPath }
+        query: { redirect: to.fullPath }  // 保存要跳转的路由
       })
     }
   } else {
-    next()
+    // 如果是登录页面，且用户已登录，则重定向到首页
+    if (to.path === '/login' && userStore.isLogin && userStore.token) {
+      next('/')
+    } else {
+      next()
+    }
   }
 })
 
