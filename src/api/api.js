@@ -21,7 +21,7 @@ export const checkLoginAPI = () => {
 	})
 }
 
-// 在现有代码中添加注册接口
+// 注册接口
 export const clientUserRegisterAPI = (params) => {
 	return request({
 		url: 'dev-api/ClientUser/register',
@@ -32,7 +32,7 @@ export const clientUserRegisterAPI = (params) => {
 	})
 }
 
-// 添加获取用户信息和更新用户信息的API
+// 获取用户信息
 export const getUserInfoAPI = () => {
 	return request({
 		url: 'dev-api/ClientUser/userInfo',
@@ -57,7 +57,7 @@ export const updateUserInfoAPI = (params) => {
 	})
 }
 
-// 修改上传头像的 API
+// 上传头像
 export const uploadAvatarAPI = (formData) => {
 	return request({
 		url: 'dev-api/upload',
@@ -70,12 +70,13 @@ export const uploadAvatarAPI = (formData) => {
 	})
 }
 
-// 更新密码的API
+// 更新密码
 export const updatePasswordAPI = (params) => {
 	return request({
 		url: 'dev-api/ClientUser/updatePassword',
 		method: 'PUT',
-		data: params
+		data: params,
+		needToken: true
 	})
 }
 
@@ -137,27 +138,6 @@ export const getSeasonalRecommendationsAPI = () => {
 	})
 }
 
-// 获取热门主题
-export const getPopularThemesAPI = () => {
-	return request({
-		url: 'dev-api/recommend/themes',
-		method: 'GET',
-		needToken: true,
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
-}
-
-// 获取季节性主题
-export const getSeasonalThemesAPI = () => {
-	return request({
-		url: 'dev-api/recommend/seasonal-themes',
-		method: 'GET',
-		needToken: true
-	})
-}
-
 // 获取所有推荐内容
 export const getAllRecommendationsAPI = () => {
 	return request({
@@ -184,24 +164,6 @@ export const getDestinationDetailAPI = (id) => {
 		needToken: true
 	})
 }
-
-// 获取所有主题的API
-export const getAllThemes = () => {
-	return request({
-		url: 'dev-api/theme/all',
-		method: 'GET',
-		needToken: true
-	});
-};
-
-// 获取主题详情的API
-export const getThemeById = (id) => {
-	return request({
-		url: `dev-api/theme/${id}`,
-		method: 'GET',
-		needToken: true
-	});
-};
 
 // 获取相似目的地的API
 export const getSimilarDestinations = (id, limit = 5) => {
