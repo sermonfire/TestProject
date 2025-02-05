@@ -23,7 +23,12 @@
 				</div>
 
 				<div class="input-container">
-					<el-input v-model="phone" placeholder="请输入手机号" maxlength="11" :prefix-icon="Phone"
+					<el-input 
+						ref="phoneInput"
+						v-model="phone" 
+						placeholder="请输入手机号" 
+						maxlength="11" 
+						:prefix-icon="Phone"
 						@input="loginChange">
 						<template #append>
 							<el-tooltip v-if="phone.length > 0" content="请输入中国大陆手机号" placement="top">
@@ -439,12 +444,30 @@ const handleEnterKey = (event) => {
 	}
 };
 
-// 添加mounted钩子来设置自动聚焦
+// 添加ref用于获取输入框实例
+const phoneInput = ref(null);
+
+// 修改mounted钩子，处理自动聚焦逻辑
 onMounted(() => {
 	// 给整个组件添加tabindex属性以便可以接收键盘事件
-	document.querySelector('.index').setAttribute('tabindex', '0');
-	// 自动聚焦
-	document.querySelector('.index').focus();
+	const indexElement = document.querySelector('.index');
+	indexElement?.setAttribute('tabindex', '0');
+	
+	// 延迟执行以确保组件完全渲染
+	nextTick(() => {
+		// 检查是否存在已保存的登录信息
+		const savedPhone = localStorage.getItem('savedPhone');
+		const savedPassword = localStorage.getItem('savedPassword');
+		
+		// 如果没有保存的登录信息，聚焦到手机号输入框
+		if (!savedPhone || !savedPassword) {
+			// 使用el-input的focus方法聚焦
+			phoneInput.value?.input?.focus();
+		} else {
+			// 如果有保存的登录信息，聚焦到整个组件以支持回车登录
+			indexElement?.focus();
+		}
+	});
 });
 </script>
 
