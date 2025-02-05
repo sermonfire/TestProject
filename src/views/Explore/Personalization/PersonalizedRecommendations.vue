@@ -82,13 +82,14 @@ const handleDestinationClick = (destination) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  transition: all 0.3s ease;
 
   .destination-card {
     background-color: #fff;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s ease;
     cursor: pointer;
     will-change: transform;
 
