@@ -33,9 +33,9 @@
       <router-link to="/userInfo" class="nav-item userinfo" v-slot="{ isExactActive }">
         <div class="nav-item-content" :class="{ 'active': isExactActive }">
           <div class="user-info-container">
-            <img class="avatar" :src="defaultAvatar" alt="avatar">
+            <img class="avatar" :src="userStore.getUserAvatar" alt="avatar">
             <div :class="['user-name', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
-                未登录
+              {{ userStore.getDisplayName }}
             </div>
           </div>
         </div>
@@ -65,10 +65,12 @@ import { ref } from 'vue'
 import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import defaultAvatarImg from '@/static/default_avatar/avatar(unlogin).png'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
+import { useUserStore } from '@/stores/userstore'
 
 const isCollapsed = ref(false)
 const isExpanding = ref(false)
 const defaultAvatar = defaultAvatarImg
+const userStore = useUserStore()
 
 const toggleSidebar = () => {
   if (!isCollapsed.value) {
@@ -109,19 +111,4 @@ const navItems = [
 
 <style lang="scss">
 @use '@/styles/index.scss';
-
-/* 添加以下样式 */
-.name,
-.nav-item-text,
-.user-name,
-.logo,
-.avatar {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  
-  /* 只保留有效的拖拽防止属性 */
-  -webkit-user-drag: none;
-}
 </style>

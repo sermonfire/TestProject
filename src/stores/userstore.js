@@ -6,7 +6,9 @@ export const useUserStore = defineStore('user', {
 	state: () => ({
 		token: localStorage.getItem('token') || '',
 		userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
-		isLogin: false
+		isLogin: false,
+		defaultLoginAvatar: '@/static/default_avatar/avatar(login).png',
+		defaultUnloginAvatar: '@/static/default_avatar/avatar(unlogin).png'
 	}),
 	actions: {
 		setToken(token) {
@@ -50,5 +52,13 @@ export const useUserStore = defineStore('user', {
 	},
 	getters: {
 		getUserInfo: (state) => state.userInfo || {},
+		getUserAvatar: (state) => {
+			if (!state.isLogin) return state.defaultUnloginAvatar;
+			return state.userInfo?.userPic || state.defaultLoginAvatar;
+		},
+		getDisplayName: (state) => {
+			if (!state.isLogin) return '未登录';
+			return state.userInfo?.phone || '未设置手机号';
+		}
 	}
 });
