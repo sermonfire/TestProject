@@ -58,10 +58,7 @@ export const updateUserInfoAPI = (params) => {
 }
 
 // 修改上传头像的 API
-export const uploadAvatarAPI = (file) => {
-	const formData = new FormData();
-	formData.append('file', file);
-
+export const uploadAvatarAPI = (formData) => {
 	return request({
 		url: 'dev-api/upload',
 		method: 'POST',
@@ -70,8 +67,8 @@ export const uploadAvatarAPI = (file) => {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		}
-	});
-};
+	})
+}
 
 // 更新密码的API
 export const updatePasswordAPI = (params) => {

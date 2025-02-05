@@ -5,12 +5,16 @@ import {
 export const useUserStore = defineStore('user', {
 	state: () => ({
 		token: localStorage.getItem('token') || '',
-		userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
+		userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}') || null,
 		isLogin: false,
 		defaultLoginAvatar: '@/static/default_avatar/avatar(login).png',
 		defaultUnloginAvatar: '@/static/default_avatar/avatar(unlogin).png'
 	}),
 	actions: {
+		setUserInfo(info) {
+			this.userInfo = info;
+			localStorage.setItem('userInfo', JSON.stringify(info));
+		},
 		setToken(token) {
 			if (!token) return;
 			this.token = token;
@@ -51,6 +55,7 @@ export const useUserStore = defineStore('user', {
 		]
 	},
 	getters: {
+		getToken: (state) => state.token,
 		getUserInfo: (state) => state.userInfo || {},
 		getUserAvatar: (state) => {
 			if (!state.isLogin) return state.defaultUnloginAvatar;
@@ -58,7 +63,7 @@ export const useUserStore = defineStore('user', {
 		},
 		getDisplayName: (state) => {
 			if (!state.isLogin) return '未登录';
-			return state.userInfo?.phone || '未设置手机号';
+			return state.userInfo?.username || '未登录';
 		}
 	}
 });

@@ -138,7 +138,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/userstore'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { getUserInfoAPI, updateUserInfoAPI, uploadAvatarAPI, updatePasswordAPI } from '@/api/api'
 
 const router = useRouter()
@@ -186,6 +186,7 @@ const updateUserInfo = async () => {
 		if (res.code === 0) {
 			ElMessage.success('修改信息成功')
 			await fetchUserInfo()
+			userStore.updateUserInfo(userInfo.value)
 			isEditing.value = false
 		}
 	} catch (error) {
@@ -211,18 +212,45 @@ const beforeAvatarUpload = (file) => {
 
 // 处理头像上传
 const handleAvatarUpload = async (options) => {
+	let loading = null
 	try {
+		loading = ElLoading.service({
+			text: '头像上传中...'
+		})
+		
 		const formData = new FormData()
 		formData.append('file', options.file)
+		
+		// console.log('开始上传头像:', options.file)
+		
 		const res = await uploadAvatarAPI(formData)
+		// console.log('上传响应:', res)
 		
 		if (res.code === 0) {
-			editForm.value.userPic = res.data.url
-			await updateUserInfo()
+			if (typeof res.data === 'string') {
+				editForm.value.userPic = res.data
+				await updateUserInfo()
+				const newUserInfo = {
+					...userInfo.value,
+					userPic: res.data
+				}
+				userStore.updateUserInfo(newUserInfo)
+			} else if (res.code === 0) {
+				await fetchUserInfo()
+				userStore.updateUserInfo(userInfo.value)
+			}
+			
 			ElMessage.success('头像更新成功')
+		} else {
+			throw new Error(res.message || '上传失败')
 		}
 	} catch (error) {
-		ElMessage.error('头像上传失败')
+		console.error('头像上传错误:', error)
+		ElMessage.error(`头像上传失败: ${error.message}`)
+	} finally {
+		if (loading) {
+			loading.close()
+		}
 	}
 }
 
