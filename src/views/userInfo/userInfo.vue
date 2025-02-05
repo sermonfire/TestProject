@@ -140,10 +140,11 @@ import { useUserStore } from '@/stores/userstore'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { getUserInfoAPI, updateUserInfoAPI, uploadAvatarAPI, updatePasswordAPI } from '@/api/api'
+import loginAvatar from '@/assets/default_avatar/avatar-login.png'
 
 const router = useRouter()
 const userStore = useUserStore()
-const DEFAULT_AVATAR_LOGIN = '/static/default_avatar/avatar(login).png'
+const DEFAULT_AVATAR_LOGIN = loginAvatar
 
 const isEditing = ref(false)
 const showPasswordForm = ref(false)
