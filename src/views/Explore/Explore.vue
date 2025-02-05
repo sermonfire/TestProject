@@ -64,6 +64,8 @@ import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import PopularDestinations from './Popular/PopularDestinations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
+import { useUserStore } from '@/stores/userstore'
+import { useRouter } from 'vue-router'
 
 // 基础状态
 const showDetailDialog = ref(false);
@@ -73,6 +75,8 @@ const loading = ref(false);
 const error = ref(null);
 const selectedDestination = ref(null);
 const similarDestinations = ref([]);
+const router = useRouter()
+const userStore = useUserStore()
 
 // 推荐数据
 const recommendations = ref({
@@ -93,8 +97,17 @@ const fetchAllRecommendations = async () => {
 			throw new Error('获取推荐失败');
 		}
 	} catch (err) {
-		error.value = err.message || '网络错误，请稍后重试';
-		ElMessage.error(error.value);
+		if(err.status === 401) {
+			ElMessage.error('登录已过期，即将前往登录页')
+			userStore.clear()
+			setTimeout(() => {
+				router.push('/login')
+			}, 1000)
+		}else if(err.message == '请求过于频繁'){
+			ElMessage.error('请求过于频繁,请稍后再尝试')
+		}else{
+			ElMessage.error('获取推荐失败')
+		}
 	} finally {
 		loading.value = false;
 	}
