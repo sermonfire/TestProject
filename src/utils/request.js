@@ -75,14 +75,6 @@ const responseInterceptors = [
           type: 'warning'
         });
         
-        localStorage.removeItem('rememberMe');
-        localStorage.removeItem('savedPhone');
-        localStorage.removeItem('savedPassword');
-        
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 1500);
-        
         return Promise.reject({ code: 401, message: '登录已过期，请重新登录' });
       }
       
@@ -192,6 +184,10 @@ export const createRequest = (customConfig = {}) => {
     if (!mergedOptions.isPublic && mergedOptions.needToken) {
       const userStore = useUserStore();
       if (!userStore.token) {
+        ElMessage({
+          message: '请先登录',
+          type: 'warning'
+        });
         return Promise.reject(new Error('请先登录'));
       }
     }
