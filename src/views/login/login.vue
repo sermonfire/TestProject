@@ -462,10 +462,12 @@ onMounted(() => {
 		// 如果没有保存的登录信息，聚焦到手机号输入框
 		if (!savedPhone || !savedPassword) {
 			// 使用el-input的focus方法聚焦
-			phoneInput.value?.input?.focus();
+			phoneInput.value?.focus();
+			// console.log('聚焦到手机号输入框'); // 添加调试日志
 		} else {
 			// 如果有保存的登录信息，聚焦到整个组件以支持回车登录
 			indexElement?.focus();
+			// console.log('聚焦到整个组件'); // 添加调试日志
 		}
 	});
 });
@@ -529,8 +531,8 @@ onMounted(() => {
 
 .top-security-tip {
 	position: fixed;
-	top: 20px;
-	left: 50%;
+	top: 24%;
+	left: 76%;
 	transform: translateX(-50%);
 	z-index: 9999;
 	background-color: rgba(255, 153, 0, 0.1);
@@ -540,6 +542,7 @@ onMounted(() => {
 	backdrop-filter: blur(4px);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	pointer-events: none;
+	user-select: none;
 }
 
 .tip-content {
@@ -702,6 +705,7 @@ onMounted(() => {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	user-select: none;
 }
 
 .title_1 {
