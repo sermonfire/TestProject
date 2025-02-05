@@ -83,6 +83,7 @@ import { ref, onMounted, nextTick, watch, computed } from 'vue';
 import { useUserStore } from '@/stores/userstore';
 import { ElMessage } from 'element-plus';
 import { sendChatMessage } from '@/api/deepseek';
+import logoAvatar from '@/assets/logo/favicon.ico';
 
 const props = defineProps({
     initialMessages: {
@@ -94,7 +95,7 @@ const props = defineProps({
 const emit = defineEmits(['update:messages', 'clear-messages']);
 
 const userStore = useUserStore();
-const LOGO_AVATAR = '/static/logo/favicon.ico';
+const LOGO_AVATAR = ref(logoAvatar);
 const DEFAULT_AVATAR_LOGIN = '/static/default_avatar/avatar(login).png';
 
 const inputText = ref('');

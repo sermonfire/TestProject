@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <div class="sidebar" :class="{ 'collapsed': isCollapsed, 'expanding': isExpanding }">
       <div class="logo-area">
-        <img src="@/static/logo/favicon.ico" alt="logo" class="logo">
+        <img src="@/assets/logo/favicon.ico" alt="logo" class="logo">
         <span :class="['name', { 'hide': isCollapsed, 'fade-in': isExpanding }]">TravelRec</span>
       </div>
 
