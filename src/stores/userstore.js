@@ -1,14 +1,16 @@
 import {
 	defineStore
 } from 'pinia';
+import loginAvatar from '@/assets/default_avatar/avatar-login.png'
+import unloginAvatar from '@/assets/default_avatar/avatar-unlogin.png'
 
 export const useUserStore = defineStore('user', {
 	state: () => ({
 		token: localStorage.getItem('token') || '',
 		userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}') || null,
 		isLogin: false,
-		defaultLoginAvatar: '@/static/default_avatar/avatar(login).png',
-		defaultUnloginAvatar: '@/static/default_avatar/avatar(unlogin).png'
+		defaultLoginAvatar: loginAvatar,
+		defaultUnloginAvatar: unloginAvatar
 	}),
 	actions: {
 		setUserInfo(info) {
@@ -19,7 +21,6 @@ export const useUserStore = defineStore('user', {
 			if (!token) return;
 			this.token = token;
 			localStorage.setItem('token', token);
-			// console.log('Token set:', token);
 		},
 		removeToken() {
 			this.token = '';
@@ -30,7 +31,6 @@ export const useUserStore = defineStore('user', {
 			if (!userInfo) return;
 			this.userInfo = userInfo;
 			localStorage.setItem('userInfo', JSON.stringify(userInfo));
-			// console.log('UserInfo updated:', userInfo);
 		},
 		clear() {
 			this.token = '';
@@ -58,11 +58,13 @@ export const useUserStore = defineStore('user', {
 		getToken: (state) => state.token,
 		getUserInfo: (state) => state.userInfo || {},
 		getUserAvatar: (state) => {
-			if (!state.isLogin) return state.defaultUnloginAvatar;
+			if (!state.token) {
+				return state.defaultUnloginAvatar;
+			}
 			return state.userInfo?.userPic || state.defaultLoginAvatar;
 		},
 		getDisplayPhone: (state) => {
-			if (!state.isLogin) return '未登录';
+			if (!state.token) return '未登录';
 			return state.userInfo?.phone || state.userInfo?.username;
 		}
 	}

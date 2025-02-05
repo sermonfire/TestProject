@@ -9,10 +9,7 @@
 
       <!-- 导航菜单 -->
       <div class="nav-items">
-        <router-link v-for="item in navItems" 
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
+        <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item"
           v-slot="{ isExactActive }">
           <div class="nav-item-content" :class="{ 'active': isExactActive }">
             <div class="nav-item-icon">
@@ -33,7 +30,7 @@
       <router-link to="/userInfo" class="nav-item userinfo" v-slot="{ isExactActive }">
         <div class="nav-item-content" :class="{ 'active': isExactActive }">
           <div class="user-info-container">
-            <img class="avatar" :src="userStore.getUserAvatar" alt="avatar">
+            <img class="avatar" :src="userStore.getUserAvatar" :alt="userStore.isLogin ? '用户头像' : '默认头像'">
             <div :class="['user-name', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
               {{ userStore.getDisplayPhone }}
             </div>
@@ -61,15 +58,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import defaultAvatarImg from '@/static/default_avatar/avatar(unlogin).png'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import { useUserStore } from '@/stores/userstore'
 
 const isCollapsed = ref(false)
 const isExpanding = ref(false)
-const defaultAvatar = defaultAvatarImg
 const userStore = useUserStore()
 
 const toggleSidebar = () => {
@@ -107,8 +102,20 @@ const navItems = [
     text: '关于'
   }
 ]
+
+// 确保组件加载时更新登录状态
+onMounted(() => {
+  userStore.setLoginState(!!userStore.token)
+})
 </script>
 
 <style lang="scss">
 @use '@/styles/index.scss';
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 </style>
