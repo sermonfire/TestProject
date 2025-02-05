@@ -91,6 +91,7 @@
             @mousemove="onDrag"
             @mouseup="stopDrag"
             @mouseleave="stopDrag"
+            @scroll="handleScroll"
           >
             <div 
               v-for="dest in similarDestinations" 
@@ -115,7 +116,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onUnmounted } from 'vue';
 import { Star, Calendar, Wallet } from '@element-plus/icons-vue';
 
 const props = defineProps({
@@ -149,35 +150,106 @@ const startX = ref(0);
 const scrollLeft = ref(0);
 const scrollContainer = ref(null);
 const hasMoved = ref(false);
+const velocity = ref(0);
+const lastX = ref(0);
+const lastTime = ref(0);
+let animationFrame = null;
 
 const startDrag = (e) => {
   isDragging.value = true;
   hasMoved.value = false;
-  startX.value = e.pageX;
+  startX.value = lastX.value = e.pageX;
+  lastTime.value = Date.now();
   scrollLeft.value = scrollContainer.value.scrollLeft;
   scrollContainer.value.style.cursor = 'grabbing';
   document.body.style.userSelect = 'none';
-};
-
-const stopDrag = () => {
-  isDragging.value = false;
-  scrollContainer.value.style.cursor = 'grab';
-  document.body.style.userSelect = '';
+  
+  // 停止任何正在进行的惯性滚动
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+  }
 };
 
 const onDrag = (e) => {
   if (!isDragging.value) return;
   e.preventDefault();
   
-  const x = e.pageX;
-  const distance = x - startX.value;
+  const currentX = e.pageX;
+  const currentTime = Date.now();
+  const deltaX = currentX - lastX.value;
+  const deltaTime = currentTime - lastTime.value;
   
-  if (Math.abs(distance) > 5) {
+  // 计算速度 (像素/毫秒)
+  if (deltaTime > 0) {
+    velocity.value = deltaX / deltaTime;
+  }
+  
+  if (Math.abs(currentX - startX.value) > 5) {
     hasMoved.value = true;
   }
   
-  scrollContainer.value.scrollLeft = scrollLeft.value - distance;
+  const newScrollLeft = scrollLeft.value - (currentX - startX.value);
+  scrollContainer.value.scrollLeft = newScrollLeft;
+  
+  lastX.value = currentX;
+  lastTime.value = currentTime;
 };
+
+const stopDrag = () => {
+  if (!isDragging.value) return;
+  
+  isDragging.value = false;
+  scrollContainer.value.style.cursor = 'grab';
+  document.body.style.userSelect = '';
+  
+  // 启动惯性滚动
+  if (Math.abs(velocity.value) > 0.1) {
+    const startVelocity = velocity.value * 100; // 调整初始速度
+    const startTime = Date.now();
+    const friction = 0.95; // 摩擦系数
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const currentVelocity = startVelocity * Math.pow(friction, elapsed / 16);
+      
+      if (Math.abs(currentVelocity) > 0.1) {
+        scrollContainer.value.scrollLeft -= currentVelocity;
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationFrame = requestAnimationFrame(animate);
+  }
+  
+  velocity.value = 0;
+};
+
+// 添加边界回弹效果
+const handleScroll = () => {
+  if (!scrollContainer.value) return;
+  
+  const container = scrollContainer.value;
+  const maxScroll = container.scrollWidth - container.clientWidth;
+  
+  if (container.scrollLeft < 0) {
+    container.scrollTo({
+      left: 0,
+      behavior: 'smooth'
+    });
+  } else if (container.scrollLeft > maxScroll) {
+    container.scrollTo({
+      left: maxScroll,
+      behavior: 'smooth'
+    });
+  }
+};
+
+// 在组件卸载时清理
+onUnmounted(() => {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+  }
+});
 
 const handleSimilarClick = (destination) => {
   if (!hasMoved.value) {
@@ -369,8 +441,12 @@ const handleSimilarClick = (destination) => {
       -ms-overflow-style: none;
       scrollbar-width: none;
       
+      scroll-behavior: auto;
+      -webkit-overflow-scrolling: touch;
+      
       &:active {
         cursor: grabbing;
+        will-change: scroll-position;
       }
     }
   }
