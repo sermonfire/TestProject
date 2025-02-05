@@ -34,206 +34,113 @@
 			<!-- 推荐内容 -->
 			<div v-else class="recommendations-container">
 				<!-- 个性化推荐 -->
-				<div v-if="recommendations.personalized?.length" class="section">
+				<PersonalizedRecommendations 
+					:recommendations="recommendations.personalized"
+					@destination-click="handleDestinationClick"
+				/>
+				<!-- 热门推荐 -->
+				<PopularDestinations 
+					:recommendations="recommendations.popular"
+					@destination-click="handleDestinationClick"
+				/>
+
+				<!-- 加载更多 -->
+				<div v-if="hasMore" class="load-more">
+					<span v-if="isLoading">加载中...</span>
+					<span v-else>上拉加载更多</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- 目的地详情弹窗 -->
+		<el-dialog v-model="showDetailDialog" :title="selectedDestination?.name" width="35%"
+			class="destination-detail-dialog" :before-close="closeDetailDialog">
+			<div class="detail-content">
+				<el-image :src="selectedDestination?.imageUrl" fit="cover" class="detail-image" />
+
+				<div class="detail-info-section">
+					<div class="detail-meta">
+						<div class="meta-item">
+							<el-icon color="#FFB800">
+								<Star />
+							</el-icon>
+							<span>{{ selectedDestination?.rating }} 分</span>
+						</div>
+						<div class="meta-item">
+							<el-icon>
+								<Calendar />
+							</el-icon>
+							<span>建议游玩 {{ selectedDestination?.recommendedDuration }}</span>
+						</div>
+						<div class="meta-item">
+							<el-icon>
+								<Wallet />
+							</el-icon>
+							<span>人均 ¥{{ selectedDestination?.averageBudget }}/天</span>
+						</div>
+					</div>
+
+					<div class="detail-tags">
+						<span v-for="(tag, index) in selectedDestination?.tags" :key="index" class="tag">{{ tag }}</span>
+					</div>
+
+					<div class="detail-description">
+						<h3 class="section-title">目的地简介</h3>
+						<p class="description-text">{{ selectedDestination?.description }}</p>
+					</div>
+
+					<div class="best-seasons">
+						<h3 class="section-title">最佳游玩季节</h3>
+						<div class="seasons-list">
+							<template v-if="selectedDestination?.bestSeasons?.length">
+								<span v-for="(season, index) in selectedDestination.bestSeasons" :key="index"
+									class="season-tag">{{ season }}</span>
+							</template>
+							<template v-else>
+								<span class="season-tag all-season">全年适宜</span>
+								<span class="season-desc">该目的地四季皆宜，可根据个人喜好选择出行时间</span>
+							</template>
+						</div>
+					</div>
+
+					<!-- 季节特色 -->
+					<div v-if="selectedDestination?.seasonalFeatures" class="seasonal-features">
+						<h3 class="section-title">季节特色</h3>
+						<div class="features-list">
+							<div v-for="(feature, season) in selectedDestination.seasonalFeatures" :key="season"
+								class="feature-item">
+								<span class="feature-season">{{ season }}</span>
+								<span class="feature-desc">{{ feature }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 相似推荐 -->
+				<div v-if="similarDestinations.length" class="similar-destinations">
 					<div class="section-header">
-						<span class="section-title">为你推荐</span>
-						<span class="section-subtitle">根据你的偏好精选</span>
+						<span class="section-title">相似推荐</span>
+						<span class="section-subtitle">你可能也会喜欢</span>
 					</div>
-					<div class="recommendations-grid">
-						<div v-for="item in recommendations.personalized" :key="item.id" class="destination-card"
-							@click="handleDestinationClick(item)">
-							<el-image :src="item.imageUrl" fit="cover" class="destination-image" />
-							<div class="destination-info">
-								<span class="destination-name">{{ item.name }}</span>
-								<div class="destination-meta">
-									<div class="meta-item">
-										<el-icon color="#FFB800">
-											<Star />
-										</el-icon>
-										<span>{{ item.rating }}</span>
+					<el-scrollbar>
+						<div class="similar-grid">
+							<div v-for="dest in similarDestinations" :key="dest.id" class="similar-item"
+								@click="handleDestinationClick(dest)">
+								<el-image :src="dest.imageUrl" fit="cover" class="similar-image" />
+								<div class="similar-info">
+									<span class="similar-name">{{ dest.name }}</span>
+									<div class="similar-meta">
+										<span class="similar-rating">{{ dest.rating }}分</span>
+										<span class="similar-price">¥{{ dest.averageBudget }}/天</span>
 									</div>
-									<div class="meta-item">
-										<el-icon>
-											<Calendar />
-										</el-icon>
-										<span>{{ item.recommendedDuration }}</span>
-									</div>
-									<div class="meta-item">
-										<el-icon>
-											<Wallet />
-										</el-icon>
-										<span>¥{{ item.averageBudget }}/天</span>
-									</div>
-								</div>
-								<div class="destination-tags">
-									<span v-for="(tag, index) in item.tags.slice(0, 3)" :key="index" class="tag">{{ tag
-										}}</span>
 								</div>
 							</div>
 						</div>
-					</div>
+					</el-scrollbar>
 				</div>
 			</div>
-		</div>
+		</el-dialog>
 	</div>
-
-	<div class="recommendations-container">
-		<!-- ... 个性化推荐部分 ... -->
-
-		<!-- 季节性推荐 -->
-		<div v-if="recommendations.seasonal?.length" class="section">
-			<div class="section-header">
-				<span class="section-title">当季推荐</span>
-				<span class="section-subtitle">{{ getSeasonalSubtitle() }}</span>
-			</div>
-			<div class="seasonal-grid">
-				<div v-for="item in recommendations.seasonal" :key="item.id" class="seasonal-card"
-					@click="handleDestinationClick(item)">
-					<el-image :src="item.imageUrl" fit="cover" class="seasonal-image" />
-					<div class="seasonal-overlay">
-						<span class="seasonal-name">{{ item.name }}</span>
-						<span class="seasonal-feature">{{ item.seasonalFeatures[getCurrentSeason()] }}</span>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- 热门推荐 -->
-		<div v-if="recommendations.popular?.length" class="section">
-			<div class="section-header">
-				<span class="section-title">热门目的地</span>
-				<span class="section-subtitle">最受欢迎的旅行地点</span>
-			</div>
-			<div class="recommendations-grid">
-				<div v-for="item in recommendations.popular" :key="item.id" class="destination-card"
-					@click="handleDestinationClick(item)">
-					<el-image :src="item.imageUrl" fit="cover" class="destination-image" />
-					<div class="destination-info">
-						<span class="destination-name">{{ item.name }}</span>
-						<div class="destination-meta">
-							<div class="meta-item">
-								<el-icon color="#FFB800">
-									<Star />
-								</el-icon>
-								<span>{{ item.rating }}</span>
-							</div>
-							<div class="meta-item">
-								<el-icon>
-									<Calendar />
-								</el-icon>
-								<span>{{ item.recommendedDuration }}</span>
-							</div>
-							<div class="meta-item">
-								<el-icon>
-									<Wallet />
-								</el-icon>
-								<span>¥{{ item.averageBudget }}/天</span>
-							</div>
-						</div>
-						<div class="destination-tags">
-							<span v-for="(tag, index) in item.tags.slice(0, 3)" :key="index" class="tag">{{ tag
-								}}</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- 加载更多 -->
-		<div v-if="hasMore" class="load-more">
-			<span v-if="isLoading">加载中...</span>
-			<span v-else>上拉加载更多</span>
-		</div>
-	</div>
-
-	<!-- 目的地详情弹窗 -->
-	<el-dialog v-model="showDetailDialog" :title="selectedDestination?.name" width="35%"
-		class="destination-detail-dialog" :before-close="closeDetailDialog">
-		<div class="detail-content">
-			<el-image :src="selectedDestination?.imageUrl" fit="cover" class="detail-image" />
-
-			<div class="detail-info-section">
-				<div class="detail-meta">
-					<div class="meta-item">
-						<el-icon color="#FFB800">
-							<Star />
-						</el-icon>
-						<span>{{ selectedDestination?.rating }} 分</span>
-					</div>
-					<div class="meta-item">
-						<el-icon>
-							<Calendar />
-						</el-icon>
-						<span>建议游玩 {{ selectedDestination?.recommendedDuration }}</span>
-					</div>
-					<div class="meta-item">
-						<el-icon>
-							<Wallet />
-						</el-icon>
-						<span>人均 ¥{{ selectedDestination?.averageBudget }}/天</span>
-					</div>
-				</div>
-
-				<div class="detail-tags">
-					<span v-for="(tag, index) in selectedDestination?.tags" :key="index" class="tag">{{ tag }}</span>
-				</div>
-
-				<div class="detail-description">
-					<h3 class="section-title">目的地简介</h3>
-					<p class="description-text">{{ selectedDestination?.description }}</p>
-				</div>
-
-				<div class="best-seasons">
-					<h3 class="section-title">最佳游玩季节</h3>
-					<div class="seasons-list">
-						<template v-if="selectedDestination?.bestSeasons?.length">
-							<span v-for="(season, index) in selectedDestination.bestSeasons" :key="index"
-								class="season-tag">{{ season }}</span>
-						</template>
-						<template v-else>
-							<span class="season-tag all-season">全年适宜</span>
-							<span class="season-desc">该目的地四季皆宜，可根据个人喜好选择出行时间</span>
-						</template>
-					</div>
-				</div>
-
-				<!-- 季节特色 -->
-				<div v-if="selectedDestination?.seasonalFeatures" class="seasonal-features">
-					<h3 class="section-title">季节特色</h3>
-					<div class="features-list">
-						<div v-for="(feature, season) in selectedDestination.seasonalFeatures" :key="season"
-							class="feature-item">
-							<span class="feature-season">{{ season }}</span>
-							<span class="feature-desc">{{ feature }}</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- 相似推荐 -->
-			<div v-if="similarDestinations.length" class="similar-destinations">
-				<div class="section-header">
-					<span class="section-title">相似推荐</span>
-					<span class="section-subtitle">你可能也会喜欢</span>
-				</div>
-				<el-scrollbar>
-					<div class="similar-grid">
-						<div v-for="dest in similarDestinations" :key="dest.id" class="similar-item"
-							@click="handleDestinationClick(dest)">
-							<el-image :src="dest.imageUrl" fit="cover" class="similar-image" />
-							<div class="similar-info">
-								<span class="similar-name">{{ dest.name }}</span>
-								<div class="similar-meta">
-									<span class="similar-rating">{{ dest.rating }}分</span>
-									<span class="similar-price">¥{{ dest.averageBudget }}/天</span>
-								</div>
-							</div>
-						</div>
-					</div>
-				</el-scrollbar>
-			</div>
-		</div>
-	</el-dialog>
 </template>
 
 <script setup>
@@ -241,6 +148,8 @@ import { ref, onMounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Star, Calendar, Wallet, Loading, CircleClose } from '@element-plus/icons-vue';
 import { getAllRecommendationsAPI, getSimilarDestinations } from '@/api/api';
+import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
+import PopularDestinations from './Popular/PopularDestinations.vue';
 
 // 基础状态
 const searchQuery = ref('');
@@ -301,15 +210,11 @@ const getSeasonalSubtitle = () => {
 
 // 处理目的地点击
 const handleDestinationClick = async (destination) => {
-	// 确保bestSeasons始终是数组
 	if (!destination.bestSeasons) {
 		destination.bestSeasons = [];
 	}
-
-	// 更新选中的目的地
 	selectedDestination.value = destination;
 
-	// 获取相似目的地推荐
 	try {
 		const { data } = await getSimilarDestinations(destination.id);
 		if (data) {
@@ -324,10 +229,8 @@ const handleDestinationClick = async (destination) => {
 		ElMessage.error('获取相似推荐失败');
 	}
 
-	// 打开详情弹窗
 	showDetailDialog.value = true;
 
-	// 确保弹窗内容滚动到顶部
 	nextTick(() => {
 		const detailContent = document.querySelector('.detail-content');
 		if (detailContent) {
@@ -362,7 +265,6 @@ const loadMore = async () => {
 	try {
 		// TODO: 实现加载更多逻辑
 		await new Promise(resolve => setTimeout(resolve, 1000));
-		// 模拟没有更多数据
 		hasMore.value = false;
 	} catch (err) {
 		ElMessage.error('加载更多失败');
