@@ -1,6 +1,6 @@
 <template>
-	<div class="overlay" @click="closeOverlay">
-		<div class="register" @click.stop>
+	<div class="overlay" @click="closeOverlay" @keyup.enter="handleRegisterEnter" tabindex="-1">
+		<div class="register" @click.stop tabindex="0" @keyup.enter.stop="handleRegisterEnter">
 			<button class="close-btn" @click="closeOverlay">×</button>
 			<div class="layout">
 				<div class="register_form">
@@ -35,6 +35,7 @@
 								:maxlength="field.maxlength"
 								class="input-field"
 								@input="registerChange"
+								@keyup.enter.stop="handleRegisterEnter"
 							>
 								<template #prefix>
 									<el-icon>
@@ -56,9 +57,11 @@
 					<el-button 
 						type="primary" 
 						class="register-button"
+						:loading="isLoading"
 						@click="handleSubmit"
+						ref="registerButton"
 					>
-						点击注册
+						{{ isLoading ? '注册中...' : '点击注册' }}
 					</el-button>
 				</div>
 			</div>
@@ -67,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { User, Lock, Phone, QuestionFilled, Select, Close } from '@element-plus/icons-vue';
 import { clientUserRegisterAPI } from '@/api/api.js';
@@ -92,6 +95,11 @@ const verifyPhone = ref(false);
 // 图标颜色
 const iconActiveColor = '#4cd964';
 const iconInactiveColor = '#dd524d';
+
+// 添加loading状态
+const isLoading = ref(false);
+
+const registerButton = ref(null);
 
 // 字段配置
 const fields = reactive([
@@ -202,11 +210,24 @@ const validateForm = () => {
 	return true;
 };
 
-// 表单提交
+// 修改回车键处理函数
+const handleRegisterEnter = (event) => {
+	// 阻止事件冒泡
+	event?.stopPropagation();
+	
+	// 如果正在加载中，不处理回车事件
+	if (isLoading.value) return;
+	
+	handleSubmit();
+};
+
+// 修改表单提交函数
 const handleSubmit = async () => {
-	if (!validateForm()) return;
+	if (!validateForm() || isLoading.value) return;
 	
 	clearError();
+	isLoading.value = true;
+	
 	try {
 		const response = await clientUserRegisterAPI({
 			username: username.value,
@@ -225,12 +246,26 @@ const handleSubmit = async () => {
 	} catch (error) {
 		console.error('Register error:', error);
 		setError(error.data?.message || '网络错误,请稍后重试');
+	} finally {
+		isLoading.value = false;
 	}
 };
 
 const closeOverlay = () => {
 	emit('close');
 };
+
+// 添加mounted钩子
+onMounted(() => {
+	// 延迟执行以确保组件完全渲染
+	nextTick(() => {
+		// 找到第一个输入框并聚焦
+		const firstInput = document.querySelector('.register .input-field input');
+		if (firstInput) {
+			firstInput.focus();
+		}
+	});
+});
 </script>
 
 <style lang="scss" scoped>
@@ -247,6 +282,10 @@ const closeOverlay = () => {
 	z-index: 999;
 	opacity: 0;
 	animation: fadeIn 0.5s ease-out forwards;
+
+	&:focus {
+		outline: none;
+	}
 }
 
 .register {
@@ -270,6 +309,10 @@ const closeOverlay = () => {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+
+	&:focus {
+		outline: none;
 	}
 }
 
@@ -361,6 +404,9 @@ const closeOverlay = () => {
 		padding-left: 5px;
 		height: 45px;
 		line-height: 45px;
+		&:focus-within {
+			box-shadow: 0 0 0 1px var(--el-input-focus-border-color) inset;
+		}
 	}
 	
 	:deep(.el-input__inner) {
