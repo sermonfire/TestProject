@@ -83,8 +83,15 @@
           <span class="section-title">相似推荐</span>
           <span class="section-subtitle">你可能也会喜欢</span>
         </div>
-        <el-scrollbar>
-          <div class="similar-grid">
+        <div class="similar-container">
+          <div 
+            class="similar-grid" 
+            ref="scrollContainer"
+            @mousedown="startDrag"
+            @mousemove="onDrag"
+            @mouseup="stopDrag"
+            @mouseleave="stopDrag"
+          >
             <div 
               v-for="dest in similarDestinations" 
               :key="dest.id" 
@@ -101,14 +108,14 @@
               </div>
             </div>
           </div>
-        </el-scrollbar>
+        </div>
       </div>
     </div>
   </el-dialog>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Star, Calendar, Wallet } from '@element-plus/icons-vue';
 
 const props = defineProps({
@@ -137,15 +144,50 @@ const handleClose = () => {
   emit('close');
 };
 
-const handleSimilarClick = (destination) => {
-  // 获取 detail-content 元素并滚动到顶部
-  const detailContent = document.querySelector('.detail-content');
-  detailContent?.scrollTo({
-    top: 0,
-    behavior: 'smooth' // 使用平滑滚动效果
-  });
+const isDragging = ref(false);
+const startX = ref(0);
+const scrollLeft = ref(0);
+const scrollContainer = ref(null);
+const hasMoved = ref(false);
+
+const startDrag = (e) => {
+  isDragging.value = true;
+  hasMoved.value = false;
+  startX.value = e.pageX;
+  scrollLeft.value = scrollContainer.value.scrollLeft;
+  scrollContainer.value.style.cursor = 'grabbing';
+  document.body.style.userSelect = 'none';
+};
+
+const stopDrag = () => {
+  isDragging.value = false;
+  scrollContainer.value.style.cursor = 'grab';
+  document.body.style.userSelect = '';
+};
+
+const onDrag = (e) => {
+  if (!isDragging.value) return;
+  e.preventDefault();
   
-  emit('similar-click', destination);
+  const x = e.pageX;
+  const distance = x - startX.value;
+  
+  if (Math.abs(distance) > 5) {
+    hasMoved.value = true;
+  }
+  
+  scrollContainer.value.scrollLeft = scrollLeft.value - distance;
+};
+
+const handleSimilarClick = (destination) => {
+  if (!hasMoved.value) {
+    const detailContent = document.querySelector('.detail-content');
+    detailContent?.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    emit('similar-click', destination);
+  }
 };
 </script>
 
@@ -309,55 +351,79 @@ const handleSimilarClick = (destination) => {
     }
   }
 
-  .similar-grid {
-    display: flex;
-    gap: 16px;
-    padding: 4px;
-
-    .similar-item {
-      flex: 0 0 160px;
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-
-      &:hover {
-        transform: translateY(-4px);
+  .similar-container {
+    overflow: hidden;
+    
+    .similar-grid {
+      display: flex;
+      gap: 16px;
+      padding: 4px;
+      cursor: grab;
+      user-select: none;
+      overflow-x: auto;
+      
+      &::-webkit-scrollbar {
+        display: none;
       }
-
-      .similar-image {
-        width: 100%;
-        height: 120px;
-        object-fit: cover;
+      
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      
+      &:active {
+        cursor: grabbing;
       }
+    }
+  }
+  
+  .similar-item {
+    flex: 0 0 160px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
       .similar-info {
-        padding: 12px;
+        background: #e6e8eb;
+      }
+    }
 
-        .similar-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #333;
-          margin-bottom: 8px;
-          display: block;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+    .similar-image {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .similar-info {
+      padding: 12px;
+
+      .similar-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .similar-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+
+        .similar-rating {
+          color: #ff9800;
         }
 
-        .similar-meta {
-          display: flex;
-          justify-content: space-between;
-          font-size: 12px;
-
-          .similar-rating {
-            color: #ff9800;
-          }
-
-          .similar-price {
-            color: #f44336;
-          }
+        .similar-price {
+          color: #f44336;
         }
       }
     }
