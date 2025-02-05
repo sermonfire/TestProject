@@ -3,12 +3,8 @@
 		<!-- 个人资料头部 -->
 		<div class="profile-header">
 			<div class="avatar-section">
-				<el-upload
-					class="avatar-uploader"
-					:show-file-list="false"
-					:before-upload="beforeAvatarUpload"
-					:http-request="handleAvatarUpload"
-				>
+				<el-upload class="avatar-uploader" :show-file-list="false" :before-upload="beforeAvatarUpload"
+					:http-request="handleAvatarUpload">
 					<img v-if="userInfo.userPic" :src="userInfo.userPic" class="avatar" />
 					<img v-else :src="DEFAULT_AVATAR_LOGIN" class="avatar" />
 				</el-upload>
@@ -47,14 +43,11 @@
 
 				<el-form-item label="性别">
 					<el-select v-if="isEditing" v-model="editForm.gender" class="gender-select">
-						<el-option
-							v-for="option in genderOptions"
-							:key="option.value"
-							:label="option.label"
-							:value="option.value"
-						/>
+						<el-option v-for="option in genderOptions" :key="option.value" :label="option.label"
+							:value="option.value" />
 					</el-select>
-					<span v-else class="value">{{ genderOptions.find(opt => opt.value === Number(userInfo.gender))?.label || '未知' }}</span>
+					<span v-else class="value">{{ genderOptions.find(opt => opt.value ===
+						Number(userInfo.gender))?.label || '未知' }}</span>
 				</el-form-item>
 			</el-form>
 		</div>
@@ -80,42 +73,22 @@
 		<div class="info-card">
 			<div class="card-header">
 				<span class="card-title">密码管理</span>
-				<el-button 
-					v-if="!showPasswordForm" 
-					type="primary" 
-					@click="showPasswordForm = true"
-				>
+				<el-button v-if="!showPasswordForm" type="primary" @click="showPasswordForm = true">
 					修改密码
 				</el-button>
 			</div>
 
-			<el-form 
-				v-if="showPasswordForm" 
-				:model="passwordForm" 
-				class="password-form"
-			>
+			<el-form v-if="showPasswordForm" :model="passwordForm" class="password-form">
 				<el-form-item label="原密码">
-					<el-input 
-						v-model="passwordForm.oldPassword" 
-						type="password" 
-						placeholder="请输入原密码"
-					/>
+					<el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" />
 				</el-form-item>
 
 				<el-form-item label="新密码">
-					<el-input 
-						v-model="passwordForm.newPassword" 
-						type="password" 
-						placeholder="请输入新密码"
-					/>
+					<el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
 				</el-form-item>
 
 				<el-form-item label="确认密码">
-					<el-input 
-						v-model="passwordForm.confirmPassword" 
-						type="password" 
-						placeholder="请再次输入新密码"
-					/>
+					<el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
 				</el-form-item>
 
 				<div v-if="passwordError" class="error-message">
@@ -177,15 +150,17 @@ const fetchUserInfo = async () => {
 		}
 	} catch (error) {
 		// 401 登录过期
-		if(error.status === 401) {
+		if (error.status === 401) {
 			ElMessage.error('登录已过期，即将前往登录页')
 			userStore.clear()
 			setTimeout(() => {
 				router.push('/login')
 			}, 1000)
-		}else if(error.message == '请求过于频繁'){
+		} else if (error.message == '请求过于频繁') {
 			ElMessage.error('请求过于频繁,请稍后再尝试')
-		}else{
+		} else if (error.status === 500) {
+			ElMessage.error('服务器似乎出了点问题')
+		} else {
 			ElMessage.error('获取用户信息失败')
 		}
 	}
@@ -202,7 +177,7 @@ const updateUserInfo = async () => {
 			userPic: editForm.value.userPic
 		}
 		// console.log('发送到后端的数据:', updateData)
-		
+
 		const res = await updateUserInfoAPI(updateData)
 		if (res.code === 0) {
 			ElMessage.success('修改信息成功')
@@ -238,15 +213,15 @@ const handleAvatarUpload = async (options) => {
 		loading = ElLoading.service({
 			text: '头像上传中...'
 		})
-		
+
 		const formData = new FormData()
 		formData.append('file', options.file)
-		
+
 		// console.log('开始上传头像:', options.file)
-		
+
 		const res = await uploadAvatarAPI(formData)
 		// console.log('上传响应:', res)
-		
+
 		if (res.code === 0) {
 			if (typeof res.data === 'string') {
 				editForm.value.userPic = res.data
@@ -260,7 +235,7 @@ const handleAvatarUpload = async (options) => {
 				await fetchUserInfo()
 				userStore.updateUserInfo(userInfo.value)
 			}
-			
+
 			ElMessage.success('头像更新成功')
 		} else {
 			throw new Error(res.message || '上传失败')
@@ -282,7 +257,7 @@ const validatePassword = (password) => {
 
 const handleUpdatePassword = async () => {
 	passwordError.value = ''
-	
+
 	if (!passwordForm.value.oldPassword) {
 		passwordError.value = '请输入原密码'
 		return
@@ -304,9 +279,9 @@ const handleUpdatePassword = async () => {
 			router.push('/login')
 		}
 	} catch (error) {
-		if(error.message){
+		if (error.message) {
 			passwordError.value = error.message
-		}else{
+		} else {
 			passwordError.value = '更新失败，请重试'
 		}
 	}
@@ -406,7 +381,7 @@ onMounted(() => {
 	display: flex;
 	align-items: center;
 	margin-bottom: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-section {
@@ -450,7 +425,7 @@ onMounted(() => {
 	border-radius: 12px;
 	padding: 20px;
 	margin-bottom: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
 	.card-header {
 		display: flex;
@@ -531,7 +506,7 @@ onMounted(() => {
 	border-radius: 8px;
 	font-weight: 500;
 	transition: all 0.3s ease;
-	
+
 	&:hover {
 		opacity: 0.9;
 		transform: scale(0.95);

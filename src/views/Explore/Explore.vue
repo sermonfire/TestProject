@@ -26,15 +26,11 @@
 			<!-- 推荐内容 -->
 			<div v-else class="recommendations-container">
 				<!-- 个性化推荐 -->
-				<PersonalizedRecommendations 
-					:recommendations="recommendations.personalized"
-					@destination-click="handleDestinationClick"
-				/>
+				<PersonalizedRecommendations :recommendations="recommendations.personalized"
+					@destination-click="handleDestinationClick" />
 				<!-- 热门推荐 -->
-				<PopularDestinations 
-					:recommendations="recommendations.popular"
-					@destination-click="handleDestinationClick"
-				/>
+				<PopularDestinations :recommendations="recommendations.popular"
+					@destination-click="handleDestinationClick" />
 
 				<!-- 加载更多 -->
 				<div v-if="hasMore" class="load-more">
@@ -45,13 +41,9 @@
 		</div>
 
 		<!-- 目的地详情弹窗 -->
-		<DestinationDetailDialog
-			v-model="showDetailDialog"
-			:destination="selectedDestination"
-			:similar-destinations="similarDestinations"
-			@close="closeDetailDialog"
-			@similar-click="handleDestinationClick"
-		/>
+		<DestinationDetailDialog v-model="showDetailDialog" :destination="selectedDestination"
+			:similar-destinations="similarDestinations" @close="closeDetailDialog"
+			@similar-click="handleDestinationClick" />
 	</div>
 </template>
 
@@ -97,15 +89,17 @@ const fetchAllRecommendations = async () => {
 			throw new Error('获取推荐失败');
 		}
 	} catch (err) {
-		if(err.status === 401) {
+		if (err.status === 401) {
 			ElMessage.error('登录已过期，即将前往登录页')
 			userStore.clear()
 			setTimeout(() => {
 				push('/login')
 			}, 1000)
-		}else if(err.message == '请求过于频繁'){
+		} else if (err.message == '请求过于频繁') {
 			ElMessage.error('请求过于频繁,请稍后再尝试')
-		}else{
+		} else if (err.status === 500) {
+			ElMessage.error('服务器似乎出了点问题')
+		} else {
 			ElMessage.error('获取推荐失败')
 		}
 	} finally {

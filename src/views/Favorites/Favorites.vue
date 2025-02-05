@@ -229,8 +229,10 @@ const fetchUserPreferences = async () => {
 			setTimeout(() => {
 				router.push('/login');
 			}, 1000)
-		}else if(err.message == '请求过于频繁' ){
+		} else if (err.message == '请求过于频繁') {
 			ElMessage.error('请求过于频繁，请稍后再试');
+		} else if (err.status === 500) {
+			ElMessage.error('服务器似乎出了点问题')
 		} else {
 			ElMessage.error('获取偏好设置失败');
 		}
