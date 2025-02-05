@@ -396,6 +396,7 @@ onMounted(() => {
 	padding: 20px;
 	background-color: #f5f5f5;
 	min-height: calc(100vh - 96px);
+	user-select: none;
 }
 
 .profile-header {

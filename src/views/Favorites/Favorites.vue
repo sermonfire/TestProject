@@ -279,6 +279,7 @@ onMounted(() => {
 .preferences-container {
 	min-height: 100vh;
 	background-color: #f5f5f5;
+	user-select: none;
 
 	.content-wrapper {
 		padding: 16px 20px;

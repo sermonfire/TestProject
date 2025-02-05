@@ -180,6 +180,7 @@ const techStack = ref([
 	height: 100%;
 	display: flex;
 	flex-direction: column;
+	user-select: none;
 }
 
 .content-wrapper {
