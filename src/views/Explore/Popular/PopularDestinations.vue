@@ -95,6 +95,10 @@ const handleDestinationClick = (destination) => {
     &:hover {
       transform: translateY(-8px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+
+      .destination-info {
+        background-color: #e6f0fc;
+      }
     }
 
     &:not(:hover) {
