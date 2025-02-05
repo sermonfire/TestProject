@@ -29,9 +29,10 @@ export const useUserStore = defineStore('user', {
 		clear() {
 			this.token = '';
 			this.userInfo = null;
+			this.isLogin = false;
 			localStorage.removeItem('token');
 			localStorage.removeItem('userInfo');
-			// console.log('Store cleared');
+			localStorage.removeItem('user');
 		},
 		setLoginState(state) {
 			this.isLogin = state;
@@ -48,8 +49,6 @@ export const useUserStore = defineStore('user', {
 		]
 	},
 	getters: {
-		isLoggedIn: (state) => !!state.token && !!state.userInfo,
 		getUserInfo: (state) => state.userInfo || {},
-		loginStatus: (state) => !!state.token && !!state.userInfo
 	}
 });

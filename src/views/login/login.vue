@@ -50,17 +50,17 @@
 
 				<div class="checkbox_1">
 					<el-checkbox-group v-model="checkbox_1" @change="handleCheckboxChange">
-						<el-checkbox :value="1" :disabled="!password || !PASSWORD_REGEX.test(password)">
-							记住密码
+						<el-checkbox v-for="item in range_1" :key="item.value" 
+							:value="item.value" :disabled="item.disabled">
+							{{ item.text }}
 						</el-checkbox>
-						<el-checkbox :value="2">立即注册</el-checkbox>
 					</el-checkbox-group>
 				</div>
 
 				<div class="checkbox_2">
 					<el-checkbox-group v-model="checkbox_2" @change="handleAgreementChange">
-						<el-checkbox :value="0">
-							我已阅读并同意《用户协议》和《隐私政策》
+						<el-checkbox v-for="item in range_2" :key="item.value" :value="item.value">
+							{{ item.text }}
 						</el-checkbox>
 					</el-checkbox-group>
 				</div>
@@ -151,7 +151,7 @@ const range_2 = [{
 	value: 0
 }];
 
-// 添加常量定义
+// 修改所有 localStorage 操作，使用定义的常量
 const STORAGE_KEY_PHONE = 'savedPhone';
 const STORAGE_KEY_PASSWORD = 'savedPassword';
 const STORAGE_KEY_REMEMBER = 'rememberMe';
@@ -187,7 +187,7 @@ const handleLoginFailure = (errorMessage) => {
 	setError(errorMessage);
 
 	// 登录失败时，如果手机号与存储的相同，则清除该手机号对应的存储信息
-	const savedPhone = localStorage.getItem('savedPhone')
+	const savedPhone = localStorage.getItem(STORAGE_KEY_PHONE)
 	if (savedPhone === phone.value) {
 		clearStoredCredentials();
 	}
@@ -235,7 +235,6 @@ const clientLogin = async () => {
 			// 保存token和用户信息
 			userStore.setToken(token);
 			userStore.updateUserInfo(userInfo);
-			// 显式设置登录状态
 			userStore.setLoginState(true);
 
 			// 立即验证token是否保存成功
@@ -248,10 +247,12 @@ const clientLogin = async () => {
 			if (rememberMe.value) {
 				localStorage.setItem(STORAGE_KEY_PHONE, phone.value);
 				localStorage.setItem(STORAGE_KEY_PASSWORD, encryptPassword(password.value));
+				localStorage.setItem(STORAGE_KEY_REMEMBER, 'true');
 			} else {
 				// 如果未选中记住密码，清除保存的密码
 				localStorage.removeItem(STORAGE_KEY_PHONE);
 				localStorage.removeItem(STORAGE_KEY_PASSWORD);
+				localStorage.removeItem(STORAGE_KEY_REMEMBER);
 			}
 
 			// 立即验证登录状态
