@@ -440,52 +440,6 @@ onMounted(() => {
 	}
 }
 
-.seasonal-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 20px;
-
-	.seasonal-card {
-		position: relative;
-		border-radius: 12px;
-		overflow: hidden;
-		cursor: pointer;
-
-		&:hover .seasonal-image {
-			transform: scale(1.05);
-		}
-
-		.seasonal-image {
-			width: 100%;
-			height: 240px;
-			object-fit: cover;
-			transition: transform 0.3s ease;
-		}
-
-		.seasonal-overlay {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			right: 0;
-			padding: 20px;
-			background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-			color: #fff;
-
-			.seasonal-name {
-				font-size: 20px;
-				font-weight: bold;
-				margin-bottom: 8px;
-				display: block;
-			}
-
-			.seasonal-feature {
-				font-size: 14px;
-				opacity: 0.9;
-			}
-		}
-	}
-}
-
 // 详情弹窗样式
 :deep(.destination-detail-dialog) {
 	.el-dialog__body {
