@@ -284,7 +284,12 @@ const clientLogin = async () => {
 
 			// 延迟跳转
 			setTimeout(() => {
-				router.replace('/');
+				const redirect = router.query.redirect;
+				if (redirect) {
+					router.replace(redirect);
+				} else {
+					router.replace('/');
+				}
 			}, 1500);
 		} else {
 			handleLoginFailure(res.message || '登录失败');

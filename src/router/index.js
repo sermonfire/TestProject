@@ -44,6 +44,9 @@ const routes = [
         path: 'userInfo',
         name: 'userInfo',
         component: () => import('@/views/userInfo/userInfo.vue'),
+        meta: {
+          requiresAuth: true,
+        },
       },
     ],
   },
@@ -65,7 +68,7 @@ router.beforeEach((to, from, next) => {
   
   // 判断该路由是否需要登录权限
   if (to.meta.requiresAuth) {
-    if (userStore.token) {
+    if (userStore.isLogin && userStore.token) {
       next()
     } else {
       next({
