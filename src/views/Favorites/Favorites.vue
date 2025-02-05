@@ -281,7 +281,7 @@ onMounted(() => {
 	background-color: #f5f5f5;
 
 	.content-wrapper {
-		padding: 20px;
+		padding: 16px 20px;
 	}
 
 	.preference-section {

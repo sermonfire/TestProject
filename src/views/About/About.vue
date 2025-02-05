@@ -184,7 +184,7 @@ const techStack = ref([
 
 .content-wrapper {
 	flex: 1;
-	padding: 20px;
+	padding: 16px 20px;
 	background-color: #f5f5f5;
 	// width: 95%;
 	// margin-left: 20px;

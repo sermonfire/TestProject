@@ -169,7 +169,7 @@ onMounted(() => {
 
 // 内容区域
 .content-wrapper {
-	padding: 20px;
+	padding: 16px 20px;
 	// height: calc(100vh - 140px);
 	overflow-y: auto;
 

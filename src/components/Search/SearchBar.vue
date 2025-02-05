@@ -32,12 +32,12 @@ const handleSearch = () => {
 
 <style lang="scss" scoped>
 .search-bar {
-  background-color: #fff;
+  background-color: #f5f5f5;
   padding: 12px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+//   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   .search-input-wrapper {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     border-radius: 25px;
     padding: 12px 20px;
     display: flex;

@@ -71,7 +71,7 @@ watch(() => route.matched, (newMatched) => {
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   user-select: none;
   
   :deep(.el-breadcrumb__item) {
