@@ -408,6 +408,21 @@ onMounted(() => {
 			font-weight: bold;
 		}
 	}
+
+	.info-list {
+		display: flex;
+		flex-direction: column;
+
+		.info-item {
+			align-items: center;
+			display: block;
+
+			.label {
+				display: inline-block;
+				width: 100px;
+			}
+		}
+	}
 }
 
 .info-form {
@@ -456,6 +471,17 @@ onMounted(() => {
 .logout-btn {
 	width: 100%;
 	margin-top: 30px;
+	height: 44px;
+	font-size: 16px;
+	border-radius: 8px;
+	font-weight: 500;
+	transition: all 0.3s ease;
+	
+	&:hover {
+		opacity: 0.9;
+		transform: scale(0.95);
+		box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+	}
 }
 
 :deep(.el-upload) {
