@@ -54,14 +54,14 @@ const handleSearch = () => {
 
     .search-icon {
       color: var(--el-color-primary);
-      font-size: 18px;
+      font-size: 24px;
     }
 
     .search-input {
       flex: 1;
       border: none;
       background: transparent;
-      font-size: 16px;
+      font-size: 20px;
       outline: none;
       color: #333;
 
