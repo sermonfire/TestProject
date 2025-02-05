@@ -75,7 +75,7 @@ const loading = ref(false);
 const error = ref(null);
 const selectedDestination = ref(null);
 const similarDestinations = ref([]);
-const router = useRouter()
+const { push } = useRouter()
 const userStore = useUserStore()
 
 // 推荐数据
@@ -101,7 +101,7 @@ const fetchAllRecommendations = async () => {
 			ElMessage.error('登录已过期，即将前往登录页')
 			userStore.clear()
 			setTimeout(() => {
-				router.push('/login')
+				push('/login')
 			}, 1000)
 		}else if(err.message == '请求过于频繁'){
 			ElMessage.error('请求过于频繁,请稍后再尝试')

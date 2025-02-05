@@ -18,7 +18,7 @@
 <script setup>
 import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { House } from '@element-plus/icons-vue'
+import { HomeFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -27,7 +27,7 @@ const breadcrumbItems = ref([])
 
 // 路由映射表
 const routeMap = {
-  home: { title: '首页', icon: markRaw(House) },
+  home: { title: '首页', icon: markRaw(HomeFilled) },
   explore: { title: '探索' },
   exploredetail: { title: '探索详情1' },
   exploredetail2: { title: '探索详情2' },
@@ -44,7 +44,7 @@ watch(() => route.matched, (newMatched) => {
   items.push({
     title: '首页',
     path: '/',
-    icon: markRaw(House)
+    icon: markRaw(HomeFilled)
   })
   
   // 添加其他路由层级
