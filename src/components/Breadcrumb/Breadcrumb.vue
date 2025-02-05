@@ -21,7 +21,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { House } from '@element-plus/icons-vue'
 
 const route = useRoute()
-const router = useRouter()
 
 // 面包屑数据
 const breadcrumbItems = ref([])
@@ -80,6 +79,7 @@ watch(() => route.matched, (newMatched) => {
       display: flex;
       align-items: center;
       user-select: none;
+      cursor: pointer;
       
       &:hover {
         color: #409EFF;
