@@ -179,7 +179,6 @@ const sendMessage = async () => {
         emit('update:messages', messages.value);
 
     } catch (error) {
-        console.error('发送消息失败:', error);
         const errorMessage = error.message || '发送失败，请重试';
         ElMessage.error(errorMessage);
         if (messages.value.length > 0) {
