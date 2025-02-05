@@ -101,10 +101,12 @@
     font-size: 20px;
     padding-left: 10px;
     white-space: nowrap;
-    transition: opacity 0.1s ease;
+    opacity: 1;
+    transition: opacity 0.2s ease;
 
     &.hide {
       opacity: 0;
+      transition: opacity 0.2s ease;
     }
 
     &.fade-in {
@@ -167,11 +169,13 @@
       color: #ffffff;
       font-size: 20px;
       white-space: nowrap;
-      transition: opacity 0.3s ease;
+      opacity: 1;
+      transition: opacity 0.2s ease;
       padding-left: 12px;
       
       &.hide {
         opacity: 0;
+        transition: opacity 0.2s ease;
         width: 0;
         overflow: hidden;
       }
