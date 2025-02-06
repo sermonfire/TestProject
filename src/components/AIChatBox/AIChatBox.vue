@@ -9,7 +9,7 @@
 
         <div class="chat-messages" ref="messagesContainer" @scroll="onScroll">
             <div class="message-list">
-                <div v-for="(message, index) in reversedMessages" :key="index"
+                <div v-for="(message, index) in visibleMessages" :key="index"
                     :class="['message', message.type, { 'fade-in': message.isNew }]" :id="`message-${index}`">
                     <div class="message-content">
                         <img v-if="message.type === 'assistant' || message.type === 'system'" class="avatar"
@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, computed } from 'vue';
+import { ref, onMounted, nextTick, watch, computed, onBeforeUnmount } from 'vue';
 import { useUserStore } from '@/stores/userstore';
 import { ElMessage } from 'element-plus';
 import { sendChatMessage } from '@/api/deepseek';
@@ -127,13 +127,19 @@ const userAvatar = computed(() => {
     return userStore.userInfo?.userPic || DEFAULT_AVATAR_LOGIN;
 });
 
-let scrollTimer = null;
+const visibleMessages = computed(() => {
+    return reversedMessages.value.slice(0, 20);
+});
+
+let scrollThrottleTimer = null;
 const onScroll = (e) => {
-    if (scrollTimer) clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
+    if (scrollThrottleTimer) return;
+    
+    scrollThrottleTimer = setTimeout(() => {
         const element = e.target;
         isAutoScrollEnabled.value = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
-    }, 200);
+        scrollThrottleTimer = null;
+    }, 100);
 };
 
 const sendMessage = async () => {
@@ -192,18 +198,25 @@ const sendMessage = async () => {
 };
 
 const sendMessageWithRetry = async () => {
-    while (retryCount.value < MAX_RETRIES) {
+    if (isLoading.value) return;
+    
+    const message = inputText.value.trim();
+    if (!message) return;
+    
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
         try {
             await sendMessage();
-            retryCount.value = 0;
             return;
         } catch (error) {
-            retryCount.value++;
-            if (retryCount.value >= MAX_RETRIES) {
-                ElMessage.error('多次请求失败，请检查网络连接或稍后重试');
+            retryCount++;
+            if (retryCount === maxRetries) {
+                ElMessage.error('发送失败，请稍后重试');
                 break;
             }
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount.value));
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
     }
 };
@@ -260,16 +273,20 @@ const copyMessage = (content) => {
         });
 };
 
+let resizeDebounceTimer = null;
 const adjustTextareaHeight = () => {
-    if (!textareaRef.value) return;
-
-    const minHeight = 40;
-    const maxHeight = 120;
-    const lineHeight = 20;
-
-    const lines = Math.ceil(inputText.value.length / 30);
-    const newHeight = Math.min(Math.max(minHeight, lines * lineHeight + 20), maxHeight);
-    textareaHeight.value = newHeight;
+    if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+    
+    resizeDebounceTimer = setTimeout(() => {
+        if (!textareaRef.value) return;
+        
+        const minHeight = 40;
+        const maxHeight = 120;
+        const lineHeight = 20;
+        
+        const lines = Math.ceil(inputText.value.length / 30);
+        textareaHeight.value = Math.min(Math.max(minHeight, lines * lineHeight + 20), maxHeight);
+    }, 100);
 };
 
 const handleEnterPress = (e) => {
@@ -289,9 +306,14 @@ const handleBlur = () => {
 
 const scrollToTop = async () => {
     if (!isAutoScrollEnabled.value) return;
+    
     await nextTick();
     if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = 0;
+        if (animationFrame.value) cancelAnimationFrame(animationFrame.value);
+        
+        animationFrame.value = requestAnimationFrame(() => {
+            messagesContainer.value.scrollTop = 0;
+        });
     }
 };
 
@@ -362,6 +384,19 @@ onMounted(() => {
     scrollToTop();
     adjustTextareaHeight();
 });
+
+const animationFrame = ref(null);
+const messageTransition = computed(() => ({
+    transform: `translateY(${isLoading.value ? '10px' : '0'})`,
+    opacity: isLoading.value ? 0 : 1,
+    transition: 'transform 0.3s ease, opacity 0.3s ease'
+}));
+
+onBeforeUnmount(() => {
+    if (scrollThrottleTimer) clearTimeout(scrollThrottleTimer);
+    if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+    if (animationFrame.value) cancelAnimationFrame(animationFrame.value);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -424,6 +459,9 @@ onMounted(() => {
     background-color: transparent;
     border-radius: 8px;
     position: relative;
+    transform: translateZ(0);
+    will-change: scroll-position;
+    -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
         width: 6px;
@@ -458,6 +496,9 @@ onMounted(() => {
     flex-direction: column;
     gap: 8px;
     max-width: 80%;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 
     &.user {
         align-self: flex-end;
@@ -495,6 +536,10 @@ onMounted(() => {
             color: #4a5568;
             font-size: 14px;
         }
+    }
+
+    &.fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
     }
 }
 
@@ -692,7 +737,7 @@ onMounted(() => {
 }
 
 .fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease-out forwards;
 }
 
 .icon-spin {

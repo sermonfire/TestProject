@@ -32,4 +32,16 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, markRaw(component))
 }
 
+// 添加性能监控
+if (process.env.NODE_ENV === 'production') {
+  // 监控页面性能
+  window.addEventListener('load', () => {
+    const timing = performance.getEntriesByType('navigation')[0];
+    console.log('页面加载时间:', timing.loadEventEnd - timing.navigationStart);
+  });
+  
+  // 监控组件渲染性能
+  app.config.performance = true;
+}
+
 app.mount('#app')

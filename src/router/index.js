@@ -55,7 +55,23 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  }
 })
+
+// 预加载常用路由
+const preloadRoutes = ['home', 'explore', 'favorites'];
+preloadRoutes.forEach(route => {
+  const component = routes.find(r => r.name === route)?.component;
+  if (component) {
+    component();
+  }
+});
 
 // 全局前置守卫
 router.beforeEach((to, from, next) => {

@@ -1,4 +1,5 @@
 import request from '@/utils/request.js'
+import { debounce } from 'lodash-es';
 
 //该接口已调用
 // 保存用户偏好设置
@@ -21,19 +22,31 @@ export const getUserPreferencesAPI = () => {
 	})
 }
 
-//该接口已调用
-// 根据用户ID获取个性化推荐内容
-export const getPersonalizedRecommendationsAPI = (pageNum = 1, pageSize = 10) => {
+const cache = new Map();
+const CACHE_TIME = 5 * 60 * 1000; // 5分钟缓存
+
+// 获取个性化推荐的防抖处理
+export const getPersonalizedRecommendationsAPI = debounce((pageNum = 1, pageSize = 10) => {
+	const cacheKey = `recommendations_${pageNum}_${pageSize}`;
+	const cachedData = cache.get(cacheKey);
+	
+	if (cachedData && Date.now() - cachedData.timestamp < CACHE_TIME) {
+		return Promise.resolve(cachedData.data);
+	}
+	
 	return request({
 		url: 'dev-api/recommend/personalized',
 		method: 'GET',
-		params: {
-			pageNum,
-			pageSize
-		},
+		params: { pageNum, pageSize },
 		needToken: true
-	})
-}
+	}).then(response => {
+		cache.set(cacheKey, {
+			data: response,
+			timestamp: Date.now()
+		});
+		return response;
+	});
+}, 300);
 
 // 预览个性化推荐
 export const getPreviewRecommendationsAPI = () => {
