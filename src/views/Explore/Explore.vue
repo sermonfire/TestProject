@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
 import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
@@ -63,7 +63,7 @@ import PersonalizedRecommendations from './Personalization/PersonalizedRecommend
 import PopularDestinations from './Popular/PopularDestinations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
 import { useUserStore } from '@/stores/userstore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 // 基础状态
 const showDetailDialog = ref(false);
@@ -73,7 +73,8 @@ const loading = ref(false);
 const error = ref(null);
 const selectedDestination = ref(null);
 const similarDestinations = ref([]);
-const { push } = useRouter()
+const { push, replace } = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 // 推荐数据
@@ -85,30 +86,6 @@ const pageSize = ref(10);
 // 新增 loadTrigger ref
 const loadTrigger = ref(null);
 let observer = null;
-
-// 修改创建观察器的函数
-const createObserver = () => {
-	// 先清理旧的观察器
-	if (observer) {
-		observer.disconnect();
-		observer = null;
-	}
-
-	observer = new IntersectionObserver(
-		(entries) => {
-			const triggerEntry = entries[0];
-			if (triggerEntry.isIntersecting && !isLoading.value && hasMore.value) {
-				// console.log('触发加载更多'); // 添加日志
-				loadMore();
-			}
-		},
-		{
-			root: null, // 使用视口作为根
-			rootMargin: '50px', // 减小预加载距离
-			threshold: 0 // 只要有一点进入视口就触发
-		}
-	);
-};
 
 // 修改获取推荐数据的函数
 const fetchAllRecommendations = async (retryCount = 0) => {
@@ -169,6 +146,46 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 	} finally {
 		loading.value = false;
 	}
+};
+
+// 添加路由参数监听
+watch(
+	() => route.query.refresh,
+	async (newVal) => {
+		if (newVal === 'true') {
+			await fetchAllRecommendations();
+			// 清除 refresh 参数，但不触发新的路由跳转
+			replace({ 
+				...route,
+				query: {} 
+			});
+		}
+	},
+	{ immediate: true }
+);
+
+// 修改创建观察器的函数
+const createObserver = () => {
+	// 先清理旧的观察器
+	if (observer) {
+		observer.disconnect();
+		observer = null;
+	}
+
+	observer = new IntersectionObserver(
+		(entries) => {
+			const triggerEntry = entries[0];
+			if (triggerEntry.isIntersecting && !isLoading.value && hasMore.value) {
+				// console.log('触发加载更多'); // 添加日志
+				loadMore();
+			}
+		},
+		{
+			root: null, // 使用视口作为根
+			rootMargin: '50px', // 减小预加载距离
+			threshold: 0 // 只要有一点进入视口就触发
+		}
+	);
 };
 
 // 处理目的地点击

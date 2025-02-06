@@ -77,7 +77,18 @@ preloadRoutes.forEach(route => {
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  // 判断该路由是否需要登录权限
+  // 处理从偏好设置页面到探索页面的跳转
+  if (to.name === 'explore' && from.name === 'favorites' && !to.query.refresh) {
+    // 只有当没有 refresh 参数时才添加，避免无限重定向
+    next({
+      name: 'explore',
+      query: { refresh: 'true' },
+      replace: true // 使用 replace 而不是 push，这样不会在历史记录中创建新条目
+    })
+    return
+  }
+
+  // 原有的登录验证逻辑
   if (to.meta.requiresAuth) {
     if (userStore.isLogin && userStore.token) {
       next()
