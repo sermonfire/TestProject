@@ -82,7 +82,7 @@ const fetchAllRecommendations = async () => {
 	loading.value = true;
 	error.value = null;
 	try {
-		const { data } = await getAllRecommendationsAPI();
+		const { data } = await getPersonalizedRecommendationsAPI();
 		if (data) {
 			recommendations.value = data;
 		} else {
@@ -115,7 +115,7 @@ const handleDestinationClick = async (destination) => {
 	selectedDestination.value = destination;
 
 	try {
-		const { data } = await getSimilarDestinationsAPI(destination.id);
+		const { data } = await getPreviewRecommendationsAPI();
 		if (data) {
 			similarDestinations.value = data;
 		} else {

@@ -22,22 +22,20 @@ export const getUserPreferencesAPI = () => {
 }
 
 //该接口已调用
-// 获取所有推荐内容
-export const getAllRecommendationsAPI = () => {
+// 根据用户ID获取个性化推荐内容
+export const getPersonalizedRecommendationsAPI = () => {
 	return request({
-		url: 'dev-api/recommend/all',
+		url: 'dev-api/recommend/personalized',
 		method: 'GET',
 		needToken: true
 	})
 }
 
-//该接口已调用
-// 获取相似目的地的API
-export const getSimilarDestinationsAPI = (id, limit = 5) => {
+// 预览个性化推荐
+export const getPreviewRecommendationsAPI = () => {
 	return request({
-		url: `dev-api/recommend/similar/${id}`,
+		url: 'dev-api/recommend//personalized/preview',
 		method: 'GET',
-		params: { limit },
 		needToken: true
 	});
 };
