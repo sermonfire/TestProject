@@ -110,34 +110,62 @@ const createObserver = () => {
 	);
 };
 
-// 获取所有推荐数据
-const fetchAllRecommendations = async () => {
+// 修改获取推荐数据的函数
+const fetchAllRecommendations = async (retryCount = 0) => {
+	const MAX_RETRIES = 3;
+	const RETRY_DELAY = 1000;
+	
+	if (loading.value) return; // 防止重复请求
+	
 	loading.value = true;
 	error.value = null;
+	
 	try {
+		// 等待组件挂载
+		await nextTick();
+		
 		const response = await getPersonalizedRecommendationsAPI(1, pageSize.value);
-		if (response.code === 0 && response.data) {
+		
+		// 处理响应数据
+		if (response?.code === 0 && response?.data?.list) {
 			recommendations.value = response.data.list;
-			total.value = response.data.total;
-			hasMore.value = recommendations.value.length < response.data.total;
-			currentPage.value = response.data.pageNum;
+			total.value = response.data.total || 0;
+			hasMore.value = recommendations.value.length < (response.data.total || 0);
+			currentPage.value = response.data.pageNum || 1;
 		} else {
-			throw new Error('获取推荐失败');
+			console.warn('Invalid response structure:', response);
+			throw new Error('数据格式错误');
 		}
 	} catch (err) {
+		console.error('Fetch error:', err);
+		
+		// 处理401错误
 		if (err.status === 401) {
-			ElMessage.error('登录已过期，即将前往登录页')
-			userStore.clear()
+			ElMessage.error('登录已过期，即将前往登录页');
+			userStore.clear();
 			setTimeout(() => {
-				push('/login')
-			}, 1000)
-		} else if (err.message == '请求过于频繁') {
-			ElMessage.error('请求过于频繁,请稍后再尝试')
-		} else if (err.status === 500) {
-			ElMessage.error('服务器似乎出了点问题')
-		} else {
-			ElMessage.error('获取推荐失败')
+				push('/login');
+			}, 1000);
+			return;
 		}
+		
+		// 处理重试逻辑
+		if (retryCount < MAX_RETRIES) {
+			console.log(`Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
+			loading.value = false; // 重置loading状态
+			await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+			return fetchAllRecommendations(retryCount + 1);
+		}
+		
+		// 设置错误信息
+		error.value = err.message || '获取推荐失败，请稍后重试';
+		ElMessage.error(error.value);
+		
+		// 清理数据
+		recommendations.value = [];
+		total.value = 0;
+		hasMore.value = false;
+		currentPage.value = 1;
 	} finally {
 		loading.value = false;
 	}
@@ -165,7 +193,7 @@ const handleSearch = (query) => {
 // 修改加载更多函数
 const loadMore = async () => {
 	if (!hasMore.value || isLoading.value) return;
-
+	
 	isLoading.value = true;
 	try {
 		const nextPage = currentPage.value + 1;
@@ -175,46 +203,56 @@ const loadMore = async () => {
 			// 添加最小加载时间
 			await new Promise(resolve => setTimeout(resolve, 800));
 			
-			// 使用 nextTick 确保 DOM 更新后再添加新数据
 			await nextTick(() => {
 				recommendations.value = [...recommendations.value, ...response.data.list];
 				hasMore.value = recommendations.value.length < total.value;
 				currentPage.value = response.data.pageNum;
 				total.value = response.data.total;
 			});
-
+			
 			// 重新设置观察器
 			nextTick(() => {
 				if (loadTrigger.value && hasMore.value) {
-					observer.observe(loadTrigger.value);
+					observer?.observe(loadTrigger.value);
 				}
 			});
 		} else {
 			hasMore.value = false;
 		}
 	} catch (err) {
-		ElMessage.error('加载更多失败');
+		console.error('Load more error:', err);
+		ElMessage.error('加载更多失败，请稍后重试');
 		hasMore.value = false;
 	} finally {
-		// 添加延迟以平滑过渡加载状态
 		setTimeout(() => {
 			isLoading.value = false;
 		}, 300);
 	}
 };
 
-// 修改组件挂载时的初始化
-onMounted(() => {
-	fetchAllRecommendations().then(() => {
-		// 数据加载完成后再初始化观察器
-		nextTick(() => {
-			createObserver();
-			if (loadTrigger.value && hasMore.value) {
-				observer.observe(loadTrigger.value);
-			}
-		});
-	});
+// 修改组件挂载逻辑
+onMounted(async () => {
+	try {
+		await nextTick();
+		await fetchAllRecommendations();
+		
+		if (!error.value) {
+			nextTick(() => {
+				createObserver();
+				if (loadTrigger.value && hasMore.value) {
+					observer?.observe(loadTrigger.value);
+				}
+			});
+		}
+	} catch (err) {
+		console.error('Mount error:', err);
+	}
 });
+
+// 添加错误重试按钮的处理函数
+const handleRetry = async () => {
+	await fetchAllRecommendations();
+};
 
 // 组件卸载时清理观察器
 onUnmounted(() => {
