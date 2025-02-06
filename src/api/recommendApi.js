@@ -23,10 +23,14 @@ export const getUserPreferencesAPI = () => {
 
 //该接口已调用
 // 根据用户ID获取个性化推荐内容
-export const getPersonalizedRecommendationsAPI = () => {
+export const getPersonalizedRecommendationsAPI = (pageNum = 1, pageSize = 10) => {
 	return request({
 		url: 'dev-api/recommend/personalized',
 		method: 'GET',
+		params: {
+			pageNum,
+			pageSize
+		},
 		needToken: true
 	})
 }

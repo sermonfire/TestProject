@@ -24,7 +24,7 @@
 			<div class="preference-section">
 				<div class="section-header">
 					<div class="section-title">季节偏好</div>
-					<div class="section-desc">选择你喜欢的旅行季节（可多选）</div>
+					<div class="section-desc">选择你喜欢的旅行季节（必选，可多选）</div>
 				</div>
 				<div class="season-options">
 					<div v-for="season in seasons" :key="season.value"
@@ -87,11 +87,22 @@
 				</div>
 			</div>
 
-			<!-- 保存按钮 -->
-			<el-button class="save-preferences-btn" type="primary" :loading="loading" :disabled="!isValid"
-				@click="savePreferences">
-				保存偏好设置
-			</el-button>
+			<!-- 保存按钮区域 -->
+			<div class="save-section">
+				<!-- 验证提示信息 -->
+				<div v-if="!isValid" class="validation-message">
+					{{ validationMessage }}
+				</div>
+				
+				<el-button 
+					class="save-preferences-btn" 
+					type="primary" 
+					:loading="loading" 
+					:disabled="!isValid"
+					@click="savePreferences">
+					保存偏好设置
+				</el-button>
+			</div>
 
 			<!-- 提示信息 -->
 			<div class="tips-section">
@@ -167,8 +178,30 @@ const isLoading = ref(false);
 const isValid = computed(() => {
 	return selectedStyles.value.length > 0 &&
 		selectedTypes.value.length > 0 &&
+		selectedSeasons.value.length > 0 &&
 		budget.value >= 100 &&
 		selectedDuration.value !== '';
+});
+
+// 添加一个计算属性来获取未完成项目的提示信息
+const validationMessage = computed(() => {
+	const messages = [];
+	if (selectedStyles.value.length === 0) {
+		messages.push('旅行风格');
+	}
+	if (selectedTypes.value.length === 0) {
+		messages.push('目的地类型');
+	}
+	if (selectedSeasons.value.length === 0) {
+		messages.push('季节偏好');
+	}
+	if (!selectedDuration.value) {
+		messages.push('时长偏好');
+	}
+	if (messages.length === 0) {
+		return '';
+	}
+	return `请完善：${messages.join('、')}`;
 });
 
 // 方法
@@ -241,11 +274,6 @@ const fetchUserPreferences = async () => {
 
 // 保存用户偏好
 const savePreferences = async () => {
-	if (!isValid.value) {
-		ElMessage.warning('请完善所有偏好设置');
-		return;
-	}
-
 	const loadingInstance = ElLoading.service({
 		lock: true,
 		text: '保存中...',
@@ -264,9 +292,19 @@ const savePreferences = async () => {
 		const res = await saveUserPreferencesAPI(userPreferences.value);
 		if (res.code === 0) {
 			ElMessage.success('保存成功');
+		} else {
+			ElMessage.error(res.message || '保存失败');
 		}
 	} catch (error) {
-		ElMessage.error('保存失败：' + error.message);
+		if (error.response?.status === 400) {
+			ElMessage.error('请检查并完善所有必填项');
+		} else if (error.response?.status === 401) {
+			ElMessage.error('登录已过期，请重新登录');
+			userStore.clear();
+			router.push('/login');
+		} else {
+			ElMessage.error('保存失败：' + (error.message || '未知错误'));
+		}
 	} finally {
 		loadingInstance.close();
 	}
@@ -416,16 +454,26 @@ onMounted(() => {
 		}
 	}
 
-	.save-preferences-btn {
-		width: 100%;
-		height: 48px;
-		border-radius: 24px;
-		font-size: 16px;
+	.save-section {
 		margin: 20px 0;
+		
+		.validation-message {
+			text-align: center;
+			color: #f56c6c;
+			font-size: 14px;
+			margin-bottom: 12px;
+		}
+		
+		.save-preferences-btn {
+			width: 100%;
+			height: 48px;
+			border-radius: 24px;
+			font-size: 16px;
 
-		&:disabled {
-			background: #ccc;
-			border-color: #ccc;
+			&:disabled {
+				background: #ccc;
+				border-color: #ccc;
+			}
 		}
 	}
 

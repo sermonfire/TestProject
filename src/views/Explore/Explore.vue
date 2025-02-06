@@ -4,8 +4,7 @@
 		<SearchBar @search="handleSearch" />
 
 		<!-- 内容区域 -->
-		<div class="content-wrapper" v-infinite-scroll="loadMore" :infinite-scroll-disabled="!hasMore || isLoading"
-			:infinite-scroll-distance="20">
+		<div class="content-wrapper">
 			<!-- 加载状态 -->
 			<div v-if="loading" class="loading-state">
 				<el-icon class="icon-spin">
@@ -29,10 +28,20 @@
 				<PersonalizedRecommendations :recommendations="recommendations"
 					@destination-click="handleDestinationClick" />
 
-				<!-- 加载更多 -->
-				<div v-if="hasMore" class="load-more">
-					<span v-if="isLoading">加载中...</span>
-					<span v-else>上拉加载更多</span>
+				<!-- 加载更多触发器 -->
+				<div ref="loadTrigger" class="load-trigger">
+					<div v-if="isLoading" class="load-more loading">
+						<el-icon class="icon-spin">
+							<Loading />
+						</el-icon>
+						<span>加载中...</span>
+					</div>
+					<div v-else-if="hasMore" class="load-more">
+						<span>更多推荐加载中...</span>
+					</div>
+					<div v-else class="no-more">
+						没有更多推荐了
+					</div>
 				</div>
 			</div>
 		</div>
@@ -45,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
 import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
@@ -69,15 +78,49 @@ const userStore = useUserStore()
 
 // 推荐数据
 const recommendations = ref([]);
+const total = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+// 新增 loadTrigger ref
+const loadTrigger = ref(null);
+let observer = null;
+
+// 修改创建观察器的函数
+const createObserver = () => {
+	// 先清理旧的观察器
+	if (observer) {
+		observer.disconnect();
+		observer = null;
+	}
+
+	observer = new IntersectionObserver(
+		(entries) => {
+			const triggerEntry = entries[0];
+			if (triggerEntry.isIntersecting && !isLoading.value && hasMore.value) {
+				// console.log('触发加载更多'); // 添加日志
+				loadMore();
+			}
+		},
+		{
+			root: null, // 使用视口作为根
+			rootMargin: '50px', // 减小预加载距离
+			threshold: 0 // 只要有一点进入视口就触发
+		}
+	);
+};
 
 // 获取所有推荐数据
 const fetchAllRecommendations = async () => {
 	loading.value = true;
 	error.value = null;
 	try {
-		const { data } = await getPersonalizedRecommendationsAPI();
-		if (data) {
-			recommendations.value = data;
+		const response = await getPersonalizedRecommendationsAPI(1, pageSize.value);
+		if (response.code === 0 && response.data) {
+			recommendations.value = response.data.list;
+			total.value = response.data.total;
+			hasMore.value = recommendations.value.length < response.data.total;
+			currentPage.value = response.data.pageNum;
 		} else {
 			throw new Error('获取推荐失败');
 		}
@@ -119,25 +162,59 @@ const handleSearch = (query) => {
 	console.log('Searching for:', query);
 };
 
-// 加载更多数据
+// 修改加载更多函数
 const loadMore = async () => {
 	if (!hasMore.value || isLoading.value) return;
 
 	isLoading.value = true;
 	try {
-		// TODO: 实现加载更多逻辑
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		hasMore.value = false;
+		const nextPage = currentPage.value + 1;
+		// console.log('加载第', nextPage, '页'); // 添加日志
+		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value);
+		
+		if (response.code === 0 && response.data && response.data.list.length > 0) {
+			recommendations.value = [...recommendations.value, ...response.data.list];
+			hasMore.value = recommendations.value.length < total.value;
+			currentPage.value = response.data.pageNum;
+			total.value = response.data.total;
+
+			// 重新设置观察器
+			nextTick(() => {
+				if (loadTrigger.value && hasMore.value) {
+					observer.observe(loadTrigger.value);
+				}
+			});
+		} else {
+			hasMore.value = false;
+		}
 	} catch (err) {
+		// console.error('加载更多失败:', err); // 添加错误日志
 		ElMessage.error('加载更多失败');
+		hasMore.value = false;
 	} finally {
 		isLoading.value = false;
 	}
 };
 
-// 页面加载时获取数据
+// 修改组件挂载时的初始化
 onMounted(() => {
-	fetchAllRecommendations();
+	fetchAllRecommendations().then(() => {
+		// 数据加载完成后再初始化观察器
+		nextTick(() => {
+			createObserver();
+			if (loadTrigger.value && hasMore.value) {
+				observer.observe(loadTrigger.value);
+			}
+		});
+	});
+});
+
+// 组件卸载时清理观察器
+onUnmounted(() => {
+	if (observer) {
+		observer.disconnect();
+		observer = null;
+	}
 });
 </script>
 
@@ -207,5 +284,30 @@ onMounted(() => {
 .recommendations-container {
 	transition: all 0.3s ease;
 	width: 100%;
+}
+
+// 添加新的样式
+.load-trigger {
+	padding: 20px 0;
+	text-align: center;
+}
+
+.load-more,
+.no-more {
+	color: #666;
+	font-size: 14px;
+	padding: 10px 0;
+	text-align: center;
+	
+	&.loading {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+	}
+}
+
+.no-more {
+	color: #999;
 }
 </style>
