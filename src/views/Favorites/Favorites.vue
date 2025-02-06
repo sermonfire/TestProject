@@ -291,7 +291,12 @@ const savePreferences = async () => {
 
 		const res = await saveUserPreferencesAPI(userPreferences.value);
 		if (res.code === 0) {
-			ElMessage.success('保存成功');
+			ElMessage.success('保存成功，即将为您跳转到推荐页面...');
+			// 添加延时，让用户看到成功提示后再刷新并重定向
+			setTimeout(() => {
+				// 使用 replace 方式跳转到 explore 页面，这样刷新后就会直接到推荐页
+				window.location.replace('/explore');
+			}, 2000); // 延长到2秒，让用户能看清提示信息
 		} else {
 			ElMessage.error(res.message || '保存失败');
 		}
