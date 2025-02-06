@@ -88,10 +88,16 @@
 			</div>
 
 			<!-- 保存按钮区域 -->
-			<div class="save-section">
+			<div class="save-section" :class="{ 'saving': isSaving }">
 				<!-- 验证提示信息 -->
 				<div v-if="!isValid" class="validation-message">
 					{{ validationMessage }}
+				</div>
+				
+				<!-- 添加保存提示 -->
+				<div class="save-hint">
+					<el-icon><InfoFilled /></el-icon>
+					<span>保存后将自动为您跳转到个性化推荐页面</span>
 				</div>
 				
 				<el-button 
@@ -100,8 +106,14 @@
 					:loading="loading" 
 					:disabled="!isValid"
 					@click="savePreferences">
-					保存偏好设置
+					{{ loading ? '保存中...' : '保存偏好设置' }}
 				</el-button>
+
+				<!-- 添加动画元素 -->
+				<div class="save-animation">
+					<div class="animation-circle"></div>
+					<div class="animation-text">正在跳转到推荐页面...</div>
+				</div>
 			</div>
 
 			<!-- 提示信息 -->
@@ -173,6 +185,7 @@ const selectedDuration = ref('');
 const selectedSeasons = ref([]);
 const loading = ref(false);
 const isLoading = ref(false);
+const isSaving = ref(false);
 
 // 计算属性：表单是否有效
 const isValid = computed(() => {
@@ -279,6 +292,8 @@ const savePreferences = async () => {
 		text: '保存中...',
 		background: 'rgba(0, 0, 0, 0.7)'
 	});
+	
+	isSaving.value = true;
 
 	try {
 		userPreferences.value = {
@@ -292,11 +307,10 @@ const savePreferences = async () => {
 		const res = await saveUserPreferencesAPI(userPreferences.value);
 		if (res.code === 0) {
 			ElMessage.success('保存成功，即将为您跳转到推荐页面...');
-			// 添加延时，让用户看到成功提示后再刷新并重定向
+			document.querySelector('.save-section').classList.add('saving');
 			setTimeout(() => {
-				// 使用 replace 方式跳转到 explore 页面，这样刷新后就会直接到推荐页
 				window.location.replace('/explore');
-			}, 2000); // 延长到2秒，让用户能看清提示信息
+			}, 2000);
 		} else {
 			ElMessage.error(res.message || '保存失败');
 		}
@@ -460,24 +474,85 @@ onMounted(() => {
 	}
 
 	.save-section {
+		position: relative;
 		margin: 20px 0;
+		text-align: center;
+		
+		.save-hint {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 16px;
+			color: #606266;
+			font-size: 14px;
+			gap: 8px;
+			
+			.el-icon {
+				color: #409EFF;
+				font-size: 16px;
+			}
+		}
 		
 		.validation-message {
-			text-align: center;
+			margin-bottom: 12px;
 			color: #f56c6c;
 			font-size: 14px;
-			margin-bottom: 12px;
 		}
 		
 		.save-preferences-btn {
+			position: relative;
+			width: 280px;
+			height: 45px;
+			border-radius: 5px;
+			font-size: 18px;
+			font-weight: 500;
+			transition: all 0.3s ease;
+			
+			&:active {
+				transform: scale(0.95);
+			}
+		}
+		
+		.save-animation {
+			position: absolute;
+			top: 0;
+			left: 0;
 			width: 100%;
-			height: 48px;
-			border-radius: 24px;
-			font-size: 16px;
-
-			&:disabled {
-				background: #ccc;
-				border-color: #ccc;
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			transition: all 0.5s ease;
+			
+			.animation-circle {
+				width: 60px;
+				height: 60px;
+				border: 3px solid #409EFF;
+				border-top-color: transparent;
+				border-radius: 50%;
+				margin-bottom: 16px;
+				animation: spin 1s linear infinite;
+			}
+			
+			.animation-text {
+				color: #409EFF;
+				font-size: 16px;
+				font-weight: 500;
+			}
+		}
+		
+		&.saving {
+			.save-preferences-btn {
+				opacity: 0;
+				transform: translateY(20px);
+			}
+			
+			.save-animation {
+				opacity: 1;
+				visibility: visible;
 			}
 		}
 	}
@@ -503,5 +578,16 @@ onMounted(() => {
 	to {
 		transform: rotate(360deg);
 	}
+}
+
+// 添加淡出动画
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
 }
 </style>
