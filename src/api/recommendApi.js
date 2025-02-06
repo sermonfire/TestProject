@@ -33,7 +33,7 @@ export const getAllRecommendationsAPI = () => {
 
 //该接口已调用
 // 获取相似目的地的API
-export const getSimilarDestinations = (id, limit = 5) => {
+export const getSimilarDestinationsAPI = (id, limit = 5) => {
 	return request({
 		url: `dev-api/recommend/similar/${id}`,
 		method: 'GET',

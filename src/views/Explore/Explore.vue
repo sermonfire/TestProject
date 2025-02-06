@@ -51,7 +51,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
-import { getAllRecommendationsAPI, getSimilarDestinations } from '@/api/api';
+import { getAllRecommendationsAPI, getSimilarDestinationsAPI } from '@/api/api';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import PopularDestinations from './Popular/PopularDestinations.vue';
@@ -115,7 +115,7 @@ const handleDestinationClick = async (destination) => {
 	selectedDestination.value = destination;
 
 	try {
-		const { data } = await getSimilarDestinations(destination.id);
+		const { data } = await getSimilarDestinationsAPI(destination.id);
 		if (data) {
 			similarDestinations.value = data;
 		} else {
