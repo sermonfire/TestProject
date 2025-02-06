@@ -169,14 +169,19 @@ const loadMore = async () => {
 	isLoading.value = true;
 	try {
 		const nextPage = currentPage.value + 1;
-		// console.log('加载第', nextPage, '页'); // 添加日志
 		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value);
 		
 		if (response.code === 0 && response.data && response.data.list.length > 0) {
-			recommendations.value = [...recommendations.value, ...response.data.list];
-			hasMore.value = recommendations.value.length < total.value;
-			currentPage.value = response.data.pageNum;
-			total.value = response.data.total;
+			// 添加最小加载时间
+			await new Promise(resolve => setTimeout(resolve, 800));
+			
+			// 使用 nextTick 确保 DOM 更新后再添加新数据
+			await nextTick(() => {
+				recommendations.value = [...recommendations.value, ...response.data.list];
+				hasMore.value = recommendations.value.length < total.value;
+				currentPage.value = response.data.pageNum;
+				total.value = response.data.total;
+			});
 
 			// 重新设置观察器
 			nextTick(() => {
@@ -188,11 +193,13 @@ const loadMore = async () => {
 			hasMore.value = false;
 		}
 	} catch (err) {
-		// console.error('加载更多失败:', err); // 添加错误日志
 		ElMessage.error('加载更多失败');
 		hasMore.value = false;
 	} finally {
-		isLoading.value = false;
+		// 添加延迟以平滑过渡加载状态
+		setTimeout(() => {
+			isLoading.value = false;
+		}, 300);
 	}
 };
 
@@ -280,16 +287,30 @@ onUnmounted(() => {
 	}
 }
 
-// 添加响应式容器
+// 修改推荐容器样式
 .recommendations-container {
 	transition: all 0.3s ease;
 	width: 100%;
+	
+	// 添加子元素的过渡效果
+	:deep(.recommendation-item) {
+		opacity: 0;
+		transform: translateY(20px);
+		animation: fadeInUp 0.5s ease forwards;
+		
+		@for $i from 1 through 10 {
+			&:nth-child(#{$i}) {
+				animation-delay: #{$i * 0.1}s;
+			}
+		}
+	}
 }
 
-// 添加新的样式
+// 修改加载触发器样式
 .load-trigger {
 	padding: 20px 0;
 	text-align: center;
+	transition: all 0.3s ease;
 }
 
 .load-more,
@@ -298,16 +319,57 @@ onUnmounted(() => {
 	font-size: 14px;
 	padding: 10px 0;
 	text-align: center;
+	transition: all 0.3s ease;
 	
 	&.loading {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
+		
+		.icon-spin {
+			animation: spin 1s linear infinite;
+			transition: all 0.3s ease;
+		}
 	}
 }
 
-.no-more {
-	color: #999;
+// 添加淡入上移动画
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+// 优化加载图标动画
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+// 添加过渡组
+.fade-move,
+.fade-enter-active,
+.fade-leave-active {
+	transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+	transform: translateY(30px);
+}
+
+.fade-leave-active {
+	position: absolute;
 }
 </style>
