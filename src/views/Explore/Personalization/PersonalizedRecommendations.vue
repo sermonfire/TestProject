@@ -6,9 +6,16 @@
     </div>
     <div class="recommendations-grid">
       <div v-for="item in recommendations" :key="item.id" class="destination-card" @click="handleDestinationClick(item)">
-        <el-image :src="item.imageUrl" fit="cover" class="destination-image" />
+        <el-image :src="item.imageUrl" fit="cover" class="destination-image">
+          <template #error>
+            <div class="image-placeholder">
+              <el-icon><Picture /></el-icon>
+            </div>
+          </template>
+        </el-image>
         <div class="destination-info">
           <span class="destination-name">{{ item.name }}</span>
+          <p class="destination-desc">{{ item.description }}</p>
           <div class="destination-meta">
             <div class="meta-item">
               <el-icon color="#FFB800">
@@ -20,7 +27,7 @@
               <el-icon>
                 <Calendar />
               </el-icon>
-              <span>{{ item.recommendedDuration }}</span>
+              <span>{{ formatDuration(item.recommendedDuration) }}</span>
             </div>
             <div class="meta-item">
               <el-icon>
@@ -30,7 +37,7 @@
             </div>
           </div>
           <div class="destination-tags">
-            <span v-for="(tag, index) in item.tags.slice(0, 3)" :key="index" class="tag">{{ tag }}</span>
+            <span v-for="(tag, index) in item.tags" :key="index" class="tag">{{ tag }}</span>
           </div>
         </div>
       </div>
@@ -52,6 +59,16 @@ const emit = defineEmits(['destinationClick']);
 
 const handleDestinationClick = (destination) => {
   emit('destinationClick', destination);
+};
+
+// 格式化推荐时长
+const formatDuration = (duration) => {
+  const durationMap = {
+    short: '短期',
+    medium: '中期',
+    long: '长期'
+  };
+  return durationMap[duration] || duration;
 };
 </script>
 
@@ -160,5 +177,27 @@ const handleDestinationClick = (destination) => {
       }
     }
   }
+}
+
+.destination-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 8px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  color: #999;
+  font-size: 24px;
 }
 </style> 

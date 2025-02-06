@@ -26,10 +26,7 @@
 			<!-- 推荐内容 -->
 			<div v-else class="recommendations-container">
 				<!-- 个性化推荐 -->
-				<PersonalizedRecommendations :recommendations="recommendations.personalized"
-					@destination-click="handleDestinationClick" />
-				<!-- 热门推荐 -->
-				<PopularDestinations :recommendations="recommendations.popular"
+				<PersonalizedRecommendations :recommendations="recommendations"
 					@destination-click="handleDestinationClick" />
 
 				<!-- 加载更多 -->
@@ -51,7 +48,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
-import { getAllRecommendationsAPI, getSimilarDestinationsAPI } from '@/api/api';
+import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import PopularDestinations from './Popular/PopularDestinations.vue';
@@ -71,11 +68,7 @@ const { push } = useRouter()
 const userStore = useUserStore()
 
 // 推荐数据
-const recommendations = ref({
-	personalized: [],
-	seasonal: [],
-	popular: []
-});
+const recommendations = ref([]);
 
 // 获取所有推荐数据
 const fetchAllRecommendations = async () => {
@@ -108,26 +101,8 @@ const fetchAllRecommendations = async () => {
 };
 
 // 处理目的地点击
-const handleDestinationClick = async (destination) => {
-	if (!destination.bestSeasons) {
-		destination.bestSeasons = [];
-	}
+const handleDestinationClick = (destination) => {
 	selectedDestination.value = destination;
-
-	try {
-		const { data } = await getPreviewRecommendationsAPI();
-		if (data) {
-			similarDestinations.value = data;
-		} else {
-			similarDestinations.value = [];
-			ElMessage.warning('暂无相似推荐');
-		}
-	} catch (err) {
-		console.error('获取相似推荐失败:', err);
-		similarDestinations.value = [];
-		ElMessage.error('获取相似推荐失败');
-	}
-
 	showDetailDialog.value = true;
 };
 
