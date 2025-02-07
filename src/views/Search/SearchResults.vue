@@ -58,9 +58,24 @@
             class="destination-card"
             @click="handleDestinationClick(destination)"
           >
-            <el-card :body-style="{ padding: '0px' }" shadow="hover">
+            <div class="card-inner">
               <div class="image-wrapper">
-                <img :src="destination.imageUrl" class="destination-image" />
+                <el-image 
+                  :src="destination.imageUrl" 
+                  fit="cover" 
+                  class="destination-image"
+                >
+                  <template #placeholder>
+                    <div class="image-placeholder">
+                      <el-icon><Picture /></el-icon>
+                    </div>
+                  </template>
+                  <template #error>
+                    <div class="image-placeholder">
+                      <el-icon><Picture /></el-icon>
+                    </div>
+                  </template>
+                </el-image>
                 <div class="image-overlay">
                   <span class="view-details">查看详情</span>
                 </div>
@@ -88,7 +103,7 @@
                   </el-tag>
                 </div>
               </div>
-            </el-card>
+            </div>
           </div>
         </div>
       </div>
@@ -101,7 +116,7 @@ import { ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getSearchResultsAPI } from '@/api/recommendApi';
 import { ElMessage } from 'element-plus';
-import { Loading, CircleClose, ArrowLeft } from '@element-plus/icons-vue';
+import { Loading, CircleClose, ArrowLeft, Picture } from '@element-plus/icons-vue';
 import PersonalizedRecommendations from '../Explore/Personalization/PersonalizedRecommendations.vue';
 import SearchBar from '@/components/Search/SearchBar.vue';
 
@@ -366,6 +381,22 @@ watch(
           padding: 8px 16px;
           border: 2px solid white;
           border-radius: 20px;
+        }
+      }
+
+      .image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f5f5f5;
+        color: #999;
+        font-size: 48px;
+        transition: all 0.3s ease;
+
+        .el-icon {
+          opacity: 0.5;
         }
       }
     }
