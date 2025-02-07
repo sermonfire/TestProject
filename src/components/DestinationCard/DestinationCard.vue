@@ -414,6 +414,7 @@ onUnmounted(() => {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      line-clamp: 2;
       cursor: pointer;
       transition: all 0.3s ease;
       padding: 4px 8px;

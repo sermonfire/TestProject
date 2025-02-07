@@ -108,12 +108,6 @@
 					@click="savePreferences">
 					{{ loading ? '保存中...' : '保存偏好设置' }}
 				</el-button>
-
-				<!-- 添加动画元素 -->
-				<div class="save-animation">
-					<div class="animation-circle"></div>
-					<div class="animation-text">正在跳转到推荐页面...</div>
-				</div>
 			</div>
 
 			<!-- 提示信息 -->
@@ -337,234 +331,293 @@ onMounted(() => {
 <style lang="scss" scoped>
 .preferences-container {
 	min-height: 100vh;
-	background-color: #f5f5f5;
-	user-select: none;
-
+	background-color: #f5f7fa;
+	padding: 20px 0;
+	
 	.content-wrapper {
+		max-width: 960px;
+		margin: 0 auto;
 		padding: 16px 20px;
 	}
 
 	.preference-section {
 		background: #fff;
-		border-radius: 12px;
-		padding: 20px;
-		margin-bottom: 20px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		border-radius: 16px;
+		padding: 24px;
+		margin-bottom: 24px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+		transition: transform 0.3s ease;
+
+		&:hover {
+			transform: translateY(-2px);
+		}
 
 		.section-header {
-			margin-bottom: 16px;
+			margin-bottom: 20px;
 
 			.section-title {
-				font-size: 18px;
-				font-weight: 500;
-				color: #333;
+				font-size: 20px;
+				font-weight: 600;
+				color: #2c3e50;
 				margin-bottom: 8px;
 			}
 
 			.section-desc {
 				font-size: 14px;
-				color: #666;
+				color: #5e6d82;
 			}
 		}
 	}
 
 	.tags-container {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-		padding: 16px;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 16px;
+		padding: 8px;
 
 		.tag {
 			display: flex;
 			align-items: center;
-			padding: 8px 16px;
-			background: #f5f5f5;
-			border-radius: 20px;
-			transition: all 0.3s;
+			padding: 12px 16px;
+			background: #f5f7fa;
+			border-radius: 12px;
+			border: 1px solid #e4e7ed;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 			cursor: pointer;
+
+			&:hover {
+				background: #ecf5ff;
+				border-color: #409eff;
+			}
+
+			.el-icon {
+				font-size: 18px;
+				margin-right: 8px;
+				color: #909399;
+			}
 
 			.tag-text {
-				margin-left: 8px;
-			}
-
-			&.active {
-				background: #2196F3;
-				color: white;
-			}
-		}
-	}
-
-	.budget-slider {
-		padding: 0 10px;
-
-		.budget-value {
-			font-size: 24px;
-			font-weight: 500;
-			color: #2196F3;
-			text-align: center;
-			margin-bottom: 16px;
-		}
-
-		.budget-range {
-			display: flex;
-			justify-content: space-between;
-			margin-top: 8px;
-			color: #999;
-			font-size: 12px;
-		}
-
-		:deep(.el-slider__runway) {
-			margin: 16px 0;
-		}
-	}
-
-	.duration-options {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 12px;
-
-		.duration-option {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			padding: 16px;
-			background: #f5f5f5;
-			border-radius: 12px;
-			transition: all 0.3s ease;
-			cursor: pointer;
-
-			.duration-label {
-				margin-top: 8px;
 				font-size: 14px;
-				color: #666;
+				color: #606266;
 			}
 
 			&.active {
-				background: #E3F2FD;
+				background: #409eff;
+				border-color: #409eff;
+				color: white;
 
-				.duration-label {
-					color: #2196F3;
+				.el-icon {
+					color: white;
+				}
+
+				.tag-text {
+					color: white;
 				}
 			}
 		}
 	}
 
 	.season-options {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-		margin-top: 12px;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+		gap: 16px;
+		margin-top: 16px;
 
 		.season-option {
-			padding: 8px 16px;
-			border-radius: 20px;
-			background: #f5f5f5;
+			padding: 12px;
+			border-radius: 12px;
+			background: #f5f7fa;
+			text-align: center;
 			transition: all 0.3s ease;
 			cursor: pointer;
+			border: 1px solid #e4e7ed;
+
+			&:hover {
+				background: #ecf5ff;
+				border-color: #409eff;
+			}
 
 			&.active {
-				background: #2196F3;
+				background: #409eff;
+				border-color: #409eff;
 				color: white;
+				transform: scale(1.02);
 			}
 
 			.season-name {
-				font-size: 14px;
+				font-size: 15px;
+				font-weight: 500;
+			}
+		}
+	}
+
+	.budget-slider {
+		padding: 20px;
+		background: #f5f7fa;
+		border-radius: 12px;
+
+		.budget-value {
+			font-size: 28px;
+			font-weight: 600;
+			color: #409eff;
+			text-align: center;
+			margin-bottom: 20px;
+		}
+
+		:deep(.el-slider__runway) {
+			margin: 20px 0;
+		}
+
+		:deep(.el-slider__bar) {
+			background-color: #409eff;
+		}
+
+		:deep(.el-slider__button) {
+			border-color: #409eff;
+		}
+
+		.budget-range {
+			display: flex;
+			justify-content: space-between;
+			margin-top: 12px;
+			color: #606266;
+			font-size: 13px;
+			font-weight: 500;
+		}
+	}
+
+	.duration-options {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 16px;
+		margin-top: 8px;
+
+		.duration-option {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			padding: 20px;
+			background: #f5f7fa;
+			border-radius: 12px;
+			border: 1px solid #e4e7ed;
+			transition: all 0.3s ease;
+			cursor: pointer;
+
+			&:hover {
+				background: #ecf5ff;
+				border-color: #409eff;
+			}
+
+			.el-icon {
+				font-size: 24px;
+				color: #909399;
+				margin-bottom: 12px;
+			}
+
+			.duration-label {
+				font-size: 15px;
+				font-weight: 500;
+				color: #606266;
+			}
+
+			&.active {
+				background: #409eff;
+				border-color: #409eff;
+				transform: scale(1.02);
+
+				.el-icon,
+				.duration-label {
+					color: white;
+				}
 			}
 		}
 	}
 
 	.save-section {
 		position: relative;
-		margin: 20px 0;
+		margin: 32px 0;
 		text-align: center;
 		
 		.save-hint {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			margin-bottom: 16px;
+			margin-bottom: 20px;
 			color: #606266;
 			font-size: 14px;
 			gap: 8px;
+			background: #ecf5ff;
+			padding: 12px;
+			border-radius: 8px;
 			
 			.el-icon {
-				color: #409EFF;
+				color: #409eff;
 				font-size: 16px;
 			}
 		}
 		
 		.validation-message {
-			margin-bottom: 12px;
+			margin-bottom: 16px;
 			color: #f56c6c;
 			font-size: 14px;
+			padding: 8px 16px;
+			background: #fef0f0;
+			border-radius: 4px;
+			display: inline-block;
 		}
 		
 		.save-preferences-btn {
-			position: relative;
-			width: 280px;
-			height: 45px;
-			border-radius: 5px;
+			width: 300px;
+			height: 48px;
+			border-radius: 24px;
 			font-size: 18px;
 			font-weight: 500;
 			transition: all 0.3s ease;
 			
+			&:not(:disabled):hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+			}
+			
 			&:active {
-				transform: scale(0.95);
-			}
-		}
-		
-		.save-animation {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			opacity: 0;
-			visibility: hidden;
-			transition: all 0.5s ease;
-			
-			.animation-circle {
-				width: 60px;
-				height: 60px;
-				border: 3px solid #409EFF;
-				border-top-color: transparent;
-				border-radius: 50%;
-				margin-bottom: 16px;
-				animation: spin 1s linear infinite;
-			}
-			
-			.animation-text {
-				color: #409EFF;
-				font-size: 16px;
-				font-weight: 500;
-			}
-		}
-		
-		&.saving {
-			.save-preferences-btn {
-				opacity: 0;
-				transform: translateY(20px);
-			}
-			
-			.save-animation {
-				opacity: 1;
-				visibility: visible;
+				transform: scale(0.98);
 			}
 		}
 	}
 
 	.tips-section {
-		padding: 20px 0;
+		padding: 24px 0;
 		text-align: center;
 
 		.tips-text {
 			font-size: 14px;
-			color: #999;
-			line-height: 1.5;
+			color: #909399;
+			line-height: 1.6;
+			background: #f5f7fa;
+			padding: 12px 20px;
+			border-radius: 8px;
+			display: inline-block;
+		}
+	}
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+	.preferences-container {
+		.content-wrapper {
+			padding: 12px;
+		}
+
+		.tags-container {
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+		}
+
+		.duration-options {
+			grid-template-columns: 1fr;
+		}
+
+		.save-preferences-btn {
+			width: 100%;
 		}
 	}
 }
