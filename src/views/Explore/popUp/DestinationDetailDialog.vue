@@ -9,17 +9,27 @@
         
         <div class="detail-content">
           <div class="image-container">
-            <img 
+            <el-image 
               :src="destination?.imageUrl" 
               :alt="destination?.name + ' 景区图片'"
               class="detail-image"
-              :class="{ loading: isLoading }"
-              @load="handleImageLoad"
-              @error="handleImageError"
-            />
-            <div v-if="isLoading" class="loading-placeholder">
-              图片加载中...
-            </div>
+              fit="cover"
+            >
+              <template #placeholder>
+                <div class="image-placeholder">
+                  <el-icon class="is-loading">
+                    <Loading />
+                  </el-icon>
+                  <span>加载中...</span>
+                </div>
+              </template>
+              <template #error>
+                <div class="image-placeholder">
+                  <el-icon><Picture /></el-icon>
+                  <!-- <span>图片加载失败</span> -->
+                </div>
+              </template>
+            </el-image>
           </div>
 
           <div class="detail-info-section">
@@ -140,6 +150,7 @@
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { Picture, Loading } from '@element-plus/icons-vue';
 
 const props = defineProps({
   modelValue: {
@@ -379,13 +390,26 @@ const handleTagClick = (tag) => {
 
 .dialog-container {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 35%;
   max-width: 800px;
   max-height: 90vh;
   position: relative;
   overflow: hidden;
   user-select: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  animation: dialog-fade-in 0.3s ease-out;
+}
+
+@keyframes dialog-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dialog-header {
@@ -433,43 +457,76 @@ const handleTagClick = (tag) => {
   overflow-y: auto;
   
   &::-webkit-scrollbar {
-    width: 0;
-    display: none;
+    width: 6px;
+    height: 6px;
   }
   
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #c0c4cc;
+    }
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f5f7fa;
+  }
 }
 
-.detail-image {
+.image-container {
+  position: relative;
   width: 100%;
   height: 240px;
-  object-fit: cover;
   background: #f5f5f5;
-  position: relative;
+  overflow: hidden;
   
-  &.loading {
-    animation: pulse 1.5s infinite;
+  .detail-image {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
   }
   
-  &.error {
-    background: #fafafa;
-    &::after {
-      content: '图片加载失败';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #999;
+  .image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    color: #909399;
+    
+    .el-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      
+      &.is-loading {
+        animation: rotating 2s linear infinite;
+      }
+    }
+    
+    span {
       font-size: 14px;
     }
   }
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+@keyframes rotating {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .detail-info-section {
@@ -482,12 +539,17 @@ const handleTagClick = (tag) => {
     padding: 16px;
     border-radius: 12px;
     margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
     .meta-item {
       display: flex;
       align-items: center;
       gap: 8px;
       color: #666;
+      
+      .icon {
+        font-size: 18px;
+      }
     }
   }
 
@@ -503,9 +565,6 @@ const handleTagClick = (tag) => {
       border-radius: 12px;
       font-size: 12px;
       color: #666;
-      margin: 4px;
-      display: inline-block;
-      cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       
       &:hover {
@@ -519,7 +578,6 @@ const handleTagClick = (tag) => {
         background-color: var(--el-color-primary);
         color: white;
         transform: scale(0.95);
-        pointer-events: none;
       }
     }
   }
@@ -531,7 +589,7 @@ const handleTagClick = (tag) => {
     margin-bottom: 16px;
     position: relative;
     padding-left: 12px;
-
+    
     &::before {
       content: '';
       position: absolute;
@@ -540,7 +598,7 @@ const handleTagClick = (tag) => {
       transform: translateY(-50%);
       width: 4px;
       height: 16px;
-      background: #2196f3;
+      background: var(--el-color-primary);
       border-radius: 2px;
     }
   }
@@ -657,32 +715,26 @@ const handleTagClick = (tag) => {
   .similar-item {
     flex: 0 0 160px;
     background: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
+    
     &:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-      .similar-info {
-        background: #e6e8eb;
+      
+      .similar-image {
+        transform: scale(1.05);
       }
     }
-
-    .image-container {
-      position: relative;
+    
+    .similar-image {
       width: 100%;
       height: 120px;
-      overflow: hidden;
-
-      .similar-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
+      object-fit: cover;
+      transition: transform 0.3s ease;
     }
 
     .similar-info {
@@ -713,23 +765,6 @@ const handleTagClick = (tag) => {
         }
       }
     }
-  }
-}
-
-.image-container {
-  position: relative;
-  width: 100%;
-  height: 240px;
-  background: #f5f5f5;
-  overflow: hidden;
-  
-  .loading-placeholder {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #999;
-    font-size: 14px;
   }
 }
 </style>
