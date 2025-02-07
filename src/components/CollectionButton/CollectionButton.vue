@@ -49,7 +49,8 @@ const toggleCollection = () => {
   ElMessage({
     type: 'success',
     message: isCollected.value ? '已添加到收藏' : '已取消收藏',
-    duration: 2000
+    duration: 2000,
+    customClass: 'collection-message'
   });
 };
 </script>
@@ -105,6 +106,23 @@ const toggleCollection = () => {
         transform: scale(0.95);
       }
     }
+  }
+}
+</style>
+
+<style>
+/* 全局消息提示样式 */
+.collection-message {
+  background: linear-gradient(45deg, #f56c6c, #e64242) !important;
+  border: none !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
+  
+  .el-message__content {
+    color: white !important;
+    font-weight: 500 !important;
   }
 }
 </style> 

@@ -9,7 +9,6 @@
               :item-id="destination?.id"
               :initial-state="destination?.isCollected"
               class="detail-collection-btn"
-              @collection-change="handleCollectionChange"
             />
             <button class="close-button" @click="handleClose">×</button>
           </div>
@@ -397,16 +396,6 @@ const handleTagClick = (tag) => {
     }, 1000);
   }
 };
-
-// 添加收藏处理函数
-const handleCollectionChange = (isCollected) => {
-  ElMessage({
-    type: 'success',
-    message: isCollected ? '已添加到收藏' : '已取消收藏',
-    duration: 2000,
-    customClass: 'collection-message'
-  });
-};
 </script>
 
 <style lang="scss" scoped>
@@ -475,11 +464,11 @@ const handleCollectionChange = (isCollected) => {
 
 .detail-collection-btn {
   :deep(.el-button) {
-    background-color: rgba(255, 255, 255, 0.9);
+    // background-color: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     
     &:hover {
-      background-color: #fff;
+      // background-color: #fff;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
