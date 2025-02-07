@@ -298,6 +298,7 @@ const stopRotation = () => {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      line-clamp: 2;
     }
   }
 
