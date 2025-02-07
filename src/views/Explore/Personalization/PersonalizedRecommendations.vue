@@ -6,6 +6,13 @@
     </div>
     <div class="recommendations-grid">
       <div v-for="item in recommendations" :key="item.id" class="destination-card" @click="handleDestinationClick(item)">
+        <CollectionButton
+          :item-id="item.id"
+          :initial-state="item.isCollected"
+          class="collection-btn"
+          @collection-change="handleCollectionChange(item.id, $event)"
+        />
+        
         <el-image :src="item.imageUrl" fit="cover" class="destination-image">
           <template #error>
             <div class="image-placeholder">
@@ -13,16 +20,23 @@
             </div>
           </template>
         </el-image>
+        
         <div class="destination-info">
-          <span class="destination-name">{{ item.name }}</span>
-          <p class="destination-desc">{{ item.description }}</p>
-          <div class="destination-meta">
-            <div class="meta-item">
-              <el-icon color="#FFB800">
-                <Star />
-              </el-icon>
-              <span>{{ item.rating }}</span>
+          <div class="destination-header">
+            <span class="destination-name">{{ item.name }}</span>
+            <div class="rating-wrapper">
+              <el-rate
+                v-model="item.rating"
+                disabled
+                text-color="#ff9900"
+                score-template="{value}"
+              />
             </div>
+          </div>
+          
+          <p class="destination-desc">{{ item.description }}</p>
+          
+          <div class="destination-meta">
             <div class="meta-item">
               <el-icon>
                 <Calendar />
@@ -36,8 +50,17 @@
               <span>¥{{ item.averageBudget }}/天</span>
             </div>
           </div>
+          
           <div class="destination-tags">
-            <span v-for="(tag, index) in item.tags" :key="index" class="tag">{{ tag }}</span>
+            <el-tag
+              v-for="(tag, index) in item.tags"
+              :key="index"
+              size="small"
+              effect="light"
+              class="tag"
+            >
+              {{ tag }}
+            </el-tag>
           </div>
         </div>
       </div>
@@ -46,7 +69,9 @@
 </template>
 
 <script setup>
-import { Star, Calendar, Wallet } from '@element-plus/icons-vue';
+import { Star, Calendar, Wallet, Picture } from '@element-plus/icons-vue';
+import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
+import { ElMessage } from 'element-plus';
 
 defineProps({
   recommendations: {
@@ -55,10 +80,14 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['destinationClick']);
+const emit = defineEmits(['destinationClick', 'collectionChange']);
 
 const handleDestinationClick = (destination) => {
   emit('destinationClick', destination);
+};
+
+const handleCollectionChange = (itemId, isCollected) => {
+  emit('collectionChange', { itemId, isCollected });
 };
 
 // 格式化推荐时长
@@ -83,7 +112,7 @@ const formatDuration = (duration) => {
     margin-bottom: 20px;
 
     .section-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
       color: #333;
     }
@@ -98,17 +127,16 @@ const formatDuration = (duration) => {
 .recommendations-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  gap: 24px;
   transition: all 0.3s ease;
 
   .destination-card {
+    position: relative;
     background-color: #fff;
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                width 0.3s ease,
-                transform 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
     will-change: transform;
     width: 100%;
@@ -118,47 +146,79 @@ const formatDuration = (duration) => {
 
     &:hover {
       transform: translateY(-8px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 
-      .destination-info {
-        background-color: #e6f0fc;
+      .destination-image {
+        transform: scale(1.05);
       }
     }
 
-    &:not(:hover) {
-      transform: translateY(0);
+    .collection-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
     }
 
     .destination-image {
       width: 100%;
-      height: 200px;
+      height: 220px;
       object-fit: cover;
       display: block;
+      transition: transform 0.3s ease;
     }
 
     .destination-info {
-      padding: 16px;
-      transition: background-color 0.3s ease;
+      padding: 20px;
+      background: linear-gradient(to bottom, #ffffff, #f8f9fa);
 
-      .destination-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
+      .destination-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 12px;
-        display: block;
+
+        .destination-name {
+          font-size: 20px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .rating-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+      }
+
+      .destination-desc {
+        font-size: 14px;
+        color: #666;
+        margin: 12px 0;
+        line-height: 1.6;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
       }
 
       .destination-meta {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
+        gap: 16px;
+        margin: 16px 0;
 
         .meta-item {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
           color: #666;
           font-size: 14px;
+
+          .el-icon {
+            font-size: 16px;
+            color: var(--el-color-primary);
+          }
         }
       }
 
@@ -166,28 +226,24 @@ const formatDuration = (duration) => {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        margin-top: 12px;
 
         .tag {
-          background-color: #f5f5f5;
-          padding: 4px 12px;
           border-radius: 12px;
-          font-size: 12px;
-          color: #666;
+          padding: 0 12px;
+          height: 24px;
+          line-height: 24px;
+          background-color: var(--el-color-primary-light-9);
+          border-color: var(--el-color-primary-light-8);
+          color: var(--el-color-primary);
+          
+          &:hover {
+            background-color: var(--el-color-primary-light-8);
+          }
         }
       }
     }
   }
-}
-
-.destination-desc {
-  font-size: 14px;
-  color: #666;
-  margin: 8px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .image-placeholder {
@@ -199,5 +255,15 @@ const formatDuration = (duration) => {
   background-color: #f5f5f5;
   color: #999;
   font-size: 24px;
+}
+
+@media screen and (max-width: 768px) {
+  .recommendations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .destination-card {
+    max-width: 100% !important;
+  }
 }
 </style> 
