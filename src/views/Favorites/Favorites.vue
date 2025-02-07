@@ -122,7 +122,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElLoading } from 'element-plus';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import { getUserPreferencesAPI, saveUserPreferencesAPI } from '@/api/api';
+import { getUserPreferencesAPI, saveUserPreferencesAPI, clearRecommendationsCache } from '@/api/api';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userstore';
 
@@ -300,10 +300,16 @@ const savePreferences = async () => {
 
 		const res = await saveUserPreferencesAPI(userPreferences.value);
 		if (res.code === 0) {
+			// 清除推荐数据缓存
+			clearRecommendationsCache();
+			
 			ElMessage.success('保存成功，即将为您跳转到推荐页面...');
 			document.querySelector('.save-section').classList.add('saving');
 			setTimeout(() => {
-				window.location.replace('/explore');
+				router.push({
+					path: '/explore',
+					query: { refresh: 'true' }
+				});
 			}, 2000);
 		} else {
 			ElMessage.error(res.message || '保存失败');

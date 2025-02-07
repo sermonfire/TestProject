@@ -25,72 +25,72 @@ export const getUserPreferencesAPI = () => {
 const cache = new Map();
 const CACHE_TIME = 5 * 60 * 1000; // 5分钟缓存
 
-// 获取个性化推荐的防抖处理
-export const getPersonalizedRecommendationsAPI = debounce((pageNum = 1, pageSize = 10) => {
+// 添加清除缓存的方法
+export const clearRecommendationsCache = () => {
+	cache.clear();
+};
+
+// 修改获取个性化推荐的方法
+export const getPersonalizedRecommendationsAPI = debounce((pageNum = 1, pageSize = 10, forceRefresh = false) => {
 	const cacheKey = `recommendations_${pageNum}_${pageSize}`;
 	const cachedData = cache.get(cacheKey);
 	
-	if (cachedData && Date.now() - cachedData.timestamp < CACHE_TIME) {
-		return Promise.resolve(cachedData.data);
+	// 如果强制刷新或缓存过期，则重新请求数据
+	if (forceRefresh || !cachedData || Date.now() - cachedData.timestamp >= CACHE_TIME) {
+		return new Promise((resolve, reject) => {
+			const timeoutId = setTimeout(() => {
+				reject(new Error('请求超时'));
+			}, 10000);
+			
+			(async () => {
+				try {
+					const response = await request({
+						url: 'dev-api/recommend/personalized',
+						method: 'GET',
+						params: { pageNum, pageSize },
+						needToken: true
+					});
+					
+					clearTimeout(timeoutId);
+					
+					if (!response) {
+						console.warn('Empty response received');
+						return reject(new Error('服务器响应为空'));
+					}
+					
+					if (typeof response !== 'object') {
+						console.warn('Invalid response format:', response);
+						return reject(new Error('响应格式错误'));
+					}
+					
+					if (response.code !== 0 || !response.data) {
+						console.warn('Business logic error:', response);
+						return reject(new Error(response.message || '业务处理失败'));
+					}
+					
+					if (!Array.isArray(response.data.list)) {
+						console.warn('Invalid data structure:', response.data);
+						return reject(new Error('数据结构错误'));
+					}
+					
+					// 更新缓存
+					cache.set(cacheKey, {
+						data: response,
+						timestamp: Date.now()
+					});
+					
+					resolve(response);
+				} catch (error) {
+					clearTimeout(timeoutId);
+					console.error('Request failed:', error);
+					reject(error);
+				}
+			})();
+		});
 	}
 	
-	// 创建一个新的Promise来处理请求
-	return new Promise((resolve, reject) => {
-		const timeoutId = setTimeout(() => {
-			reject(new Error('请求超时'));
-		}, 10000);
-		
-		// 使用async/await处理请求
-		(async () => {
-			try {
-				const response = await request({
-					url: 'dev-api/recommend/personalized',
-					method: 'GET',
-					params: { pageNum, pageSize },
-					needToken: true
-				});
-				
-				clearTimeout(timeoutId);
-				
-				// 确保response存在且格式正确
-				if (!response) {
-					console.warn('Empty response received');
-					return reject(new Error('服务器响应为空'));
-				}
-				
-				// 验证响应格式
-				if (typeof response !== 'object') {
-					console.warn('Invalid response format:', response);
-					return reject(new Error('响应格式错误'));
-				}
-				
-				// 验证业务数据
-				if (response.code !== 0 || !response.data) {
-					console.warn('Business logic error:', response);
-					return reject(new Error(response.message || '业务处理失败'));
-				}
-				
-				// 验证数据结构
-				if (!Array.isArray(response.data.list)) {
-					console.warn('Invalid data structure:', response.data);
-					return reject(new Error('数据结构错误'));
-				}
-				
-				// 缓存有效响应
-				cache.set(cacheKey, {
-					data: response,
-					timestamp: Date.now()
-				});
-				
-				resolve(response);
-			} catch (error) {
-				clearTimeout(timeoutId);
-				console.error('Request failed:', error);
-				reject(error);
-			}
-		})();
-	});
-}, 300, { leading: true, trailing: false }); // 修改防抖配置，确保第一次调用立即执行
+	return Promise.resolve(cachedData.data);
+}, 300, { leading: true, trailing: false });
 
 // 预览个性化推荐
 export const getPreviewRecommendationsAPI = () => {

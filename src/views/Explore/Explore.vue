@@ -100,25 +100,32 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 	const MAX_RETRIES = 3;
 	const RETRY_DELAY = 1000;
 	
-	if (loading.value) return; // 防止重复请求
+	if (loading.value) return;
 	
 	loading.value = true;
 	error.value = null;
 	
 	try {
-		// 等待组件挂载
 		await nextTick();
 		
-		const response = await getPersonalizedRecommendationsAPI(1, pageSize.value);
+		// 添加 forceRefresh 参数，当有 refresh 查询参数时强制刷新
+		const forceRefresh = route.query.refresh === 'true';
+		const response = await getPersonalizedRecommendationsAPI(1, pageSize.value, forceRefresh);
 		
-		// 处理响应数据
 		if (response?.code === 0 && response?.data?.list) {
 			recommendations.value = response.data.list;
 			total.value = response.data.total || 0;
 			hasMore.value = recommendations.value.length < (response.data.total || 0);
 			currentPage.value = response.data.pageNum || 1;
+			
+			// 重新设置观察器
+			nextTick(() => {
+				createObserver();
+				if (loadTrigger.value && hasMore.value) {
+					observer?.observe(loadTrigger.value);
+				}
+			});
 		} else {
-			console.warn('Invalid response structure:', response);
 			throw new Error('数据格式错误');
 		}
 	} catch (err) {
@@ -156,7 +163,7 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 	}
 };
 
-// 添加路由参数监听
+// 修改路由参数监听
 watch(
 	() => route.query.refresh,
 	async (newVal) => {
@@ -166,6 +173,13 @@ watch(
 			replace({ 
 				...route,
 				query: {} 
+			});
+			// 确保在清除参数后重新设置观察器
+			nextTick(() => {
+				if (loadTrigger.value && hasMore.value) {
+					createObserver();
+					observer?.observe(loadTrigger.value);
+				}
 			});
 		}
 	},
@@ -241,10 +255,9 @@ const loadMore = async () => {
 	isLoading.value = true;
 	try {
 		const nextPage = currentPage.value + 1;
-		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value);
+		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value, false);
 		
 		if (response.code === 0 && response.data && response.data.list.length > 0) {
-			// 添加最小加载时间
 			await new Promise(resolve => setTimeout(resolve, 800));
 			
 			await nextTick(() => {
@@ -254,9 +267,10 @@ const loadMore = async () => {
 				total.value = response.data.total;
 			});
 			
-			// 重新设置观察器
+			// 确保在加载更多后重新设置观察器
 			nextTick(() => {
 				if (loadTrigger.value && hasMore.value) {
+					createObserver();
 					observer?.observe(loadTrigger.value);
 				}
 			});
@@ -308,6 +322,10 @@ onUnmounted(() => {
 		observer.disconnect();
 		observer = null;
 	}
+	// 重置相关状态
+	hasMore.value = true;
+	currentPage.value = 1;
+	recommendations.value = [];
 });
 </script>
 
