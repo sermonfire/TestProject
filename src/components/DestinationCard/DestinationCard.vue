@@ -115,8 +115,10 @@ let hoverStartTime = null;
 
 const handleNameHover = () => {
   isHoveringName.value = true;
+  if (isFlipped.value) return;
+  
   hoverStartTime = Date.now();
-  if (flipTimer) clearTimeout(flipTimer);
+  if (flipTimer) clearInterval(flipTimer);
   
   flipTimer = setInterval(() => {
     if (isHoveringName.value && Date.now() - hoverStartTime >= 2000) {
@@ -133,16 +135,15 @@ const handleNameLeave = () => {
     clearInterval(flipTimer);
     flipTimer = null;
   }
-  isFlipped.value = false;
 };
 
 const handleCardLeave = () => {
   isHoveringName.value = false;
+  isFlipped.value = false;
   if (flipTimer) {
     clearInterval(flipTimer);
     flipTimer = null;
   }
-  isFlipped.value = false;
 };
 
 const handleCollectionChange = (isCollected) => {
