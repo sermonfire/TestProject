@@ -100,3 +100,18 @@ export const getPreviewRecommendationsAPI = () => {
 		needToken: true
 	});
 };
+
+// 获取搜索结果
+export const getSearchResultsAPI = ({ query, tags, pageNum = 1, pageSize = 10 }) => {
+	return request({
+		url: 'dev-api/recommend/search',
+		method: 'GET',
+		params: {
+			query,
+			tags: tags.join(','),
+			pageNum,
+			pageSize
+		},
+		needToken: true
+	});
+};

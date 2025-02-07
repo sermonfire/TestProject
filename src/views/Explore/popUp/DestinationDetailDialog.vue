@@ -43,6 +43,8 @@
                 v-for="(tag, index) in destination?.tags" 
                 :key="index" 
                 class="tag"
+                @click="handleTagClick(tag)"
+                :class="{ 'tag-clicked': clickedTags[index] }"
               >{{ tag }}</span>
             </div>
 
@@ -136,6 +138,8 @@
 
 <script setup>
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: {
@@ -152,7 +156,8 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'close', 'similar-click']);
+const router = useRouter();
+const emit = defineEmits(['update:modelValue', 'close', 'similar-click', 'tag-click']);
 
 const handleClose = () => {
   emit('update:modelValue', false);
@@ -331,6 +336,31 @@ watch(() => props.similarDestinations, (newVal) => {
   });
   isLoadingMap.value = loadingState;
 }, { immediate: true });
+
+// 处理标签点击
+const clickedTags = ref({});
+
+const handleTagClick = (tag) => {
+  emit('tag-click', tag);
+  // 找到被点击的标签索引
+  const index = props.destination?.tags.findIndex(t => t === tag);
+  if (index !== -1) {
+    clickedTags.value[index] = true;
+    // 显示提示消息
+    ElMessage({
+      message: `已将"${tag}"添加到搜索栏`,
+      type: 'success',
+      duration: 2000,
+      // 自定义样式
+      customClass: 'tag-added-message',
+      offset: 60
+    });
+    // 1秒后重置点击状态
+    setTimeout(() => {
+      clickedTags.value[index] = false;
+    }, 1000);
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -468,11 +498,29 @@ watch(() => props.similarDestinations, (newVal) => {
     margin-bottom: 24px;
 
     .tag {
-      background: rgba(33, 150, 243, 0.1);
-      color: #2196f3;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 14px;
+      background-color: #f5f5f5;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #666;
+      margin: 4px;
+      display: inline-block;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &:hover {
+        background-color: var(--el-color-primary-light-8);
+        color: var(--el-color-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.2);
+      }
+      
+      &.tag-clicked {
+        background-color: var(--el-color-primary);
+        color: white;
+        transform: scale(0.95);
+        pointer-events: none;
+      }
     }
   }
 
@@ -682,6 +730,31 @@ watch(() => props.similarDestinations, (newVal) => {
     transform: translate(-50%, -50%);
     color: #999;
     font-size: 14px;
+  }
+}
+</style>
+
+<style>
+/* 全局样式 - 自定义 ElMessage 样式 */
+.tag-added-message {
+  background: rgba(var(--el-color-success-rgb), 0.9) !important;
+  border-width: 0 !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  min-width: 240px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(8px) !important;
+  
+  .el-message__content {
+    color: white !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+  }
+  
+  .el-message__icon {
+    color: white !important;
+    font-size: 18px !important;
+    margin-right: 10px !important;
   }
 }
 </style> 

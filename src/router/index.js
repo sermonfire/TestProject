@@ -29,6 +29,13 @@ const routes = [
         meta: {
           requiresAuth: true,
         },
+        children: [
+          {
+            path: 'search',
+            name: 'searchResults',
+            component: () => import('@/views/Explore/SearchResults.vue'),
+          }
+        ]
       },
       {
         path: 'about',

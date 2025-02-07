@@ -1,7 +1,7 @@
 <template>
 	<div class="explore-container">
 		<!-- 搜索栏 -->
-		<SearchBar @search="handleSearch" />
+		<SearchBar ref="searchBarRef" @search="handleSearch" />
 
 		<!-- 内容区域 -->
 		<div class="content-wrapper">
@@ -49,7 +49,7 @@
 		<!-- 目的地详情弹窗 -->
 		<DestinationDetailDialog v-model="showDetailDialog" :destination="selectedDestination"
 			:similar-destinations="similarDestinations" @close="closeDetailDialog"
-			@similar-click="handleDestinationClick" />
+			@similar-click="handleDestinationClick" @tag-click="handleTagClick" />
 	</div>
 </template>
 
@@ -86,6 +86,8 @@ const pageSize = ref(10);
 // 新增 loadTrigger ref
 const loadTrigger = ref(null);
 let observer = null;
+
+const searchBarRef = ref(null);
 
 // 修改获取推荐数据的函数
 const fetchAllRecommendations = async (retryCount = 0) => {
@@ -201,10 +203,22 @@ const closeDetailDialog = () => {
 	similarDestinations.value = [];
 };
 
+// 处理标签点击
+const handleTagClick = (tag) => {
+	if (searchBarRef.value) {
+		searchBarRef.value.addTag(tag);
+	}
+};
+
 // 处理搜索
-const handleSearch = (query) => {
-	// TODO: 实现搜索逻辑
-	console.log('Searching for:', query);
+const handleSearch = ({ query, tags }) => {
+	router.push({
+		name: 'searchResults',
+		query: {
+			q: query,
+			tags: tags.join(',')
+		}
+	});
 };
 
 // 修改加载更多函数
