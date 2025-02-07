@@ -24,17 +24,19 @@
           </div>
         </div>
         <div class="destination-info">
-          <h3>{{ destination.name }}</h3>
-          <div class="rating-row">
-            <el-rate 
-              v-model="destination.rating" 
-              disabled 
-              show-score 
-              text-color="#ff9900"
-              score-template="{value}"
-            />
+          <div class="info-header">
+            <h3 class="destination-name">{{ destination.name }}</h3>
+            <div class="rating-row">
+              <el-rate 
+                v-model="destination.rating" 
+                disabled 
+                show-score 
+                text-color="#ff9900"
+                score-template="{value}"
+              />
+            </div>
           </div>
-          <div class="tags">
+          <div class="tags-wrapper">
             <el-tag 
               v-for="tag in destination.tags.slice(0, 3)" 
               :key="tag" 
@@ -49,8 +51,13 @@
       </div>
       <div class="card-back">
         <div class="back-content">
-          <h3>{{ destination.name }}</h3>
-          <p class="description">{{ destination.description || '暂无描述' }}</p>
+          <div class="back-header">
+            <h3>{{ destination.name }}</h3>
+            <div class="divider"></div>
+          </div>
+          <div class="description-wrapper">
+            <p class="description">{{ destination.description || '暂无描述' }}</p>
+          </div>
           <div class="action-btn">了解更多</div>
         </div>
       </div>
@@ -135,44 +142,65 @@ const stopRotation = () => {
         align-items: center;
         text-align: center;
 
-        h3 {
-          font-size: 24px;
-          color: var(--el-color-primary);
+        .back-header {
+          text-align: center;
           margin-bottom: 20px;
-        }
 
-        .description {
-          flex: 1;
-          color: #666;
-          margin: 20px 0;
-          font-size: 16px;
-          line-height: 1.6;
-          overflow-y: auto;
-          padding: 0 10px;
-
-          &::-webkit-scrollbar {
-            width: 6px;
+          h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--el-color-primary);
+            margin-bottom: 12px;
           }
 
-          &::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
+          .divider {
+            width: 40px;
+            height: 3px;
+            background: var(--el-color-primary);
+            margin: 0 auto;
+            border-radius: 2px;
+          }
+        }
+
+        .description-wrapper {
+          flex: 1;
+          overflow-y: auto;
+          margin: 20px 0;
+          padding: 0 4px;
+
+          .description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+            text-align: justify;
+            margin: 0;
+            
+            &::-webkit-scrollbar {
+              width: 4px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+              background-color: var(--el-color-primary-light-5);
+              border-radius: 2px;
+            }
           }
         }
 
         .action-btn {
-          margin-top: 20px;
-          padding: 12px 30px;
+          margin-top: 24px;
+          padding: 10px 28px;
           background: var(--el-color-primary);
           color: white;
           border-radius: 25px;
-          font-size: 16px;
+          font-size: 15px;
+          font-weight: 500;
           transition: all 0.3s ease;
-          cursor: pointer;
-
+          box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.2);
+          
           &:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
+            box-shadow: 0 6px 16px rgba(var(--el-color-primary-rgb), 0.3);
+            background: var(--el-color-primary-dark-2);
           }
         }
       }
@@ -248,6 +276,64 @@ const stopRotation = () => {
   }
   100% {
     transform: rotateY(360deg);
+  }
+}
+
+.destination-info {
+  padding: 16px;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+
+  .info-header {
+    margin-bottom: 12px;
+
+    .destination-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--el-color-primary-dark-2);
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+  }
+
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    :deep(.el-rate) {
+      height: 20px;
+      line-height: 20px;
+    }
+  }
+
+  .tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .destination-tag {
+      padding: 0 12px;
+      height: 24px;
+      line-height: 24px;
+      border-radius: 12px;
+      font-size: 12px;
+      background-color: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary-light-8);
+      color: var(--el-color-primary);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        background-color: var(--el-color-primary-light-8);
+      }
+    }
   }
 }
 </style> 
