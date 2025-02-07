@@ -237,9 +237,13 @@ const loadMore = async () => {
 			hasMore.value = false;
 		}
 	} catch (err) {
-		console.error('Load more error:', err);
-		ElMessage.error('加载更多失败，请稍后重试');
-		hasMore.value = false;
+		// console.error('Load more error:', err);
+		if(err.response.status === 401){
+			// ElMessage.error('登录已过期，即将前往登录页');
+			ElMessage.error('登录似乎过期了!');
+			hasMore.value = false;
+		}
+		
 	} finally {
 		setTimeout(() => {
 			isLoading.value = false;

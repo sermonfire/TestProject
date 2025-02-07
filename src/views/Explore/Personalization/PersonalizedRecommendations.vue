@@ -2,7 +2,7 @@
   <div v-if="recommendations?.length" class="section">
     <div class="section-header">
       <span class="section-title">为你推荐</span>
-      <span class="section-subtitle">根据你的偏好精选</span>
+      <span class="section-subtitle">根据你的偏好精选({{ recommendations.length }})</span>
     </div>
     <div class="recommendations-grid">
       <div v-for="item in recommendations" :key="item.id" class="destination-card" @click="handleDestinationClick(item)">
