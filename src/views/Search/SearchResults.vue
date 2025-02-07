@@ -13,6 +13,9 @@
     </div>
 
     <div class="search-results">
+      <!-- 添加面包屑导航 -->
+      <Breadcrumb />
+
       <!-- 搜索信息区域 -->
       <div class="search-info">
         <div class="search-header">
@@ -125,6 +128,7 @@ import { ElMessage } from 'element-plus';
 import { Loading, CircleClose, ArrowLeft, Picture } from '@element-plus/icons-vue';
 import PersonalizedRecommendations from '../Explore/Personalization/PersonalizedRecommendations.vue';
 import SearchBar from '@/components/Search/SearchBar.vue';
+import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -256,6 +260,11 @@ watch(
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  padding: 20px;
+
+  :deep(.breadcrumb) {
+    margin-bottom: 20px;
+  }
 
   .search-info {
     padding: 24px 32px;

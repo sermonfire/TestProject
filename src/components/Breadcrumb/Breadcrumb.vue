@@ -33,7 +33,8 @@ const routeMap = {
   exploredetail2: { title: '探索详情2' },
   favorites: { title: '偏好设置' },
   about: { title: '关于' },
-  userInfo: { title: '用户信息' }
+  userInfo: { title: '用户信息' },
+  searchResults: { title: '搜索结果' }
 }
 
 // 监听路由变化更新面包屑
