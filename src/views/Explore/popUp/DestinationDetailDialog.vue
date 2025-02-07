@@ -55,7 +55,10 @@
                 class="tag"
                 @click="handleTagClick(tag)"
                 :class="{ 'tag-clicked': clickedTags[index] }"
-              >{{ tag }}</span>
+              >
+                <el-icon class="tag-icon"><Plus /></el-icon>
+                <span class="tag-text">{{ tag }}</span>
+              </span>
             </div>
 
             <div class="detail-description">
@@ -150,7 +153,7 @@
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Picture, Loading } from '@element-plus/icons-vue';
+import { Picture, Loading, Plus } from '@element-plus/icons-vue';
 
 const props = defineProps({
   modelValue: {
@@ -560,25 +563,96 @@ const handleTagClick = (tag) => {
     margin-bottom: 24px;
 
     .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       background-color: #f5f5f5;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
       color: #666;
+      cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        background: var(--el-color-primary);
+        border-radius: inherit;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.1;
+        transition: transform 0.3s ease;
+      }
+      
+      .tag-icon {
+        font-size: 12px;
+        transition: transform 0.3s ease;
+        color: #909399;
+      }
+      
+      .tag-text {
+        position: relative;
+        z-index: 1;
+      }
       
       &:hover {
-        background-color: var(--el-color-primary-light-8);
+        background-color: #fff;
         color: var(--el-color-primary);
+        border-color: var(--el-color-primary-light-5);
         transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.2);
+        box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.15);
+        
+        &::before {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        
+        .tag-icon {
+          transform: rotate(180deg);
+          color: var(--el-color-primary);
+        }
+      }
+      
+      &:active {
+        transform: translateY(0) scale(0.95);
       }
       
       &.tag-clicked {
+        animation: tag-pulse 0.5s ease;
         background-color: var(--el-color-primary);
         color: white;
+        border-color: transparent;
         transform: scale(0.95);
+        pointer-events: none;
+        
+        .tag-icon {
+          transform: rotate(180deg) scale(0);
+          opacity: 0;
+        }
+        
+        &::before {
+          display: none;
+        }
       }
+    }
+  }
+
+  @keyframes tag-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(var(--el-color-primary-rgb), 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(var(--el-color-primary-rgb), 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(var(--el-color-primary-rgb), 0);
     }
   }
 
