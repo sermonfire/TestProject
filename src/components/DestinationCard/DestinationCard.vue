@@ -46,7 +46,7 @@
               {{ destination.name }}
               <div class="hover-tip">
                 <el-icon><ArrowRight /></el-icon>
-                <span>翻转简介</span>
+                <span>2s后翻转</span>
               </div>
             </h3>
             <div class="rating-row">
@@ -442,15 +442,16 @@ onUnmounted(() => {
           left: 8px;
           width: calc(100% - 16px);
           height: 2px;
-          background: linear-gradient(to right, 
-            var(--el-color-primary) 0%, 
-            var(--el-color-primary) 0%, 
-            var(--el-color-primary-light-7) 0%, 
+          background: linear-gradient(to right,
+            var(--el-color-primary) 0%,
+            var(--el-color-primary) 50%,
+            var(--el-color-primary-light-7) 50%,
             var(--el-color-primary-light-7) 100%
           );
-          transition: all 2s linear;
+          background-size: 200% 100%;
           border-radius: 1px;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          animation: none;
         }
 
         &::before {
@@ -472,12 +473,7 @@ onUnmounted(() => {
         opacity: 1;
 
         &::after {
-          background: linear-gradient(to right, 
-            var(--el-color-primary) 0%, 
-            var(--el-color-primary) 100%, 
-            var(--el-color-primary-light-7) 100%, 
-            var(--el-color-primary-light-7) 100%
-          );
+          animation: progressFlow 2s linear forwards;
         }
 
         &::before {
@@ -542,6 +538,15 @@ onUnmounted(() => {
         background-color: var(--el-color-primary-light-9);
       }
     }
+  }
+}
+
+@keyframes progressFlow {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
   }
 }
 </style> 
