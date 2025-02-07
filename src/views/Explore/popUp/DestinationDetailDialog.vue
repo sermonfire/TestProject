@@ -4,7 +4,15 @@
       <div class="dialog-container" @click.stop>
         <div class="dialog-header">
           <h2 class="dialog-title">{{ destination?.name }}</h2>
-          <button class="close-button" @click="handleClose">×</button>
+          <div class="header-actions">
+            <CollectionButton
+              :item-id="destination?.id"
+              :initial-state="destination?.isCollected"
+              class="detail-collection-btn"
+              @collection-change="handleCollectionChange"
+            />
+            <button class="close-button" @click="handleClose">×</button>
+          </div>
         </div>
         
         <div class="detail-content">
@@ -35,15 +43,21 @@
           <div class="detail-info-section">
             <div class="detail-meta">
               <div class="meta-item">
-                <span class="icon">⭐</span>
+                <el-icon class="icon">
+                  <Star />
+                </el-icon>
                 <span>{{ destination?.rating }} 分</span>
               </div>
               <div class="meta-item">
-                <span class="icon">📅</span>
+                <el-icon class="icon">
+                  <Calendar />
+                </el-icon>
                 <span>建议游玩 {{ destination?.recommendedDuration }}</span>
               </div>
               <div class="meta-item">
-                <span class="icon">💰</span>
+                <el-icon class="icon">
+                  <Wallet />
+                </el-icon>
                 <span>人均 ¥{{ destination?.averageBudget }}/天</span>
               </div>
             </div>
@@ -153,7 +167,15 @@
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Picture, Loading, Plus } from '@element-plus/icons-vue';
+import { 
+  Picture, 
+  Loading, 
+  Plus, 
+  Star,
+  Calendar,
+  Wallet
+} from '@element-plus/icons-vue';
+import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 
 const props = defineProps({
   modelValue: {
@@ -375,6 +397,16 @@ const handleTagClick = (tag) => {
     }, 1000);
   }
 };
+
+// 添加收藏处理函数
+const handleCollectionChange = (isCollected) => {
+  ElMessage({
+    type: 'success',
+    message: isCollected ? '已添加到收藏' : '已取消收藏',
+    duration: 2000,
+    customClass: 'collection-message'
+  });
+};
 </script>
 
 <style lang="scss" scoped>
@@ -417,41 +449,71 @@ const handleTagClick = (tag) => {
 
 .dialog-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid #ebeef5;
-  position: relative;
+  background: linear-gradient(to right, #fff, #f8f9fa);
 }
 
 .dialog-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
-  color: #333;
+  color: #2c3e50;
   margin: 0;
-  flex: 1;
-  text-align: center;
+  background: linear-gradient(45deg, #2c3e50, #3498db);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-collection-btn {
+  :deep(.el-button) {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      background-color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    &.is-collected {
+      background-color: #f56c6c;
+      box-shadow: 0 2px 8px rgba(245, 108, 108, 0.4);
+      
+      &:hover {
+        background-color: #e64242;
+        box-shadow: 0 4px 12px rgba(245, 108, 108, 0.5);
+      }
+    }
+  }
 }
 
 .close-button {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
   font-size: 24px;
   color: #909399;
   cursor: pointer;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
   
   &:hover {
-    color: #333;
+    color: #f56c6c;
+    background-color: rgba(245, 108, 108, 0.1);
+    transform: rotate(90deg);
   }
 }
 
@@ -481,17 +543,34 @@ const handleTagClick = (tag) => {
 .image-container {
   position: relative;
   width: 100%;
-  height: 240px;
+  height: 280px;
   background: #f5f5f5;
   overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.2),
+      transparent 50%,
+      rgba(0, 0, 0, 0.1)
+    );
+    pointer-events: none;
+  }
   
   .detail-image {
     width: 100%;
     height: 100%;
-    transition: transform 0.3s ease;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     
     &:hover {
       transform: scale(1.05);
+      filter: brightness(1.05);
     }
   }
   
@@ -534,24 +613,34 @@ const handleTagClick = (tag) => {
 
 .detail-info-section {
   padding: 24px;
+  background: linear-gradient(to bottom, #fff, #f8f9fa);
 
   .detail-meta {
     display: flex;
     justify-content: space-between;
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 12px;
+    background: linear-gradient(45deg, #f8f9fa, #fff);
+    padding: 20px;
+    border-radius: 16px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 
     .meta-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #666;
+      color: #2c3e50;
+      font-weight: 500;
       
       .icon {
-        font-size: 18px;
+        font-size: 20px;
+        color: var(--el-color-primary);
+        background: none;
+        -webkit-background-clip: initial;
+        
+        &.is-loading {
+          animation: rotating 2s linear infinite;
+        }
       }
     }
   }
@@ -864,6 +953,20 @@ const handleTagClick = (tag) => {
     color: white !important;
     font-size: 18px !important;
     margin-right: 10px !important;
+  }
+}
+
+.collection-message {
+  background: linear-gradient(45deg, #f56c6c, #e64242) !important;
+  border: none !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
+  
+  .el-message__content {
+    color: white !important;
+    font-weight: 500 !important;
   }
 }
 </style> 
