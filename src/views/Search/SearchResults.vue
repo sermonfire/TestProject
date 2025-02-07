@@ -16,7 +16,7 @@
       <!-- 搜索信息区域 -->
       <div class="search-info">
         <div class="search-header">
-          <h2>搜索结果</h2>
+        <h2>搜索结果</h2>
           <span class="search-count">共找到 {{ results.length }} 个目的地</span>
         </div>
         <div v-if="searchTags.length" class="tags-container">
@@ -61,48 +61,52 @@
             @mouseleave="stopRotation(destination.id)"
           >
             <div class="card-inner" :class="{ 'is-rotating': rotatingCards[destination.id] }">
-              <div class="image-wrapper">
-                <el-image 
-                  :src="destination.imageUrl" 
-                  fit="cover" 
-                  class="destination-image"
-                >
-                  <template #placeholder>
-                    <div class="image-placeholder">
-                      <el-icon><Picture /></el-icon>
-                    </div>
-                  </template>
-                  <template #error>
-                    <div class="image-placeholder">
-                      <el-icon><Picture /></el-icon>
-                    </div>
-                  </template>
-                </el-image>
-                <div class="image-overlay">
-                  <span class="view-details">查看详情</span>
+              <div class="card-front">
+                <div class="image-wrapper">
+                  <el-image 
+                    :src="destination.imageUrl" 
+                    fit="cover" 
+                    class="destination-image"
+                  >
+                    <template #error>
+                      <div class="image-placeholder">
+                        <el-icon><Picture /></el-icon>
+                      </div>
+                    </template>
+                  </el-image>
+                  <div class="image-overlay">
+                    <span class="view-details">查看详情</span>
+                  </div>
+                </div>
+                <div class="destination-info">
+                  <h3>{{ destination.name }}</h3>
+                  <div class="rating-row">
+                    <el-rate 
+                      v-model="destination.rating" 
+                      disabled 
+                      show-score 
+                      text-color="#ff9900"
+                      score-template="{value}"
+                    />
+                  </div>
+                  <div class="tags">
+                    <el-tag 
+                      v-for="tag in destination.tags.slice(0, 3)" 
+                      :key="tag" 
+                      size="small" 
+                      effect="plain"
+                      class="destination-tag"
+                    >
+                      {{ tag }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
-              <div class="destination-info">
-                <h3>{{ destination.name }}</h3>
-                <div class="rating-row">
-                  <el-rate 
-                    v-model="destination.rating" 
-                    disabled 
-                    show-score 
-                    text-color="#ff9900"
-                    score-template="{value}"
-                  />
-                </div>
-                <div class="tags">
-                  <el-tag 
-                    v-for="tag in destination.tags.slice(0, 3)" 
-                    :key="tag" 
-                    size="small" 
-                    effect="plain"
-                    class="destination-tag"
-                  >
-                    {{ tag }}
-                  </el-tag>
+              <div class="card-back">
+                <div class="back-content">
+                  <h3>{{ destination.name }}</h3>
+                  <p class="description">{{ destination.description || '暂无描述' }}</p>
+                  <div class="action-btn">了解更多</div>
                 </div>
               </div>
             </div>
@@ -265,7 +269,7 @@ watch(
 
       h2 {
         font-size: 28px;
-        color: #333;
+      color: #333;
         font-weight: 600;
         margin: 0;
       }
@@ -283,7 +287,7 @@ watch(
       gap: 12px;
       
       .tags-label {
-        color: #666;
+      color: #666;
         font-size: 14px;
       }
       
@@ -346,29 +350,24 @@ watch(
 
   .results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
     animation: fadeIn 0.3s ease;
   }
 
   .destination-card {
     cursor: pointer;
-    transition: all 0.3s ease;
     perspective: 1500px;
     transform-style: preserve-3d;
-
-    &:hover {
-      transform: translateY(-5px);
-      
-      .image-overlay {
-        opacity: 1;
-      }
-    }
+    min-height: 400px;
+    margin-bottom: 20px;
 
     .card-inner {
       position: relative;
       width: 100%;
       height: 100%;
+      min-height: 400px;
       transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
       transform-style: preserve-3d;
       transform-origin: center center;
@@ -377,92 +376,96 @@ watch(
         animation: rotate3D 1.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .image-wrapper,
-      .destination-info {
+      .card-front,
+      .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        min-height: 400px;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
       }
 
-      .image-wrapper {
-        position: relative;
-        overflow: hidden;
-        border-radius: 8px 8px 0 0;
-        transform: translateZ(1px);
+      .card-front {
+        transform: rotateY(0deg);
 
-        .destination-image {
-          width: 100%;
-          height: 200px;
-          object-fit: cover;
-          transition: transform 0.3s ease;
-        }
+        .image-wrapper {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px 12px 0 0;
+          height: 220px;
 
-        .image-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-
-          .view-details {
-            color: white;
-            font-size: 16px;
-            padding: 8px 16px;
-            border: 2px solid white;
-            border-radius: 20px;
+          .destination-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
         }
 
-        .image-placeholder {
-          width: 100%;
+        .destination-info {
+          flex: 1;
+          padding: 20px;
+          background: #fff;
+          border-radius: 0 0 12px 12px;
+        }
+      }
+
+      .card-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(135deg, var(--el-color-primary-light-9), #fff);
+
+        .back-content {
+          padding: 24px;
           height: 100%;
           display: flex;
+          flex-direction: column;
+          justify-content: space-between;
           align-items: center;
-          justify-content: center;
-          background-color: #f5f5f5;
-          color: #999;
-          font-size: 48px;
-          transition: all 0.3s ease;
+          text-align: center;
 
-          .el-icon {
-            opacity: 0.5;
+          h3 {
+            font-size: 24px;
+            color: var(--el-color-primary);
+            margin-bottom: 20px;
           }
-        }
-      }
 
-      .destination-info {
-        padding: 16px;
-        transform: translateZ(0);
+          .description {
+            flex: 1;
+            color: #666;
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-y: auto;
+            padding: 0 10px;
 
-        h3 {
-          margin: 0 0 12px;
-          font-size: 18px;
-          color: #333;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+            &::-webkit-scrollbar {
+              width: 6px;
+            }
 
-        .rating-row {
-          margin-bottom: 12px;
-        }
+            &::-webkit-scrollbar-thumb {
+              background-color: rgba(0, 0, 0, 0.1);
+              border-radius: 3px;
+            }
+          }
 
-        .tags {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
+          .action-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--el-color-primary);
+            color: white;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
 
-          .destination-tag {
-            border-radius: 12px;
-            padding: 0 12px;
-            
             &:hover {
-              color: var(--el-color-primary);
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
             }
           }
         }
@@ -564,6 +567,65 @@ watch(
     
     .results-container {
       padding: 16px;
+    }
+  }
+}
+
+.image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+  height: 220px;
+
+  .destination-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    color: #999;
+    font-size: 24px;
+
+    .el-icon {
+      font-size: 48px;
+    }
+  }
+
+  .image-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+
+    .view-details {
+      color: white;
+      font-size: 16px;
+      padding: 10px 24px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 25px;
+      backdrop-filter: blur(8px);
+      transform: translateY(20px) scale(0.9);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(0) scale(1.05);
+      }
     }
   }
 }
