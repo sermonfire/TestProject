@@ -6,13 +6,21 @@
       circle
       @click.stop="toggleCollection"
       :class="{ 'is-collected': isCollected }"
-    />
+    >
+      <template #icon>
+        <el-icon :size="24">
+          <Star v-if="isCollected" />
+          <StarFilled v-else />
+        </el-icon>
+      </template>
+    </el-button>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Star, StarFilled } from '@element-plus/icons-vue';
 
 const props = defineProps({
   itemId: {
@@ -49,31 +57,53 @@ const toggleCollection = () => {
 <style lang="scss" scoped>
 .collection-button {
   .el-button {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     padding: 8px;
     transition: all 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(185, 177, 177, 0.9);
     border: none;
     backdrop-filter: blur(4px);
     
+    :deep(.el-icon) {
+      font-size: 20px;
+      transition: all 0.3s ease;
+      color: #ffffff;
+    }
+    
     &.is-collected {
-      transform: scale(1.1);
-      background-color: var(--el-color-danger-light-9);
+      transform: scale(1.2);
+      background-color: #f56c6c;
+      box-shadow: 0 2px 8px rgba(245, 108, 108, 0.4);
       
       &:hover {
-        background-color: var(--el-color-danger-light-8);
+        background-color: #e64242;
         transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(245, 108, 108, 0.5);
+        
+        :deep(.el-icon) {
+          transform: scale(1.1);
+        }
       }
     }
     
     &:hover {
       transform: scale(1.1);
-      background-color: rgba(255, 255, 255, 1);
+      background-color: #f56c6c;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      
+      :deep(.el-icon) {
+        transform: scale(1.1);
+      }
     }
     
     &:active {
-      transform: scale(0.95);
+      transform: scale(1.05);
+      background-color: #e64242;
+      
+      :deep(.el-icon) {
+        transform: scale(0.95);
+      }
     }
   }
 }
