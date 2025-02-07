@@ -5,9 +5,12 @@
     @mouseenter="startRotation"
     @mouseleave="stopRotation"
   >
-    <div class="card-inner" :class="{ 'is-rotating': isRotating }">
+    <div class="card-inner" :class="{ 'is-rotating': isRotating, 'is-flipped': isFlipped }">
       <div class="card-front">
-        <div class="image-wrapper">
+        <div class="image-wrapper"
+          @mouseenter="handleImageHover"
+          @mouseleave="handleImageLeave"
+        >
           <el-image 
             :src="destination.imageUrl" 
             fit="cover" 
@@ -19,7 +22,7 @@
               </div>
             </template>
           </el-image>
-          <div class="image-overlay">
+          <div class="image-overlay" :class="{ 'hide-overlay': isHoveringButton }">
             <span class="view-details">查看详情</span>
           </div>
           <div class="collection-wrapper">
@@ -28,6 +31,8 @@
               :initial-state="destination.isCollected"
               @collection-change="handleCollectionChange"
               @click.stop
+              @mouseenter="handleButtonHover"
+              @mouseleave="handleButtonLeave"
             />
           </div>
           <div class="actions-wrapper">
@@ -47,16 +52,19 @@
               />
             </div>
           </div>
-          <div class="tags-wrapper">
-            <el-tag 
-              v-for="tag in destination.tags.slice(0, 3)" 
-              :key="tag" 
-              size="small" 
-              effect="plain"
-              class="destination-tag"
-            >
-              {{ tag }}
-            </el-tag>
+          <div class="info-content">
+            <div class="tags-wrapper">
+              <el-tag 
+                v-for="tag in destination.tags.slice(0, 3)" 
+                :key="tag" 
+                size="small" 
+                effect="plain"
+                class="destination-tag"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+            <span class="view-more">查看详情</span>
           </div>
         </div>
       </div>
@@ -91,6 +99,9 @@ const props = defineProps({
 const emit = defineEmits(['cardClick', 'collection-change']);
 
 const isRotating = ref(false);
+const isFlipped = ref(false);
+const isHoveringButton = ref(false);
+const isHoveringImage = ref(false);
 
 const startRotation = () => {
   isRotating.value = true;
@@ -102,6 +113,23 @@ const stopRotation = () => {
 
 const handleCollectionChange = (isCollected) => {
   emit('collection-change', { id: props.destination.id, isCollected });
+};
+
+const handleButtonHover = () => {
+  isHoveringButton.value = true;
+};
+
+const handleButtonLeave = () => {
+  isHoveringButton.value = false;
+};
+
+const handleImageHover = () => {
+  isHoveringImage.value = true;
+};
+
+const handleImageLeave = () => {
+  isHoveringImage.value = false;
+  isHoveringButton.value = false;
 };
 </script>
 
@@ -254,7 +282,7 @@ const handleCollectionChange = (isCollected) => {
   .image-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -262,16 +290,16 @@ const handleCollectionChange = (isCollected) => {
     transition: all 0.3s ease;
     transform-style: preserve-3d;
     backface-visibility: hidden;
-
+    
     .view-details {
       color: white;
-      font-size: 16px;
-      padding: 10px 24px;
+      font-size: 15px;
+      padding: 8px 20px;
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 25px;
+      border-radius: 20px;
       backdrop-filter: blur(8px);
-      transform: translateY(20px) scale(0.9);
+      transform: translateY(20px);
       opacity: 0;
       transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
       
@@ -279,6 +307,11 @@ const handleCollectionChange = (isCollected) => {
         background: rgba(255, 255, 255, 0.25);
         transform: translateY(0) scale(1.05);
       }
+    }
+
+    &.hide-overlay {
+      opacity: 0 !important;
+      pointer-events: none;
     }
   }
 
@@ -301,9 +334,13 @@ const handleCollectionChange = (isCollected) => {
   }
 
   &:hover {
-    .actions-wrapper {
+    .image-overlay {
       opacity: 1;
-      transform: translateY(0);
+      
+      .view-details {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   }
 }
@@ -321,59 +358,87 @@ const handleCollectionChange = (isCollected) => {
 }
 
 .destination-info {
-  padding: 16px;
+  padding: 20px;
   background: #fff;
   border-radius: 0 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 
   .info-header {
-    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
 
     .destination-name {
-      font-size: 20px;
+      flex: 1;
+      font-size: 18px;
       font-weight: 600;
       color: var(--el-color-primary-dark-2);
-      margin: 0 0 8px 0;
+      margin: 0;
       line-height: 1.4;
       overflow: hidden;
       text-overflow: ellipsis;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
-      line-clamp: 2;
+    }
+
+    .rating-row {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      :deep(.el-rate) {
+        height: 18px;
+        line-height: 18px;
+      }
     }
   }
 
-  .rating-row {
+  .info-content {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
 
-    :deep(.el-rate) {
-      height: 20px;
-      line-height: 20px;
+    .tags-wrapper {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 22px;
+
+      .destination-tag {
+        padding: 0 10px;
+        height: 22px;
+        line-height: 22px;
+        border-radius: 11px;
+        font-size: 12px;
+        background-color: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary-light-8);
+        color: var(--el-color-primary);
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          background-color: var(--el-color-primary-light-8);
+        }
+      }
     }
-  }
 
-  .tags-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-
-    .destination-tag {
-      padding: 0 12px;
-      height: 24px;
-      line-height: 24px;
-      border-radius: 12px;
-      font-size: 12px;
-      background-color: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary-light-8);
+    .view-more {
+      flex-shrink: 0;
+      font-size: 13px;
       color: var(--el-color-primary);
+      padding: 4px 12px;
+      border-radius: 4px;
       transition: all 0.3s ease;
-
+      
       &:hover {
-        transform: translateY(-2px);
-        background-color: var(--el-color-primary-light-8);
+        background-color: var(--el-color-primary-light-9);
       }
     }
   }
