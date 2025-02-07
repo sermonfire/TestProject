@@ -28,18 +28,18 @@ const routes = [
         component: () => import('@/views/Explore/Explore.vue'),
         meta: {
           requiresAuth: true,
+        }
+      },
+      {
+        path: 'search',
+        name: 'searchResults',
+        component: () => import('@/views/Search/SearchResults.vue'),
+        meta: {
+          requiresAuth: true,
         },
-        children: [
-          {
-            path: 'search',
-            name: 'searchResults',
-            component: () => import('@/views/Explore/SearchResults.vue'),
-            props: (route) => ({
-              query: route.query.q,
-              tags: route.query.tags
-            })
-          }
-        ]
+        props: (route) => ({
+          tags: route.query.tags ? route.query.tags.split(',').filter(Boolean) : []
+        })
       },
       {
         path: 'about',

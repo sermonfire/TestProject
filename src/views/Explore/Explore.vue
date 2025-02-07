@@ -1,7 +1,7 @@
 <template>
 	<div class="explore-container">
 		<!-- 搜索栏 -->
-		<SearchBar ref="searchBarRef" @search="handleSearch" />
+		<SearchBar ref="searchBarRef" :initial-tags="initialTags" @search="handleSearch" />
 
 		<!-- 内容区域 -->
 		<div class="content-wrapper">
@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
 import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
@@ -76,6 +76,7 @@ const similarDestinations = ref([]);
 const { push, replace } = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const router = useRouter()
 
 // 推荐数据
 const recommendations = ref([]);
@@ -88,6 +89,12 @@ const loadTrigger = ref(null);
 let observer = null;
 
 const searchBarRef = ref(null);
+
+// 从路由获取初始标签
+const initialTags = computed(() => {
+	const tagString = route.query.tags;
+	return tagString ? tagString.split(',').filter(Boolean) : [];
+});
 
 // 修改获取推荐数据的函数
 const fetchAllRecommendations = async (retryCount = 0) => {
@@ -210,13 +217,23 @@ const handleTagClick = (tag) => {
 	}
 };
 
-// 处理搜索
-const handleSearch = ({ query, tags }) => {
+// 修改处理搜索函数
+const handleSearch = ({ tags }) => {
+	console.log('Search triggered with tags:', tags);
+	
+	if (!tags || !tags.length) {
+		console.log('No tags provided, showing warning');
+		ElMessage.warning('请选择至少一个标签');
+		return;
+	}
+	
+	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
+	console.log('Formatted tags for route:', formattedTags);
+	
 	router.push({
 		name: 'searchResults',
 		query: {
-			q: query,
-			tags: tags.join(',')
+			tags: formattedTags
 		}
 	});
 };

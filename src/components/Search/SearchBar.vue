@@ -43,44 +43,52 @@ const emit = defineEmits(['search', 'update:tags']);
 
 // 添加标签
 const addTag = (tag) => {
+  console.log('Adding tag:', tag);
   if (!selectedTags.value.includes(tag)) {
     selectedTags.value.push(tag);
+    console.log('Updated selected tags:', selectedTags.value);
   }
 };
 
 // 移除标签
 const removeTag = (tag) => {
+  console.log('Removing tag:', tag);
   selectedTags.value = selectedTags.value.filter(t => t !== tag);
+  console.log('Updated selected tags:', selectedTags.value);
 };
 
-// 处理搜索
-const handleSearch = () => {
-  emit('search', {
-    query: searchQuery.value,
-    tags: selectedTags.value
-  });
-};
-
-// 修改搜索提交处理函数
+// 修改处理搜索提交函数
 const handleSearchSubmit = async () => {
-  if (!searchQuery.value.trim() && !selectedTags.value.length) {
-    ElMessage.warning('请输入搜索内容或选择标签');
+  console.log('Search submitted with tags:', selectedTags.value);
+  
+  if (!selectedTags.value.length) {
+    console.log('No tags selected, showing warning');
+    ElMessage.warning('请选择至少一个标签');
     return;
   }
 
   try {
+    const query = {
+      tags: selectedTags.value.join(',')
+    };
+    console.log('Router push with query:', query);
+    
     await router.push({
       name: 'searchResults',
-      query: {
-        q: searchQuery.value.trim(),
-        tags: selectedTags.value.join(',')
-      },
+      query,
       replace: false
     });
   } catch (error) {
     console.error('Navigation error:', error);
     ElMessage.error('搜索页面加载失败，请稍后重试');
   }
+};
+
+// 实时搜索处理函数
+const handleSearch = () => {
+  emit('search', {
+    tags: selectedTags.value
+  });
 };
 
 // 暴露方法给父组件
