@@ -66,23 +66,14 @@
 		reactive
 	} from 'vue';
 	// 导入 Swiper Vue.js 组件
-	import {
-		Swiper,
-		SwiperSlide
-	} from 'swiper/vue';
-	// 导入需要的 Swiper 模块
-	import {
-		EffectCoverflow,
-		Pagination,
-		Navigation,
-		Autoplay
-	} from 'swiper/modules';
-
+	import { Swiper, SwiperSlide } from 'swiper/vue';
 	// 导入 Swiper 样式
 	import 'swiper/css';
 	import 'swiper/css/effect-coverflow';
 	import 'swiper/css/pagination';
 	import 'swiper/css/navigation';
+	// 导入需要的 Swiper 模块
+	import { EffectCoverflow, Pagination, Navigation, Autoplay } from 'swiper/modules';
 
 	const modules = [EffectCoverflow, Pagination, Navigation, Autoplay];
 	const slides = ref([
