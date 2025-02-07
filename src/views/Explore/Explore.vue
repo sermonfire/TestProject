@@ -168,6 +168,12 @@ watch(
 	() => route.query.refresh,
 	async (newVal) => {
 		if (newVal === 'true') {
+			// 先滚动到顶部
+			window.scrollTo({
+				top: 0,
+				behavior: 'smooth'
+			});
+			
 			await fetchAllRecommendations();
 			// 清除 refresh 参数，但不触发新的路由跳转
 			replace({ 
@@ -295,6 +301,12 @@ const loadMore = async () => {
 // 修改组件挂载逻辑
 onMounted(async () => {
 	try {
+		// 组件挂载时也滚动到顶部
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth'
+		});
+		
 		await nextTick();
 		await fetchAllRecommendations();
 		
