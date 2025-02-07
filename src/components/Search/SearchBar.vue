@@ -43,23 +43,23 @@ const emit = defineEmits(['search', 'update:tags']);
 
 // 添加标签
 const addTag = (tag) => {
-  console.log('Adding tag:', tag);
+  // console.log('Adding tag:', tag);
   if (!selectedTags.value.includes(tag)) {
     selectedTags.value.push(tag);
-    console.log('Updated selected tags:', selectedTags.value);
+    // console.log('Updated selected tags:', selectedTags.value);
   }
 };
 
 // 移除标签
 const removeTag = (tag) => {
-  console.log('Removing tag:', tag);
+  // console.log('Removing tag:', tag);
   selectedTags.value = selectedTags.value.filter(t => t !== tag);
-  console.log('Updated selected tags:', selectedTags.value);
+  // console.log('Updated selected tags:', selectedTags.value);
 };
 
 // 修改处理搜索提交函数
 const handleSearchSubmit = async () => {
-  console.log('Search submitted with tags:', selectedTags.value);
+  // console.log('Search submitted with tags:', selectedTags.value);
   
   if (!selectedTags.value.length) {
     console.log('No tags selected, showing warning');
@@ -71,7 +71,7 @@ const handleSearchSubmit = async () => {
     const query = {
       tags: selectedTags.value.join(',')
     };
-    console.log('Router push with query:', query);
+    // console.log('Router push with query:', query);
     
     await router.push({
       name: 'searchResults',

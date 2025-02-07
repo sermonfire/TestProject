@@ -57,7 +57,7 @@ const fetchSearchResults = async () => {
   loading.value = true;
   error.value = '';
   
-  console.log('Fetching search results with tags:', searchTags.value);
+  // console.log('Fetching search results with tags:', searchTags.value);
   
   try {
     const response = await getSearchResultsAPI({
@@ -66,11 +66,11 @@ const fetchSearchResults = async () => {
       pageSize: 10
     });
     
-    console.log('Search API Response:', response);
+    // console.log('Search API Response:', response);
     
     if (response.code === 0) {
       results.value = response.data.list || [];
-      console.log('Search results updated:', results.value);
+      // console.log('Search results updated:', results.value);
     } else {
       throw new Error(response.message || '获取搜索结果失败');
     }
@@ -91,7 +91,7 @@ const handleDestinationClick = (destination) => {
 
 // 添加搜索处理函数
 const handleSearch = ({ tags }) => {
-  console.log('Search triggered with tags:', tags);
+  // console.log('Search triggered with tags:', tags);
   
   if (!tags || !tags.length) {
     console.log('No tags provided, showing warning');
@@ -100,7 +100,7 @@ const handleSearch = ({ tags }) => {
   }
   
   const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
-  console.log('Formatted tags for route:', formattedTags);
+  // console.log('Formatted tags for route:', formattedTags);
   
   router.push({
     name: 'searchResults',
@@ -115,9 +115,9 @@ const handleSearch = ({ tags }) => {
 watch(
   () => route.query,
   (newQuery) => {
-    console.log('Route query changed:', newQuery);
+    // console.log('Route query changed:', newQuery);
     searchTags.value = newQuery.tags ? newQuery.tags.split(',') : [];
-    console.log('Updated search tags:', searchTags.value);
+    // console.log('Updated search tags:', searchTags.value);
     if (searchTags.value.length) {
       fetchSearchResults();
     }

@@ -222,13 +222,13 @@ const handleSearch = ({ tags }) => {
 	console.log('Search triggered with tags:', tags);
 	
 	if (!tags || !tags.length) {
-		console.log('No tags provided, showing warning');
+		// console.log('No tags provided, showing warning');
 		ElMessage.warning('请选择至少一个标签');
 		return;
 	}
 	
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
-	console.log('Formatted tags for route:', formattedTags);
+	// console.log('Formatted tags for route:', formattedTags);
 	
 	router.push({
 		name: 'searchResults',

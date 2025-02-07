@@ -104,14 +104,7 @@ export const getPreviewRecommendationsAPI = () => {
 // 获取搜索结果
 export const getSearchResultsAPI = ({ tags, pageNum = 1, pageSize = 10 }) => {
 	// 确保 tags 是数组
-	const tagsArray = Array.isArray(tags) ? tags : [tags];
-	
-	console.log('Search API Request Params:', {
-		tags: tagsArray,
-		pageNum,
-		pageSize
-	});
-	
+	const tagsArray = Array.isArray(tags) ? tags : [tags];	
 	// 构建查询字符串
 	const queryParams = tagsArray.map(tag => `tags=${encodeURIComponent(tag)}`).join('&');
 	const url = `dev-api/recommend/related?${queryParams}&pageNum=${pageNum}&pageSize=${pageSize}`;
