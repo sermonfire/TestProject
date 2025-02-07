@@ -1,11 +1,7 @@
 <template>
   <div class="breadcrumb">
     <el-breadcrumb separator="/">
-      <el-breadcrumb-item 
-        v-for="(item, index) in breadcrumbItems" 
-        :key="index"
-        :to="item.path"
-      >
+      <el-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index" :to="item.path">
         <el-icon v-if="item.icon" class="breadcrumb-icon">
           <component :is="markRaw(item.icon)" />
         </el-icon>
@@ -18,7 +14,7 @@
 <script setup>
 import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled } from '@element-plus/icons-vue'
+import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -28,26 +24,25 @@ const breadcrumbItems = ref([])
 // 路由映射表
 const routeMap = {
   home: { title: '首页', icon: markRaw(HomeFilled) },
-  explore: { title: '探索' },
-  exploredetail: { title: '探索详情1' },
-  exploredetail2: { title: '探索详情2' },
-  favorites: { title: '偏好设置' },
-  about: { title: '关于' },
-  userInfo: { title: '用户信息' },
-  searchResults: { title: '搜索结果' }
+  explore: { title: '探索', icon: markRaw(Compass) },
+  favorites: { title: '偏好设置', icon: markRaw(Checked) },
+  about: { title: '关于', icon: markRaw(HotWater) },
+  userInfo: { title: '用户信息', icon: markRaw(UserFilled) },
+  searchResults: { title: '搜索结果', icon: markRaw(Search) },
+  collection: { title: '我的收藏', icon: markRaw(StarFilled) }
 }
 
 // 监听路由变化更新面包屑
 watch(() => route.matched, (newMatched) => {
   const items = []
-  
+
   // 始终添加首页
   items.push({
     title: '首页',
     path: '/',
     icon: markRaw(HomeFilled)
   })
-  
+
   // 添加其他路由层级
   newMatched.forEach((match) => {
     if (match.name && match.name !== 'home') {
@@ -61,7 +56,7 @@ watch(() => route.matched, (newMatched) => {
       }
     }
   })
-  
+
   breadcrumbItems.value = items
 }, { immediate: true })
 </script>
@@ -74,14 +69,14 @@ watch(() => route.matched, (newMatched) => {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 12px;
   user-select: none;
-  
+
   :deep(.el-breadcrumb__item) {
     .el-breadcrumb__inner {
       display: flex;
       align-items: center;
       user-select: none;
       cursor: pointer;
-      
+
       &:hover {
         color: #409EFF;
       }
@@ -95,4 +90,4 @@ watch(() => route.matched, (newMatched) => {
   pointer-events: none;
   user-select: none;
 }
-</style> 
+</style>

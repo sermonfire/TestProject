@@ -60,7 +60,6 @@ import { Loading, CircleClose } from '@element-plus/icons-vue';
 import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
-import PopularDestinations from './Popular/PopularDestinations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
 import { useUserStore } from '@/stores/userstore'
 import { useRouter, useRoute } from 'vue-router'

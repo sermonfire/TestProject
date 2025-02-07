@@ -13,9 +13,6 @@
     </div>
 
     <div class="search-results">
-      <!-- 添加面包屑导航 -->
-      <Breadcrumb />
-
       <!-- 搜索信息区域 -->
       <div class="search-info">
         <div class="search-header">
