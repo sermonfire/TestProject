@@ -81,7 +81,6 @@ const goToExplore = () => {
 const handleCollectionChange = ({ id, isCollected }) => {
   if (!isCollected) {
     collections.value = collections.value.filter(item => item.id !== id);
-    ElMessage.success('已取消收藏');
   }
 };
 </script>

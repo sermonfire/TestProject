@@ -88,7 +88,7 @@ const props = defineProps({
   }
 });
 
-defineEmits(['cardClick', 'collection-change']);
+const emit = defineEmits(['cardClick', 'collection-change']);
 
 const isRotating = ref(false);
 
