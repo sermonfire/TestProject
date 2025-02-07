@@ -1,11 +1,9 @@
 <template>
   <div 
     class="destination-card"
-    @click="$emit('cardClick', destination)"
-    @mouseenter="startRotation"
-    @mouseleave="stopRotation"
+    @mouseleave="handleCardLeave"
   >
-    <div class="card-inner" :class="{ 'is-rotating': isRotating, 'is-flipped': isFlipped }">
+    <div class="card-inner" :class="{ 'is-flipped': isFlipped }">
       <div class="card-front">
         <div class="image-wrapper"
           @mouseenter="handleImageHover"
@@ -41,7 +39,16 @@
         </div>
         <div class="destination-info">
           <div class="info-header">
-            <h3 class="destination-name">{{ destination.name }}</h3>
+            <h3 class="destination-name" 
+              @mouseenter="handleNameHover"
+              @click="$emit('cardClick', destination)"
+            >
+              {{ destination.name }}
+              <div class="hover-tip">
+                <el-icon><ArrowRight /></el-icon>
+                <span>翻转简介</span>
+              </div>
+            </h3>
             <div class="rating-row">
               <el-rate 
                 v-model="destination.rating" 
@@ -85,8 +92,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Picture } from '@element-plus/icons-vue';
+import { ref, onUnmounted } from 'vue';
+import { Picture, ArrowRight } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 
 const props = defineProps({
@@ -98,17 +105,24 @@ const props = defineProps({
 
 const emit = defineEmits(['cardClick', 'collection-change']);
 
-const isRotating = ref(false);
 const isFlipped = ref(false);
 const isHoveringButton = ref(false);
 const isHoveringImage = ref(false);
+let flipTimer = null;
 
-const startRotation = () => {
-  isRotating.value = true;
+const handleNameHover = () => {
+  if (flipTimer) clearTimeout(flipTimer);
+  flipTimer = setTimeout(() => {
+    isFlipped.value = true;
+  }, 2000);
 };
 
-const stopRotation = () => {
-  isRotating.value = false;
+const handleCardLeave = () => {
+  if (flipTimer) {
+    clearTimeout(flipTimer);
+    flipTimer = null;
+  }
+  isFlipped.value = false;
 };
 
 const handleCollectionChange = (isCollected) => {
@@ -131,6 +145,13 @@ const handleImageLeave = () => {
   isHoveringImage.value = false;
   isHoveringButton.value = false;
 };
+
+onUnmounted(() => {
+  if (flipTimer) {
+    clearTimeout(flipTimer);
+    flipTimer = null;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -146,12 +167,12 @@ const handleImageLeave = () => {
     width: 100%;
     height: 100%;
     min-height: 400px;
-    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     transform-origin: center center;
 
-    &.is-rotating {
-      animation: rotate3D 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    &.is-flipped {
+      transform: rotateY(180deg);
     }
 
     .card-front,
@@ -345,18 +366,6 @@ const handleImageLeave = () => {
   }
 }
 
-@keyframes rotate3D {
-  0% {
-    transform: rotateY(0deg);
-  }
-  50% {
-    transform: rotateY(180deg);
-  }
-  100% {
-    transform: rotateY(360deg);
-  }
-}
-
 .destination-info {
   padding: 20px;
   background: #fff;
@@ -372,6 +381,7 @@ const handleImageLeave = () => {
     gap: 16px;
 
     .destination-name {
+      position: relative;
       flex: 1;
       font-size: 18px;
       font-weight: 600;
@@ -383,6 +393,97 @@ const handleImageLeave = () => {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: 4px;
+      
+      &:hover {
+        color: var(--el-color-primary);
+        background-color: var(--el-color-primary-light-9);
+
+        .hover-tip {
+          opacity: 1;
+          transform: translateX(4px) translateY(-50%);
+        }
+      }
+
+      .hover-tip {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateX(-10px) translateY(-50%);
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: normal;
+        color: var(--el-color-primary);
+        transition: all 0.4s ease;
+        white-space: nowrap;
+        pointer-events: none;
+        background-color: var(--el-color-primary-light-9);
+        padding: 4px 8px;
+        padding-bottom: 6px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        .el-icon {
+          font-size: 14px;
+          transition: transform 0.4s ease;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 8px;
+          width: calc(100% - 16px);
+          height: 2px;
+          background: linear-gradient(to right, 
+            var(--el-color-primary) 0%, 
+            var(--el-color-primary) 0%, 
+            var(--el-color-primary-light-7) 0%, 
+            var(--el-color-primary-light-7) 100%
+          );
+          transition: all 2s linear;
+          border-radius: 1px;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        &::before {
+          content: '即将翻转';
+          position: absolute;
+          font-size: 12px;
+          color: var(--el-color-primary);
+          bottom: -18px;
+          left: 50%;
+          transform: translateX(-50%);
+          white-space: nowrap;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          font-weight: 500;
+        }
+      }
+
+      &:hover .hover-tip {
+        opacity: 1;
+
+        &::after {
+          background: linear-gradient(to right, 
+            var(--el-color-primary) 0%, 
+            var(--el-color-primary) 100%, 
+            var(--el-color-primary-light-7) 100%, 
+            var(--el-color-primary-light-7) 100%
+          );
+        }
+
+        &::before {
+          opacity: 1;
+        }
+      }
     }
 
     .rating-row {
