@@ -47,7 +47,7 @@
               {{ destination.name }}
               <div class="hover-tip">
                 <el-icon><ArrowRight /></el-icon>
-                <span>2s后翻转</span>
+                <span>1s后翻转</span>
               </div>
             </h3>
             <div class="rating-row">
@@ -121,7 +121,7 @@ const handleNameHover = () => {
   if (flipTimer) clearInterval(flipTimer);
   
   flipTimer = setInterval(() => {
-    if (isHoveringName.value && Date.now() - hoverStartTime >= 2000) {
+    if (isHoveringName.value && Date.now() - hoverStartTime >= 1000) {
       isFlipped.value = true;
       clearInterval(flipTimer);
       flipTimer = null;
@@ -494,7 +494,7 @@ onUnmounted(() => {
         opacity: 1;
 
         &::after {
-          animation: progressFlow 2s linear forwards;
+          animation: progressFlow 1s linear forwards;
         }
 
         &::before {
