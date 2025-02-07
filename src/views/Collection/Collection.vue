@@ -1,7 +1,5 @@
 <template>
   <div class="collection-container">
-    <Breadcrumb />
-    
     <div class="collection-header">
       <h2>我的收藏</h2>
       <div class="filter-section">

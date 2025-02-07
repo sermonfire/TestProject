@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight ,Checked } from '@element-plus/icons-vue'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import { useUserStore } from '@/stores/userstore'
 
@@ -93,7 +93,7 @@ const navItems = [
   },
   {
     path: '/favorites',
-    icon: StarFilled,
+    icon: Checked,
     text: '偏好设置'
   },
   {
