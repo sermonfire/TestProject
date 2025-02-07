@@ -452,6 +452,7 @@ const handleTagClick = (tag) => {
   margin: 0;
   background: linear-gradient(45deg, #2c3e50, #3498db);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -624,8 +625,8 @@ const handleTagClick = (tag) => {
       .icon {
         font-size: 20px;
         color: var(--el-color-primary);
-        background: none;
         -webkit-background-clip: initial;
+        background-clip: initial;
         
         &.is-loading {
           animation: rotating 2s linear infinite;
