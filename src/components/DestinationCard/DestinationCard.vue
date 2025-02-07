@@ -22,6 +22,17 @@
           <div class="image-overlay">
             <span class="view-details">查看详情</span>
           </div>
+          <div class="collection-wrapper">
+            <CollectionButton
+              :item-id="destination.id"
+              :initial-state="destination.isCollected"
+              @collection-change="handleCollectionChange"
+              @click.stop
+            />
+          </div>
+          <div class="actions-wrapper">
+            <slot name="actions"></slot>
+          </div>
         </div>
         <div class="destination-info">
           <div class="info-header">
@@ -68,6 +79,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Picture } from '@element-plus/icons-vue';
+import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 
 const props = defineProps({
   destination: {
@@ -76,7 +88,7 @@ const props = defineProps({
   }
 });
 
-defineEmits(['cardClick']);
+defineEmits(['cardClick', 'collection-change']);
 
 const isRotating = ref(false);
 
@@ -86,6 +98,10 @@ const startRotation = () => {
 
 const stopRotation = () => {
   isRotating.value = false;
+};
+
+const handleCollectionChange = (isCollected) => {
+  emit('collection-change', { id: props.destination.id, isCollected });
 };
 </script>
 
@@ -263,6 +279,31 @@ const stopRotation = () => {
         background: rgba(255, 255, 255, 0.25);
         transform: translateY(0) scale(1.05);
       }
+    }
+  }
+
+  .collection-wrapper {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    transition: opacity 0.3s ease;
+  }
+
+  .actions-wrapper {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+  }
+
+  &:hover {
+    .actions-wrapper {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 }
