@@ -24,6 +24,41 @@
           @keydown.enter="handleSearchSubmit"
         />
       </div>
+      <button 
+        class="search-button" 
+        @click="handleSearchSubmit"
+        :disabled="isSearching"
+      >
+        <span class="button-text" v-if="!isSearching">搜索</span>
+        <div class="loader" v-else>
+          <div class="cube">
+            <div class="side front"></div>
+            <div class="side back"></div>
+            <div class="side right"></div>
+            <div class="side left"></div>
+            <div class="side top"></div>
+            <div class="side bottom"></div>
+          </div>
+        </div>
+      </button>
+    </div>
+    
+    <div class="fullscreen-loader" v-if="isSearching">
+      <div class="spinner">
+        <div class="cube-wrapper">
+          <div class="cube">
+            <div class="sides">
+              <div class="top"></div>
+              <div class="right"></div>
+              <div class="bottom"></div>
+              <div class="left"></div>
+              <div class="front"></div>
+              <div class="back"></div>
+            </div>
+          </div>
+        </div>
+        <div class="loading-text">搜索中...</div>
+      </div>
     </div>
   </div>
 </template>
@@ -37,41 +72,37 @@ import { ElMessage } from 'element-plus';
 const router = useRouter();
 const searchQuery = ref('');
 const selectedTags = ref([]);
+const isSearching = ref(false);
 
 // 定义emit
 const emit = defineEmits(['search', 'update:tags']);
 
 // 添加标签
 const addTag = (tag) => {
-  // console.log('Adding tag:', tag);
   if (!selectedTags.value.includes(tag)) {
     selectedTags.value.push(tag);
-    // console.log('Updated selected tags:', selectedTags.value);
   }
 };
 
 // 移除标签
 const removeTag = (tag) => {
-  // console.log('Removing tag:', tag);
   selectedTags.value = selectedTags.value.filter(t => t !== tag);
-  // console.log('Updated selected tags:', selectedTags.value);
 };
 
 // 修改处理搜索提交函数
 const handleSearchSubmit = async () => {
-  // console.log('Search submitted with tags:', selectedTags.value);
-  
   if (!selectedTags.value.length) {
-    console.log('No tags selected, showing warning');
     ElMessage.warning('请选择至少一个标签');
     return;
   }
 
   try {
+    isSearching.value = true;
     const query = {
       tags: selectedTags.value.join(',')
     };
-    // console.log('Router push with query:', query);
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     await router.push({
       name: 'searchResults',
@@ -81,6 +112,8 @@ const handleSearchSubmit = async () => {
   } catch (error) {
     console.error('Navigation error:', error);
     ElMessage.error('搜索页面加载失败，请稍后重试');
+  } finally {
+    isSearching.value = false;
   }
 };
 
@@ -106,10 +139,10 @@ defineExpose({
   .search-input-wrapper {
     background-color: #ffffff;
     border-radius: 25px;
-    padding: 12px 20px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     transition: all 0.3s ease;
     border: 1px solid transparent;
 
@@ -185,6 +218,213 @@ defineExpose({
         opacity: 0.5;
       }
     }
+
+    .search-button {
+      min-width: 80px;
+      height: 40px;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #007AFF, #00C6FF);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+      }
+      
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .fullscreen-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+    perspective: 1000px;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, transparent 20%, rgba(0, 122, 255, 0.1) 20%, rgba(0, 122, 255, 0.1) 21%, transparent 21%);
+      background-size: 20px 20px;
+      animation: particleMove 20s linear infinite;
+      opacity: 0.3;
+    }
+
+    .spinner {
+      transform-style: preserve-3d;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(0, 122, 255, 0.2) 0%, transparent 70%);
+        animation: glowPulse 2s ease-in-out infinite;
+      }
+    }
+
+    .loading-text {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 500;
+      margin-top: 40px;
+      text-shadow: 0 0 10px rgba(0, 122, 255, 0.8);
+      animation: textPulse 2s ease-in-out infinite;
+    }
+  }
+
+  .cube-wrapper {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: spin 3s infinite linear;
+    
+    .cube {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: innerSpin 8s infinite linear;
+      
+      .sides {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        
+        div {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(0, 122, 255, 0.9), rgba(0, 198, 255, 0.9));
+          border: 2px solid rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+          backface-visibility: visible;
+          transform-style: preserve-3d;
+          
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.8) 45%, transparent 50%);
+            animation: shine 3s infinite linear;
+          }
+        }
+        
+        .front  { transform: rotateY(0deg)   translateZ(50px); }
+        .back   { transform: rotateY(180deg) translateZ(50px); }
+        .right  { transform: rotateY(90deg)  translateZ(50px); }
+        .left   { transform: rotateY(-90deg) translateZ(50px); }
+        .top    { transform: rotateX(90deg)  translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(720deg) rotateZ(720deg);
+  }
+}
+
+@keyframes innerSpin {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(-360deg) rotateY(360deg) rotateZ(-360deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes textPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes particleMove {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .cube-wrapper {
+    width: 80px;
+    height: 80px;
+    
+    .cube .sides div {
+      &.front, &.back, &.right, &.left, &.top, &.bottom {
+        transform: translateZ(40px);
+      }
+    }
+  }
+  
+  .fullscreen-loader .loading-text {
+    font-size: 20px;
   }
 }
 </style> 
