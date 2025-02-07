@@ -219,16 +219,13 @@ const handleTagClick = (tag) => {
 
 // 修改处理搜索函数
 const handleSearch = ({ tags }) => {
-	console.log('Search triggered with tags:', tags);
 	
 	if (!tags || !tags.length) {
-		// console.log('No tags provided, showing warning');
-		ElMessage.warning('请选择至少一个标签');
+		ElMessage.warning('本项目暂不支持自定义搜索，只支持预设标签搜索');
 		return;
 	}
 	
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
-	// console.log('Formatted tags for route:', formattedTags);
 	
 	router.push({
 		name: 'searchResults',

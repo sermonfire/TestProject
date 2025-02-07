@@ -326,7 +326,7 @@ onMounted(() => {
 					#FF5722,
 					#2196F3
 				);
-				animation: spin 3s linear infinite;
+				animation: spinPause 4s ease-in-out infinite;  // 修改这里的动画
 				z-index: -1;
 				transform: translateZ(-10px);
 			}
@@ -782,6 +782,19 @@ onMounted(() => {
 	}
 	100% {
 		filter: hue-rotate(360deg) brightness(1);
+	}
+}
+
+// 添加新的动画关键帧
+@keyframes spinPause {
+	0%, 15% {
+		transform: translateZ(-10px) rotate(0deg);
+	}
+	35%, 65% {
+		transform: translateZ(-10px) rotate(360deg);
+	}
+	85%, 100% {
+		transform: translateZ(-10px) rotate(720deg);
 	}
 }
 </style>

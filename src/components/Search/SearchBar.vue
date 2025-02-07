@@ -93,6 +93,7 @@ const removeTag = (tag) => {
 const handleSearchSubmit = async () => {
   if (!selectedTags.value.length) {
     ElMessage.warning('请选择至少一个标签');
+    ElMessage.warning('本项目暂不支持自定义搜索，只支持预设标签搜索');
     return;
   }
 
