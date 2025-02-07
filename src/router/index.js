@@ -54,6 +54,14 @@ const routes = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'collection',
+        name: 'collection',
+        component: () => import('@/views/Collection/Collection.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
     ],
   },
   {

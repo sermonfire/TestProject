@@ -97,6 +97,11 @@ const navItems = [
     text: '偏好设置'
   },
   {
+    path: '/collection',
+    icon: StarFilled,
+    text: '我的收藏'
+  },
+  {
     path: '/about',
     icon: HotWater,
     text: '关于'
