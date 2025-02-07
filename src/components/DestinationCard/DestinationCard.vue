@@ -41,6 +41,7 @@
           <div class="info-header">
             <h3 class="destination-name" 
               @mouseenter="handleNameHover"
+              @mouseleave="handleNameLeave"
               @click="$emit('cardClick', destination)"
             >
               {{ destination.name }}
@@ -108,18 +109,37 @@ const emit = defineEmits(['cardClick', 'collection-change']);
 const isFlipped = ref(false);
 const isHoveringButton = ref(false);
 const isHoveringImage = ref(false);
+const isHoveringName = ref(false);
 let flipTimer = null;
+let hoverStartTime = null;
 
 const handleNameHover = () => {
+  isHoveringName.value = true;
+  hoverStartTime = Date.now();
   if (flipTimer) clearTimeout(flipTimer);
-  flipTimer = setTimeout(() => {
-    isFlipped.value = true;
-  }, 2000);
+  
+  flipTimer = setInterval(() => {
+    if (isHoveringName.value && Date.now() - hoverStartTime >= 2000) {
+      isFlipped.value = true;
+      clearInterval(flipTimer);
+      flipTimer = null;
+    }
+  }, 100);
+};
+
+const handleNameLeave = () => {
+  isHoveringName.value = false;
+  if (flipTimer) {
+    clearInterval(flipTimer);
+    flipTimer = null;
+  }
+  isFlipped.value = false;
 };
 
 const handleCardLeave = () => {
+  isHoveringName.value = false;
   if (flipTimer) {
-    clearTimeout(flipTimer);
+    clearInterval(flipTimer);
     flipTimer = null;
   }
   isFlipped.value = false;
@@ -148,7 +168,7 @@ const handleImageLeave = () => {
 
 onUnmounted(() => {
   if (flipTimer) {
-    clearTimeout(flipTimer);
+    clearInterval(flipTimer);
     flipTimer = null;
   }
 });
