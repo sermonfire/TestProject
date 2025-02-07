@@ -204,32 +204,43 @@ onMounted(() => {
 		element.addEventListener('mousemove', (e) => handleMouseMove(e, element));
 	});
 
-	// 添加Logo鼠标跟踪效果
+	// 修改Logo鼠标跟踪效果
 	const logoWrapper = document.querySelector('.logo-wrapper');
 	const handleLogoMouseMove = (e) => {
 		const rect = logoWrapper.getBoundingClientRect();
-		const x = ((e.clientX - rect.left) / rect.width) * 100;
-		const y = ((e.clientY - rect.top) / rect.height) * 100;
+		const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2; // -1 到 1
+		const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2; // -1 到 1
 		
-		const rotateX = (y - 50) * 0.1;
-		const rotateY = (x - 50) * 0.1;
+		// 限制旋转角度在 -90 到 90 度之间
+		const maxRotation = 45; // 最大旋转角度
 		
+		// 根据鼠标位置计算旋转角度，并限制在合理范围内
+		const rotateX = y * maxRotation; // 上下移动影响X轴旋转
+		const rotateY = -x * maxRotation; // 左右移动影响Y轴旋转
+		const rotateZ = (x * y) * (maxRotation / 2); // 对角线移动影响Z轴旋转，减小Z轴旋转幅度
+		
+		// 应用旋转变换，添加透视效果
 		logoWrapper.querySelector('.rotate-container').style.transform = 
-			`rotateX(${-rotateX}deg) rotateY(${rotateY}deg)`;
-			
-		logoWrapper.querySelectorAll('.front, .back').forEach(face => {
-			face.style.setProperty('--mouse-x', `${x}%`);
-			face.style.setProperty('--mouse-y', `${y}%`);
-		});
+			`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
 	};
 	
 	const handleLogoMouseLeave = () => {
-		logoWrapper.querySelector('.rotate-container').style.transform = '';
+		// 鼠标离开时重置旋转并恢复浮动动画
+		const container = logoWrapper.querySelector('.rotate-container');
+		container.style.transform = '';
+		container.style.animation = 'floatLogo 6s ease-in-out infinite';
+	};
+	
+	const handleLogoMouseEnter = () => {
+		// 鼠标进入时暂停浮动动画
+		const container = logoWrapper.querySelector('.rotate-container');
+		container.style.animation = 'none';
 	};
 	
 	if (logoWrapper) {
 		logoWrapper.addEventListener('mousemove', handleLogoMouseMove);
 		logoWrapper.addEventListener('mouseleave', handleLogoMouseLeave);
+		logoWrapper.addEventListener('mouseenter', handleLogoMouseEnter);
 	}
 });
 </script>
@@ -294,8 +305,12 @@ onMounted(() => {
 			width: 100%;
 			height: 100%;
 			transform-style: preserve-3d;
-			transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+			transition: transform 0.3s ease-out;  // 修改transition
 			animation: floatLogo 6s ease-in-out infinite;
+			
+			&:hover {
+				animation-play-state: paused;  // 悬停时暂停浮动动画
+			}
 			
 			&::before, &::after {
 				content: '';
@@ -380,24 +395,6 @@ onMounted(() => {
 			.back {
 				transform: rotateY(180deg);
 				background: linear-gradient(135deg, #1976D2, #0D47A1);
-			}
-		}
-		
-		&:hover {
-			.rotate-container {
-				transform: rotateY(180deg) scale(1.05);
-				
-				&::before {
-					animation: spin 1.5s linear infinite;
-				}
-				
-				.front::before, .back::before {
-					opacity: 1;
-				}
-				
-				img {
-					transform: translateZ(20px) scale(1.1);
-				}
 			}
 		}
 	}
