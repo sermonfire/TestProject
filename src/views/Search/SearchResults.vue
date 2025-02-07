@@ -57,8 +57,10 @@
             :key="destination.id" 
             class="destination-card"
             @click="handleDestinationClick(destination)"
+            @mouseenter="startRotation(destination.id)"
+            @mouseleave="stopRotation(destination.id)"
           >
-            <div class="card-inner">
+            <div class="card-inner" :class="{ 'is-rotating': rotatingCards[destination.id] }">
               <div class="image-wrapper">
                 <el-image 
                   :src="destination.imageUrl" 
@@ -126,6 +128,17 @@ const loading = ref(false);
 const error = ref('');
 const results = ref([]);
 const searchTags = ref([]);
+
+// 添加旋转状态管理
+const rotatingCards = ref({});
+
+const startRotation = (id) => {
+  rotatingCards.value[id] = true;
+};
+
+const stopRotation = (id) => {
+  rotatingCards.value[id] = false;
+};
 
 // 获取搜索结果
 const fetchSearchResults = async () => {
@@ -341,6 +354,8 @@ watch(
   .destination-card {
     cursor: pointer;
     transition: all 0.3s ease;
+    perspective: 1500px;
+    transform-style: preserve-3d;
 
     &:hover {
       transform: translateY(-5px);
@@ -350,87 +365,131 @@ watch(
       }
     }
 
-    .image-wrapper {
+    .card-inner {
       position: relative;
-      overflow: hidden;
-      border-radius: 8px 8px 0 0;
+      width: 100%;
+      height: 100%;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      transform-origin: center center;
 
-      .destination-image {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        transition: transform 0.3s ease;
+      &.is-rotating {
+        animation: rotate3D 1.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .image-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+      .image-wrapper,
+      .destination-info {
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
 
-        .view-details {
-          color: white;
-          font-size: 16px;
-          padding: 8px 16px;
-          border: 2px solid white;
-          border-radius: 20px;
+      .image-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px 8px 0 0;
+        transform: translateZ(1px);
+
+        .destination-image {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .image-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+
+          .view-details {
+            color: white;
+            font-size: 16px;
+            padding: 8px 16px;
+            border: 2px solid white;
+            border-radius: 20px;
+          }
+        }
+
+        .image-placeholder {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #f5f5f5;
+          color: #999;
+          font-size: 48px;
+          transition: all 0.3s ease;
+
+          .el-icon {
+            opacity: 0.5;
+          }
         }
       }
 
-      .image-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #f5f5f5;
-        color: #999;
-        font-size: 48px;
-        transition: all 0.3s ease;
+      .destination-info {
+        padding: 16px;
+        transform: translateZ(0);
 
-        .el-icon {
-          opacity: 0.5;
+        h3 {
+          margin: 0 0 12px;
+          font-size: 18px;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .rating-row {
+          margin-bottom: 12px;
+        }
+
+        .tags {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+
+          .destination-tag {
+            border-radius: 12px;
+            padding: 0 12px;
+            
+            &:hover {
+              color: var(--el-color-primary);
+            }
+          }
         }
       }
     }
 
-    .destination-info {
-      padding: 16px;
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        45deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 45%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.1) 55%,
+        transparent 100%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
 
-      h3 {
-        margin: 0 0 12px;
-        font-size: 18px;
-        color: #333;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .rating-row {
-        margin-bottom: 12px;
-      }
-
-      .tags {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        .destination-tag {
-          border-radius: 12px;
-          padding: 0 12px;
-          
-          &:hover {
-            color: var(--el-color-primary);
-          }
-        }
-      }
+    &.is-rotating::before {
+      opacity: 1;
+      animation: shine 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 }
@@ -438,6 +497,32 @@ watch(
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rotate3D {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
 }
 
 // 响应式布局优化
