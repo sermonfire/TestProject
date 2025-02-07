@@ -34,6 +34,10 @@ const routes = [
             path: 'search',
             name: 'searchResults',
             component: () => import('@/views/Explore/SearchResults.vue'),
+            props: (route) => ({
+              query: route.query.q,
+              tags: route.query.tags
+            })
           }
         ]
       },

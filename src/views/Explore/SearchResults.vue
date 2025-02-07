@@ -2,98 +2,112 @@
   <div class="search-results">
     <div class="search-info">
       <h2>搜索结果</h2>
-      <div class="search-tags" v-if="searchTags.length">
-        <el-tag v-for="tag in searchTags" :key="tag">{{ tag }}</el-tag>
+      <p v-if="searchQuery">搜索关键词: {{ searchQuery }}</p>
+      <p v-if="searchTags.length">标签: {{ searchTags.join(', ') }}</p>
+    </div>
+
+    <div class="results-container">
+      <!-- 这里添加搜索结果展示逻辑 -->
+      <p v-if="loading">加载中...</p>
+      <p v-else-if="error">{{ error }}</p>
+      <p v-else-if="!results.length">暂无搜索结果</p>
+      <div v-else class="results-grid">
+        <!-- 搜索结果列表 -->
       </div>
     </div>
-    
-    <PersonalizedRecommendations 
-      :recommendations="searchResults"
-      @destination-click="handleDestinationClick"
-    />
-    
-    <el-empty 
-      v-if="!searchResults.length" 
-      description="暂无相关推荐"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { getSearchResultsAPI } from '@/api/recommendApi';
-import PersonalizedRecommendations from '../Personalization/PersonalizedRecommendations.vue';
 import { ElMessage } from 'element-plus';
 
 const route = useRoute();
-const router = useRouter();
+const loading = ref(false);
+const error = ref('');
+const results = ref([]);
 
-const searchResults = ref([]);
+const searchQuery = ref('');
 const searchTags = ref([]);
-const isLoading = ref(false);
 
 // 获取搜索结果
 const fetchSearchResults = async () => {
+  if (!searchQuery.value && !searchTags.value.length) {
+    return;
+  }
+  
+  loading.value = true;
+  error.value = '';
+  
   try {
-    isLoading.value = true;
-    const query = route.query.q;
-    const tags = route.query.tags ? route.query.tags.split(',') : [];
-    searchTags.value = tags;
-    
     const response = await getSearchResultsAPI({
-      query,
-      tags,
+      query: searchQuery.value,
+      tags: searchTags.value,
       pageNum: 1,
       pageSize: 10
     });
     
     if (response.code === 0) {
-      searchResults.value = response.data.list || [];
+      results.value = response.data.list || [];
     } else {
-      ElMessage.error(response.message || '获取搜索结果失败');
+      throw new Error(response.message || '获取搜索结果失败');
     }
-  } catch (error) {
-    console.error('Search error:', error);
-    ElMessage.error('搜索失败，请稍后重试');
+  } catch (err) {
+    error.value = err.message;
+    ElMessage.error(error.value);
   } finally {
-    isLoading.value = false;
+    loading.value = false;
   }
-};
-
-// 处理目的地点击
-const handleDestinationClick = (destination) => {
-  // 处理目的地点击逻辑
 };
 
 // 监听路由参数变化
 watch(
   () => route.query,
-  () => {
+  (newQuery) => {
+    searchQuery.value = newQuery.q || '';
+    searchTags.value = newQuery.tags ? newQuery.tags.split(',') : [];
     fetchSearchResults();
   },
   { immediate: true }
 );
+
+onMounted(() => {
+  if (route.query.q || route.query.tags) {
+    fetchSearchResults();
+  }
+});
 </script>
 
 <style lang="scss" scoped>
 .search-results {
   padding: 20px;
-  
+
   .search-info {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     
     h2 {
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       font-size: 24px;
       color: #333;
     }
     
-    .search-tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    p {
+      color: #666;
+      margin: 5px 0;
     }
+  }
+
+  .results-container {
+    min-height: 200px;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
   }
 }
 </style> 

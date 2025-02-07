@@ -32,6 +32,7 @@
 import { ref, watch } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const searchQuery = ref('');
@@ -60,15 +61,26 @@ const handleSearch = () => {
   });
 };
 
-// 处理搜索提交
-const handleSearchSubmit = () => {
-  router.push({
-    name: 'searchResults',
-    query: {
-      q: searchQuery.value,
-      tags: selectedTags.value.join(',')
-    }
-  });
+// 修改搜索提交处理函数
+const handleSearchSubmit = async () => {
+  if (!searchQuery.value.trim() && !selectedTags.value.length) {
+    ElMessage.warning('请输入搜索内容或选择标签');
+    return;
+  }
+
+  try {
+    await router.push({
+      name: 'searchResults',
+      query: {
+        q: searchQuery.value.trim(),
+        tags: selectedTags.value.join(',')
+      },
+      replace: false
+    });
+  } catch (error) {
+    console.error('Navigation error:', error);
+    ElMessage.error('搜索页面加载失败，请稍后重试');
+  }
 };
 
 // 暴露方法给父组件
