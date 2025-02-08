@@ -6,7 +6,8 @@ import {
   removeFavoriteAPI, 
   removeAllFavoritesAPI,
   getFavoriteListAPI,
-  checkIsFavoriteAPI
+  checkIsFavoriteAPI,
+  updateFavoriteAPI
 } from '@/api/favoriteApi'
 
 export const useFavoriteStore = defineStore('favorite', () => {
@@ -19,12 +20,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const addFavorite = async (destinationId, category = '', notes = '') => {
     try {
       isLoading.value = true
-      const response = await request({
-        url: `dev-api/favorite/${destinationId}`,
-        method: 'POST',
-        params: { category, notes },
-        needToken: true
-      })
+      const response = await addFavoriteAPI(destinationId, category, notes)
 
       if (response.code === 0) {
         ElMessage.success('收藏成功')
@@ -44,11 +40,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const removeFavorite = async (destinationId) => {
     try {
       isLoading.value = true
-      const response = await request({
-        url: `dev-api/favorite/${destinationId}`,
-        method: 'DELETE',
-        needToken: true
-      })
+      const response = await removeFavoriteAPI(destinationId)
 
       if (response.code === 0) {
         ElMessage.success('已取消收藏')
@@ -68,11 +60,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const removeAllFavorites = async () => {
     try {
       isLoading.value = true
-      const response = await request({
-        url: 'dev-api/favorite/all',
-        method: 'DELETE',
-        needToken: true
-      })
+      const response = await removeAllFavoritesAPI()
 
       if (response.code === 0) {
         ElMessage.success('已清空收藏')
@@ -92,12 +80,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const getFavoriteList = async (pageNum = 1, pageSize = 10) => {
     try {
       isLoading.value = true
-      const response = await request({
-        url: 'dev-api/favorite/list',
-        method: 'GET',
-        params: { pageNum, pageSize },
-        needToken: true
-      })
+      const response = await getFavoriteListAPI(pageNum, pageSize)
 
       if (response.code === 0) {
         favorites.value = response.data.list
@@ -115,11 +98,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
 
   const checkIsFavorite = async (destinationId) => {
     try {
-      const response = await request({
-        url: `dev-api/favorite/check/${destinationId}`,
-        method: 'GET',
-        needToken: true
-      })
+      const response = await checkIsFavoriteAPI(destinationId)
       return response.code === 0 && response.data
     } catch (err) {
       console.error('Check favorite status error:', err)
@@ -130,12 +109,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const updateFavorite = async (id, category, notes) => {
     try {
       isLoading.value = true
-      const response = await request({
-        url: `dev-api/favorite/${id}`,
-        method: 'PUT',
-        data: { category, notes },
-        needToken: true
-      })
+      const response = await updateFavoriteAPI(id, category, notes)
 
       if (response.code === 0) {
         ElMessage.success('更新成功')

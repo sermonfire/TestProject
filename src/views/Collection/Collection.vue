@@ -329,8 +329,10 @@ const handleTagClick = (tag) => {
 };
 
 const getCategoryTagType = (category) => {
-  const types = ['', 'success', 'warning', 'danger', 'info'];
-  const hash = category?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
+  if (!category) return 'info'; // 当没有分类时返回默认类型
+  
+  const types = ['primary', 'success', 'warning', 'danger', 'info'];
+  const hash = category.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return types[hash % types.length];
 };
 
