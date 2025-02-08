@@ -94,9 +94,10 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, onMounted } from 'vue';
 import { Picture, ArrowRight } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 
 const props = defineProps({
   destination: {
@@ -106,6 +107,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['cardClick', 'collection-change']);
+
+const favoriteStore = useFavoriteStore();
 
 const isFlipped = ref(false);
 const isHoveringButton = ref(false);
@@ -147,8 +150,8 @@ const handleCardLeave = () => {
   }
 };
 
-const handleCollectionChange = (isCollected) => {
-  emit('collection-change', { id: props.destination.id, isCollected });
+const handleCollectionChange = ({ id, isCollected }) => {
+  favoriteStore.updateFavoriteStatus(id, isCollected);
 };
 
 const handleButtonHover = () => {
@@ -167,6 +170,11 @@ const handleImageLeave = () => {
   isHoveringImage.value = false;
   isHoveringButton.value = false;
 };
+
+onMounted(async () => {
+  // 检查当前目的地的收藏状态
+  await favoriteStore.checkIsFavorite(props.destination.id);
+});
 
 onUnmounted(() => {
   if (flipTimer) {

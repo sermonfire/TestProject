@@ -9,6 +9,7 @@
               :item-id="destination?.id"
               :initial-state="destination?.isCollected"
               class="detail-collection-btn"
+              @collection-change="handleCollectionChange"
             />
             <button class="close-button" @click="handleClose">×</button>
           </div>
@@ -175,6 +176,7 @@ import {
   Wallet
 } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
+import { useFavoriteStore } from '@/stores/favoriteStore';
 
 const props = defineProps({
   modelValue: {
@@ -193,6 +195,7 @@ const props = defineProps({
 
 const router = useRouter();
 const emit = defineEmits(['update:modelValue', 'close', 'similar-click', 'tag-click']);
+const favoriteStore = useFavoriteStore();
 
 const handleClose = () => {
   emit('update:modelValue', false);
@@ -395,6 +398,18 @@ const handleTagClick = (tag) => {
       clickedTags.value[index] = false;
     }, 1000);
   }
+};
+
+// 监听对话框打开，检查收藏状态
+watch(() => props.modelValue, async (newVal) => {
+  if (newVal && props.destination?.id) {
+    await favoriteStore.checkIsFavorite(props.destination.id);
+  }
+});
+
+// 处理收藏状态变化
+const handleCollectionChange = ({ id, isCollected }) => {
+  favoriteStore.updateFavoriteStatus(id, isCollected);
 };
 </script>
 

@@ -10,9 +10,14 @@
         :type="isCollected ? 'danger' : 'primary'"
         circle
         @click.stop="handleCollectionClick"
-        :class="{ 'is-collected': isCollected }"
+        :class="{ 
+          'is-collected': isCollected,
+          'is-animating': isAnimating
+        }"
         :loading="loading"
         :disabled="disabled"
+        v-loading.fullscreen.lock="loading"
+        element-loading-text="处理中..."
       >
         <template #icon>
           <el-icon :size="24">
@@ -125,6 +130,7 @@ import { Star, StarFilled, Warning } from '@element-plus/icons-vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { ElMessage } from 'element-plus';
 import { debounce } from 'lodash-es'
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
   itemId: {
@@ -160,8 +166,19 @@ const emit = defineEmits([
   'collection-error'   // 收藏操作出错
 ]);
 const favoriteStore = useFavoriteStore();
+const { favoriteStatus } = storeToRefs(favoriteStore);
 
-const isCollected = ref(props.initialState);
+const isCollected = computed(() => {
+  return favoriteStore.getFavoriteStatus(props.itemId);
+});
+
+// 监听收藏状态变化
+watch(() => favoriteStore.getFavoriteStatus(props.itemId), (newStatus) => {
+  if (newStatus !== isCollected.value) {
+    emit('collection-change', { id: props.itemId, isCollected: newStatus });
+  }
+});
+
 const loading = ref(false);
 const dialogVisible = ref(false);
 const confirmDialogVisible = ref(false);
@@ -185,14 +202,14 @@ const hasOnlyDefaultCategory = computed(() => {
 
 // 监听 initialState 的变化
 watch(() => props.initialState, (newValue) => {
-  isCollected.value = newValue;
+  favoriteStore.updateFavoriteStatus(props.itemId, newValue);
 });
 
 // 组件挂载时检查收藏状态
 onMounted(async () => {
   try {
     const status = await favoriteStore.checkIsFavorite(props.itemId);
-    isCollected.value = status;
+    favoriteStore.updateFavoriteStatus(props.itemId, status);
     // 初始化时获取分类列表
     if (!favoriteStore.categories.length) {
       await favoriteStore.getCategories();
@@ -202,8 +219,15 @@ onMounted(async () => {
   }
 });
 
+const isAnimating = ref(false)
+
 const handleCollectionClick = async () => {
   if (loading.value || props.disabled) return
+  
+  isAnimating.value = true
+  setTimeout(() => {
+    isAnimating.value = false
+  }, 300)
   
   if (isCollected.value) {
     // 显示取消确认对话框
@@ -245,55 +269,70 @@ const handleConfirm = debounce(async () => {
   form.value = { category: '', notes: '' }
 }, 300)
 
-// 修改收藏方法，移除本地的成功提示，统一由 store 处理
-const addFavorite = async (categoryId = '', notes = '') => {
-  loading.value = true
-  emit('collection-start')
+// 添加重试机制
+const MAX_RETRIES = 3
+const retryDelay = 1000
+
+const retryOperation = async (operation, retries = 0) => {
   try {
-    const success = await favoriteStore.addFavorite(props.itemId, categoryId, notes)
+    return await operation()
+  } catch (error) {
+    if (retries < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+      return retryOperation(operation, retries + 1)
+    }
+    throw error
+  }
+}
+
+// 修改收藏方法
+const addFavorite = async (categoryId = '', notes = '') => {
+  loading.value = true;
+  emit('collection-start');
+  try {
+    const success = await retryOperation(() => 
+      favoriteStore.addFavorite(props.itemId, categoryId, notes)
+    );
     if (success) {
-      isCollected.value = true
-      emit('collection-change', true)
-      
       if (props.autoRefresh) {
-        await favoriteStore.refreshFavoriteData()
+        await favoriteStore.refreshFavoriteData();
       }
     }
   } catch (error) {
     console.error('Add favorite failed:', error)
     emit('collection-error', error)
-    ElMessage.error('收藏失败，请稍后重试')
+    ElMessage({
+      message: '收藏失败，请稍后重试',
+      type: 'error',
+      duration: 3000,
+      showClose: true,
+      customClass: 'collection-error-message'
+    })
   } finally {
-    loading.value = false
-    emit('collection-end')
+    loading.value = false;
+    emit('collection-end');
   }
-}
+};
 
-// 修改取消收藏方法，移除本地的成功提示
+// 修改取消收藏方法
 const removeFavorite = async () => {
-  loading.value = true
-  emit('collection-start')
+  loading.value = true;
+  emit('collection-start');
   try {
-    const success = await favoriteStore.removeFavorite(props.itemId)
+    const success = await favoriteStore.removeFavorite(props.itemId);
     if (success) {
-      isCollected.value = false
-      emit('collection-change', false)
-      
       if (props.autoRefresh) {
-        await favoriteStore.refreshFavoriteData()
-        const status = await favoriteStore.checkIsFavorite(props.itemId)
-        isCollected.value = status
+        await favoriteStore.refreshFavoriteData();
       }
     }
   } catch (error) {
-    console.error('Remove favorite failed:', error)
-    emit('collection-error', error)
-    ElMessage.error('取消收藏失败，请稍后重试')
+    console.error('Remove favorite failed:', error);
+    ElMessage.error('取消收藏失败，请稍后重试');
   } finally {
-    loading.value = false
-    emit('collection-end')
+    loading.value = false;
+    emit('collection-end');
   }
-}
+};
 
 // 添加对话框关闭处理
 const handleDialogClose = () => {
@@ -357,6 +396,10 @@ const handleDialogClose = () => {
       opacity: 0.6;
       cursor: not-allowed;
     }
+
+    &.is-animating {
+      animation: pulse 0.3s ease;
+    }
   }
 
   .category-option {
@@ -375,6 +418,12 @@ const handleDialogClose = () => {
       font-size: 12px;
     }
   }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .confirm-content {

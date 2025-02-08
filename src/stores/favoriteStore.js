@@ -17,6 +17,7 @@ import {
   updateCategorySortAPI,
   updateFavoriteAPI
 } from '@/api/api'
+import { debounce } from 'lodash-es'
 
 export const useFavoriteStore = defineStore('favorite', () => {
   // 状态
@@ -28,6 +29,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const pageSize = ref(10)
   const total = ref(0)
   const selectedCategory = ref(null)
+  const favoriteStatus = ref(new Map()) // 用于存储所有项目的收藏状态
 
   // 添加收藏操作的状态跟踪
   const operationStatus = ref({
@@ -36,6 +38,10 @@ export const useFavoriteStore = defineStore('favorite', () => {
     message: '',
     timestamp: null
   })
+
+  // 添加缓存
+  const statusCache = new Map()
+  const CACHE_EXPIRE = 5 * 60 * 1000 // 5分钟缓存过期
 
   // 计算属性
   const hasDefaultCategory = computed(() => {
@@ -72,6 +78,17 @@ export const useFavoriteStore = defineStore('favorite', () => {
     ).length
   })
 
+  // 添加序列化和反序列化方法
+  const serializeFavoriteStatus = computed(() => {
+    return Array.from(favoriteStatus.value.entries())
+  })
+  
+  const deserializeFavoriteStatus = (data) => {
+    if (Array.isArray(data)) {
+      favoriteStatus.value = new Map(data)
+    }
+  }
+
   // 方法
   // 添加刷新方法
   const refreshFavoriteData = async () => {
@@ -105,6 +122,24 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
+  // 更新收藏状态
+  const updateFavoriteStatus = (itemId, status) => {
+    // 创建新的 Map 实例以触发响应式更新
+    const newMap = new Map(favoriteStatus.value)
+    newMap.set(itemId, status)
+    favoriteStatus.value = newMap
+    // 同时更新缓存
+    statusCache.set(itemId, {
+      status,
+      timestamp: Date.now()
+    })
+  }
+
+  // 获取收藏状态
+  const getFavoriteStatus = (itemId) => {
+    return favoriteStatus.value.get(itemId) || false
+  }
+
   // 修改添加收藏方法
   const addFavorite = async (destinationId, category = '', notes = '') => {
     updateOperationStatus('add', 'pending')
@@ -112,6 +147,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
       loading.value = true
       const res = await addFavoriteAPI(destinationId, category, notes)
       if (res.code === 0) {
+        // 立即更新状态
+        updateFavoriteStatus(destinationId, true)
         ElMessage({
           message: '收藏成功',
           type: 'success',
@@ -121,6 +158,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
         updateOperationStatus('add', 'success', '收藏成功')
         return true
       } else {
+        // 失败时也要更新状态
+        updateFavoriteStatus(destinationId, false)
         ElMessage({
           message: res.message || '收藏失败',
           type: 'error',
@@ -130,6 +169,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       }
     } catch (error) {
       console.error('[收藏失败]:', error)
+      updateFavoriteStatus(destinationId, false)
       ElMessage({
         message: '网络异常，请稍后重试',
         type: 'error',
@@ -149,7 +189,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await removeFavoriteAPI(destinationId)
       
       if (res.code === 0) {
-        // 添加取消收藏成功的提示
+        // 立即更新状态
+        updateFavoriteStatus(destinationId, false)
         ElMessage({
           type: 'success',
           message: '已取消收藏',
@@ -166,11 +207,14 @@ export const useFavoriteStore = defineStore('favorite', () => {
         await getCategories()
         return true
       } else {
+        // 失败时恢复状态
+        updateFavoriteStatus(destinationId, true)
         ElMessage.error(res.message || '取消收藏失败')
         return false
       }
     } catch (error) {
       console.error('取消收藏失败:', error)
+      updateFavoriteStatus(destinationId, true)
       ElMessage.error('取消收藏失败，请重试')
       return false
     } finally {
@@ -179,11 +223,25 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 检查是否已收藏
-  const checkIsFavorite = async (destinationId) => {
+  const checkIsFavorite = async (itemId) => {
     try {
-      const res = await checkIsFavoriteAPI(destinationId)
-      // 确保返回正确的布尔值
-      return res.code === 0 && Boolean(res.data)
+      // 检查缓存
+      const cached = statusCache.get(itemId)
+      if (cached && Date.now() - cached.timestamp < CACHE_EXPIRE) {
+        return cached.status
+      }
+
+      const res = await checkIsFavoriteAPI(itemId)
+      if (res.code === 0) {
+        updateFavoriteStatus(itemId, res.data)
+        // 更新缓存
+        statusCache.set(itemId, {
+          status: res.data,
+          timestamp: Date.now()
+        })
+        return res.data
+      }
+      return false
     } catch (error) {
       console.error('Check favorite status failed:', error)
       return false
@@ -371,6 +429,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         await getFavoriteStats()
         // 更新分类列表
         await getCategories()
+        ids.forEach(id => updateFavoriteStatus(id, false))
         return true
       } else {
         ElMessage.error(res.message || '批量取消收藏失败')
@@ -403,6 +462,24 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
+  // 优化批量检查方法
+  const batchCheckFavoriteStatus = debounce(async (itemIds) => {
+    try {
+      // 过滤掉已缓存的ID
+      const uncachedIds = itemIds.filter(id => {
+        const cached = statusCache.get(id)
+        return !cached || Date.now() - cached.timestamp >= CACHE_EXPIRE
+      })
+
+      if (uncachedIds.length === 0) return
+
+      const promises = uncachedIds.map(id => checkIsFavorite(id))
+      await Promise.all(promises)
+    } catch (error) {
+      console.error('Batch check favorite status failed:', error)
+    }
+  }, 300)
+
   return {
     // 状态
     categories,
@@ -431,11 +508,20 @@ export const useFavoriteStore = defineStore('favorite', () => {
     updateFavorite,
     refreshFavoriteData,
     operationStatus,
-    updateOperationStatus
+    updateOperationStatus,
+    updateFavoriteStatus,
+    getFavoriteStatus,
+    batchCheckFavoriteStatus,
+    serializeFavoriteStatus,
+    deserializeFavoriteStatus
   }
 }, {
   persist: {
     key: 'favorite-store',
-    paths: ['categories', 'selectedCategory']
+    paths: ['categories', 'selectedCategory', 'serializeFavoriteStatus'],
+    afterRestore: (ctx) => {
+      const store = ctx.store
+      store.deserializeFavoriteStatus(store.serializeFavoriteStatus)
+    }
   }
 }) 
