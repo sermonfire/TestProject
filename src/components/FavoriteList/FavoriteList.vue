@@ -1,22 +1,44 @@
 <template>
-  <div class="favorite-list" :class="{ 'is-grid': viewMode === 'grid' }">
-    <!-- 工具栏 -->
+  <div class="favorite-list" :class="{ 'is-grid': localViewMode === 'grid' }">
+    <!-- 工具栏优化 -->
     <div class="toolbar">
       <div class="left">
-        <el-button-group>
+        <el-radio-group 
+          :model-value="localViewMode"
+          @update:model-value="handleViewModeChange"
+          size="large" 
+          class="view-mode"
+        >
+          <el-radio-button value="grid">
+            <el-icon><Grid /></el-icon>
+            网格视图
+          </el-radio-button>
+          <el-radio-button value="list">
+            <el-icon><List /></el-icon>
+            列表视图
+          </el-radio-button>
+        </el-radio-group>
+
+        <el-divider direction="vertical" />
+
+        <el-button-group class="action-group">
           <el-button 
             type="primary" 
             :disabled="!selectedItems.length"
             @click="handleBatchMove"
+            class="batch-button"
           >
-            移动到
+            <el-icon><FolderAdd /></el-icon>
+            移动到 {{ selectedItems.length ? `(${selectedItems.length})` : '' }}
           </el-button>
           <el-button 
-            type="warning" 
+            type="danger" 
             :disabled="!selectedItems.length"
             @click="handleBatchDelete"
+            class="batch-button"
           >
-            取消收藏
+            <el-icon><Delete /></el-icon>
+            取消收藏 {{ selectedItems.length ? `(${selectedItems.length})` : '' }}
           </el-button>
         </el-button-group>
       </div>
@@ -25,76 +47,83 @@
           v-model="searchKeyword"
           placeholder="搜索收藏..."
           clearable
+          class="search-input"
           @clear="handleSearch"
           @keyup.enter="handleSearch"
         >
-          <template #suffix>
-            <el-icon class="el-input__icon" @click="handleSearch">
-              <Search />
-            </el-icon>
+          <template #prefix>
+            <el-icon><Search /></el-icon>
           </template>
         </el-input>
       </div>
     </div>
 
-    <!-- 列表内容 -->
+    <!-- 列表内容区域优化 -->
     <div class="list-content" v-loading="loading">
-      <template v-if="viewMode === 'grid'">
-        <div class="grid-view">
-          <div v-for="item in processedFavorites" :key="item.id" class="grid-item">
-            <DestinationCard 
-              :destination="item.destination"
-              @collection-change="handleCollectionChange"
+      <template v-if="localViewMode === 'grid'">
+        <div class="grid-view" :class="{ 'is-empty': !processedFavorites.length }">
+          <TransitionGroup 
+            name="grid-fade" 
+            tag="div"
+            class="grid-container"
+          >
+            <div 
+              v-for="item in processedFavorites" 
+              :key="item.id" 
+              class="grid-item"
             >
-              <template #actions>
-                <el-button-group>
-                  <el-button 
-                    type="primary" 
-                    @click.stop="handleEdit(item)"
-                    class="action-button"
-                    title="编辑备注"
-                  >
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
-                  <el-button 
-                    type="danger" 
-                    @click.stop="handleDelete(item)"
-                    class="action-button"
-                    title="取消收藏"
-                  >
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </el-button-group>
-              </template>
-            </DestinationCard>
-          </div>
+              <DestinationCard 
+                :destination="item.destination"
+                @collection-change="handleCollectionChange"
+                class="card-wrapper"
+              >
+                <template #actions>
+                  <div class="card-actions">
+                    <el-button-group>
+                      <el-button 
+                        type="primary" 
+                        @click.stop="handleEdit(item)"
+                        class="action-button"
+                        title="编辑备注"
+                      >
+                        <el-icon><Edit /></el-icon>
+                      </el-button>
+                      <el-button 
+                        type="danger" 
+                        @click.stop="handleDelete(item)"
+                        class="action-button"
+                        title="取消收藏"
+                      >
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </el-button-group>
+                  </div>
+                </template>
+              </DestinationCard>
+            </div>
+          </TransitionGroup>
         </div>
       </template>
-      
+
+      <!-- 添加列表视图 -->
       <template v-else>
         <div class="list-view">
           <el-table
             ref="tableRef"
-            v-loading="loading"
-            :data="tableData"
+            :data="processedFavorites"
             style="width: 100%"
             @selection-change="handleSelectionChange"
-            row-key="id"
-            v-bind="$attrs"
           >
-            <el-table-column
-              type="selection"
-              width="55"
-              :selectable="(row) => !row.disabled"
-            />
+            <el-table-column type="selection" width="55" />
+            
             <el-table-column label="景点信息" min-width="300">
               <template #default="{ row }">
                 <div class="destination-info">
                   <div class="destination-image">
                     <el-image 
-                      :src="row.imageUrl" 
+                      :src="row.destination.imageUrl" 
                       fit="cover"
-                      :preview-src-list="[row.imageUrl]"
+                      :preview-src-list="[row.destination.imageUrl]"
                     >
                       <template #error>
                         <div class="image-placeholder">
@@ -104,12 +133,13 @@
                     </el-image>
                   </div>
                   <div class="info">
-                    <h3 class="name">{{ row.name }}</h3>
+                    <h3 class="name">{{ row.destination.name }}</h3>
                     <div class="tags">
                       <el-tag 
-                        v-for="tag in row.tags" 
+                        v-for="tag in row.destination.tags" 
                         :key="tag"
                         size="small"
+                        effect="light"
                       >
                         {{ tag }}
                       </el-tag>
@@ -118,38 +148,40 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="备注" min-width="200" show-overflow-tooltip>
+            
+            <el-table-column label="分类" width="120">
               <template #default="{ row }">
-                <el-input
-                  v-model="row.notes"
-                  type="textarea"
-                  :rows="2"
-                  placeholder="添加备注..."
-                  @blur="handleNotesUpdate(row)"
-                />
+                <el-tag size="small" effect="plain">
+                  {{ row.categoryName || '默认分类' }}
+                </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="收藏时间" width="160" show-overflow-tooltip>
-              <template #default="{ row }">
-                {{ formatDate(row.createTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="120" fixed="right">
+            
+            <el-table-column 
+              prop="createTime" 
+              label="收藏时间" 
+              width="180"
+              :formatter="(row) => dayjs(row.createTime).format('YYYY-MM-DD HH:mm')"
+            />
+            
+            <el-table-column label="操作" width="150" fixed="right">
               <template #default="{ row }">
                 <el-button-group>
                   <el-button 
-                    link 
                     type="primary" 
-                    @click="handleMove(row)"
+                    link
+                    @click="handleEdit(row)"
                   >
-                    移动
+                    <el-icon><Edit /></el-icon>
+                    编辑
                   </el-button>
                   <el-button 
-                    link 
-                    type="warning" 
+                    type="danger" 
+                    link
                     @click="handleDelete(row)"
                   >
-                    取消收藏
+                    <el-icon><Delete /></el-icon>
+                    删除
                   </el-button>
                 </el-button-group>
               </template>
@@ -158,27 +190,35 @@
         </div>
       </template>
 
-      <!-- 空状态 -->
-      <el-empty
-        v-if="!loading && (!favorites || !favorites.length)"
-        description="暂无收藏"
-      >
-        <template #image>
-          <el-icon :size="60"><Star /></el-icon>
-        </template>
-      </el-empty>
+      <!-- 空状态优化 -->
+      <div v-if="!loading && !processedFavorites.length" class="empty-state">
+        <el-empty 
+          :image="emptyImage"
+          :image-size="200"
+          description="暂无收藏内容"
+        >
+          <template #description>
+            <div class="empty-text">
+              <p>还没有收藏任何内容</p>
+              <p class="sub-text">去发现更多精彩景点吧</p>
+            </div>
+          </template>
+          <el-button type="primary" @click="goExplore">去探索</el-button>
+        </el-empty>
+      </div>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination-wrapper">
+    <!-- 分页器优化 -->
+    <div class="pagination-wrapper" v-if="processedFavorites.length">
       <el-pagination
         :current-page="currentPage"
         :page-size="pageSize"
         :page-sizes="[12, 24, 36, 48]"
         :total="total"
-        layout="total, sizes, prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
         @update:current-page="handlePageChange"
         @update:page-size="handleSizeChange"
+        background
       />
     </div>
 
@@ -238,13 +278,16 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { 
   Search, Picture, Star, Edit, Delete, Timer, 
-  Money, Location, Calendar, Memo 
+  Money, Location, Calendar, Memo, FolderAdd,
+  Grid, List
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import DestinationCard from '@/components/DestinationCard/DestinationCard.vue'
 import { getFavoriteListAPI } from '@/api/favoriteApi'
+import '@/styles/mixins.scss'
 
 const props = defineProps({
   favorites: {
@@ -276,10 +319,12 @@ const emit = defineEmits([
   'page-change',
   'size-change',
   'refresh',
-  'selection-change'
+  'selection-change',
+  'update:viewMode'
 ])
 
 const favoriteStore = useFavoriteStore()
+const router = useRouter()
 
 // 状态
 const loading = ref(false)
@@ -319,6 +364,20 @@ const processedFavorites = computed(() => {
     }
   })
 })
+
+// 创建本地响应式变量跟踪视图模式
+const localViewMode = ref(props.viewMode)
+
+// 监听 prop 变化更新本地变量
+watch(() => props.viewMode, (newValue) => {
+  localViewMode.value = newValue
+})
+
+// 处理视图模式变化
+const handleViewModeChange = (value) => {
+  localViewMode.value = value
+  emit('update:viewMode', value)
+}
 
 // 方法
 const handleSelectionChange = (selection) => {
@@ -560,96 +619,327 @@ const handleCollectionChange = () => {
   loadFavoriteList()
 }
 
+// 添加空状态图片
+const emptyImage = `data:image/svg+xml;base64,${btoa(`
+  <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 180c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z" fill="#f5f7fa"/>
+    <path d="M100 140c22.091 0 40-17.909 40-40s-17.909-40-40-40-40 17.909-40 40 17.909 40 40 40z" fill="#e4e7ed"/>
+  </svg>
+`)}`
+
+// 添加跳转方法
+const goExplore = () => {
+  router.push({
+    name: 'explore'  // 确保路由中定义了这个名称
+  })
+}
+
 onMounted(() => {
   loadFavoriteList()
 })
 </script>
 
 <style lang="scss" scoped>
-.favorite-list {
-  padding: 24px 32px;
-  
-  .grid-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-    padding: 16px;
-  }
+@use '@/styles/mixins.scss' as mixins;
 
-  .grid-item {
-    position: relative;
-  }
+.favorite-list {
+  min-height: calc(100vh - 200px);
+  padding: 24px;
+  background: #f8fafc;
 
   .toolbar {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-}
+    gap: 16px;
 
-.pagination-wrapper {
-  margin-top: 32px;
-  display: flex;
-  justify-content: center;
-  
-  :deep(.el-pagination) {
-    --el-pagination-button-bg-color: #f8fafc;
-    
-    .el-pagination__sizes {
-      margin-right: 16px;
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .view-mode {
+        .el-radio-button {
+          :deep(.el-radio-button__inner) {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            
+            .el-icon {
+              font-size: 16px;
+            }
+          }
+        }
+      }
+
+      .el-divider {
+        height: 24px;
+        margin: 0;
+      }
+
+      .action-group {
+        .batch-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          
+          .el-icon {
+            margin-right: 4px;
+          }
+          
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+          }
+        }
+      }
     }
-    
-    button {
-      background: #f8fafc;
-      border-radius: 8px;
+
+    .search-input {
+      width: 300px;
       
-      &:hover {
-        background: #f1f5f9;
+      :deep(.el-input__wrapper) {
+        box-shadow: 0 0 0 1px var(--el-border-color) inset;
+        
+        &:hover {
+          box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+        }
+        
+        &.is-focus {
+          box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+        }
+      }
+    }
+  }
+
+  .list-content {
+    position: relative;
+    min-height: 400px;
+    
+    .grid-view {
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+        padding: 8px;
+      }
+
+      .grid-item {
+        transition: all 0.3s ease;
+        
+        &:hover {
+          transform: translateY(-4px);
+        }
+        
+        .card-wrapper {
+          height: 100%;
+          
+          .card-actions {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            z-index: 2;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            
+            .action-button {
+              padding: 8px;
+              border-radius: 4px;
+              
+              .el-icon {
+                font-size: 16px;
+              }
+            }
+          }
+          
+          &:hover .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+
+    .list-view {
+      .destination-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        
+        .destination-image {
+          width: 80px;
+          height: 60px;
+          border-radius: 4px;
+          overflow: hidden;
+          
+          .el-image {
+            width: 100%;
+            height: 100%;
+          }
+          
+          .image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--el-fill-color-lighter);
+            
+            .el-icon {
+              font-size: 24px;
+              color: var(--el-text-color-secondary);
+            }
+          }
+        }
+        
+        .info {
+          flex: 1;
+          min-width: 0;
+          
+          .name {
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--el-text-color-primary);
+            @include mixins.text-ellipsis;
+          }
+          
+          .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            
+            .el-tag {
+              margin: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 60px 0;
+    
+    .empty-text {
+      margin-top: 16px;
+      
+      p {
+        margin: 8px 0;
+        color: var(--el-text-color-primary);
+        
+        &.sub-text {
+          color: var(--el-text-color-secondary);
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .pagination-wrapper {
+    margin-top: 32px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    
+    :deep(.el-pagination) {
+      justify-content: center;
+      
+      .el-pagination__total {
+        margin-right: 16px;
       }
       
-      &.is-active {
-        background: #4f46e5;
-        color: white;
+      .el-pagination__sizes {
+        margin-right: 16px;
+      }
+      
+      button {
+        &:not(:disabled):hover {
+          color: var(--el-color-primary);
+        }
+      }
+      
+      .el-pager li {
+        &:not(.is-active):hover {
+          color: var(--el-color-primary);
+        }
+        
+        &.is-active {
+          background-color: var(--el-color-primary);
+          color: white;
+        }
+      }
+    }
+  }
+
+  &:not(.is-grid) {
+    .list-content {
+      .list-view {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+
+        :deep(.el-table) {
+          --el-table-border-color: var(--el-border-color-lighter);
+          
+          .el-table__header {
+            background-color: var(--el-fill-color-light);
+          }
+          
+          .el-table__row {
+            &:hover {
+              background-color: var(--el-fill-color-lighter);
+            }
+          }
+        }
       }
     }
   }
 }
 
-:deep(.el-empty) {
-  padding: 40px 0;
-  
-  .el-empty__image {
-    .el-icon {
-      color: var(--el-text-color-secondary);
-    }
-  }
-  
-  .el-empty__description {
-    margin-top: 20px;
-    color: var(--el-text-color-secondary);
-  }
+// 添加网格动画
+.grid-fade-enter-active,
+.grid-fade-leave-active {
+  transition: all 0.3s ease;
 }
 
-:deep(.collection-message) {
-  min-width: 120px;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  
-  &.el-message--success {
-    background-color: var(--el-color-success-light-9);
-    border-color: var(--el-color-success-light-7);
-  }
-  
-  &.el-message--warning {
-    background-color: var(--el-color-warning-light-9);
-    border-color: var(--el-color-warning-light-7);
-  }
-  
-  &.el-message--error {
-    background-color: var(--el-color-error-light-9);
-    border-color: var(--el-color-error-light-7);
+.grid-fade-enter-from,
+.grid-fade-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+  .favorite-list {
+    padding: 16px;
+    
+    .toolbar {
+      flex-direction: column;
+      gap: 12px;
+      
+      .right {
+        width: 100%;
+        
+        .search-input {
+          width: 100%;
+        }
+      }
+    }
+    
+    .grid-view .grid-container {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>
