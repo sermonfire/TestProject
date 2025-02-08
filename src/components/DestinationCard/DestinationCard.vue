@@ -27,6 +27,7 @@
             <CollectionButton
               :item-id="destination.id"
               :initial-state="destination.isCollected"
+              :auto-refresh="true"
               @collection-change="handleCollectionChange"
               @click.stop
               @mouseenter="handleButtonHover"

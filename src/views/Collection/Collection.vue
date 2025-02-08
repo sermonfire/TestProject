@@ -1,7 +1,5 @@
 <template>
   <div class="collection-page" v-loading="loading" element-loading-text="加载中...">
-    <Breadcrumb />
-    
     <div class="collection-container">
       <!-- 左侧分类栏 -->
       <div class="category-sidebar">

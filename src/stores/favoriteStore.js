@@ -35,7 +35,15 @@ export const useFavoriteStore = defineStore('favorite', () => {
   })
 
   const sortedCategories = computed(() => {
-    return [...categories.value].sort((a, b) => {
+    return [...categories.value].map(category => ({
+      ...category,
+      // 计算每个分类下的收藏数量
+      count: favorites.value.filter(item => 
+        category.isDefault ? 
+          !item.category || item.category === category.id : // 默认分类包含未分类的收藏
+          item.category === category.id
+      ).length
+    })).sort((a, b) => {
       // 默认分类始终排在第一位
       if (a.isDefault) return -1
       if (b.isDefault) return 1
@@ -44,21 +52,45 @@ export const useFavoriteStore = defineStore('favorite', () => {
     })
   })
 
-  // 添加一个计算属性来获取当前分类的收藏数量
+  // 修改当前分类收藏数量的计算属性
   const currentCategoryCount = computed(() => {
-    const category = categories.value.find(c => c.id === selectedCategory.value)
-    return category?.count || 0
+    const currentCategory = categories.value.find(c => c.id === selectedCategory.value)
+    if (!currentCategory) return 0
+
+    return favorites.value.filter(item => 
+      currentCategory.isDefault ? 
+        !item.category || item.category === currentCategory.id :
+        item.category === currentCategory.id
+    ).length
   })
 
   // 方法
-  // 添加收藏
+  // 添加刷新方法
+  const refreshFavoriteData = async () => {
+    try {
+      // 如果当前在收藏页面，刷新收藏列表
+      if (selectedCategory.value) {
+        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+      }
+      // 刷新分类列表和统计信息
+      await Promise.all([
+        getCategories(),
+        getFavoriteStats()
+      ])
+    } catch (error) {
+      console.error('Refresh favorite data failed:', error)
+    }
+  }
+
+  // 修改添加收藏方法
   const addFavorite = async (destinationId, category = '', notes = '') => {
     try {
       loading.value = true
       const res = await addFavoriteAPI(destinationId, category, notes)
       if (res.code === 0) {
         ElMessage.success('收藏成功')
-        await getFavoriteStats()
+        // 刷新数据
+        await refreshFavoriteData()
         return true
       }
       return false
@@ -70,14 +102,15 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 取消收藏
+  // 修改取消收藏方法
   const removeFavorite = async (destinationId) => {
     try {
       loading.value = true
       const res = await removeFavoriteAPI(destinationId)
       if (res.code === 0) {
         ElMessage.success('已取消收藏')
-        await getFavoriteStats()
+        // 刷新数据
+        await refreshFavoriteData()
         return true
       }
       return false
@@ -100,17 +133,20 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 获取收藏列表
+  // 修改获取收藏列表方法
   const getFavoriteList = async (page = 1, size = 10, categoryId = null) => {
     try {
       loading.value = true
       currentPage.value = page
       pageSize.value = size
       
-      // 如果没有指定分类ID，则获取所有收藏
       const res = await getFavoriteListAPI(page, size, categoryId)
       if (res.code === 0) {
-        favorites.value = res.data.list
+        // 更新收藏列表
+        favorites.value = res.data.list.map(item => ({
+          ...item,
+          category: item.category || (categoryId || null) // 如果没有分类，使用当前选中的分类ID
+        }))
         total.value = res.data.total
       }
     } catch (error) {
@@ -240,14 +276,17 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 批量更新分类
+  // 修改移动收藏方法
   const batchUpdateCategory = async (favoriteIds, category) => {
     try {
       loading.value = true
       const res = await batchUpdateCategoryAPI(favoriteIds, category)
       if (res.code === 0) {
         ElMessage.success('批量更新成功')
+        // 更新收藏列表
         await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+        // 更新分类列表以刷新计数
+        await getCategories()
         return true
       }
       return false
@@ -328,7 +367,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
     searchFavorites,
     batchUpdateCategory,
     batchDeleteFavorites,
-    updateFavorite
+    updateFavorite,
+    refreshFavoriteData
   }
 }, {
   persist: {

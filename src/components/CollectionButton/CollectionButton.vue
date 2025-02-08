@@ -16,11 +16,63 @@
         </el-icon>
       </template>
     </el-button>
+
+    <!-- 添加分类选择对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      title="选择收藏分类"
+      width="30%"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        label-width="80px"
+      >
+        <el-form-item label="分类">
+          <el-select 
+            v-model="form.category"
+            placeholder="请选择分类"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="category in categories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
+            >
+              <span style="float: left">{{ category.name }}</span>
+              <span style="float: right; color: var(--el-text-color-secondary)">
+                ({{ category.count || 0 }})
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="form.notes"
+            type="textarea"
+            :rows="3"
+            placeholder="添加备注（可选）"
+            maxlength="255"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleConfirm" :loading="loading">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { Star, StarFilled } from '@element-plus/icons-vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { ElMessage } from 'element-plus';
@@ -45,6 +97,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  autoRefresh: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -53,6 +109,19 @@ const favoriteStore = useFavoriteStore();
 
 const isCollected = ref(props.initialState);
 const loading = ref(false);
+const dialogVisible = ref(false);
+const form = ref({
+  category: '',
+  notes: ''
+});
+
+// 获取分类列表
+const categories = computed(() => favoriteStore.sortedCategories);
+
+// 检查是否有自定义分类
+const hasCustomCategories = computed(() => {
+  return categories.value.some(category => !category.isDefault);
+});
 
 // 监听 initialState 的变化
 watch(() => props.initialState, (newValue) => {
@@ -64,6 +133,10 @@ onMounted(async () => {
   try {
     const status = await favoriteStore.checkIsFavorite(props.itemId);
     isCollected.value = status;
+    // 初始化时获取分类列表
+    if (!favoriteStore.categories.length) {
+      await favoriteStore.getCategories();
+    }
   } catch (error) {
     console.error('Failed to check favorite status:', error);
   }
@@ -72,19 +145,71 @@ onMounted(async () => {
 const handleCollectionClick = async () => {
   if (loading.value || props.disabled) return;
   
+  if (isCollected.value) {
+    // 如果已收藏，直接取消收藏
+    await removeFavorite();
+  } else {
+    // 如果未收藏且有自定义分类，显示分类选择对话框
+    if (hasCustomCategories.value) {
+      // 设置默认分类
+      const defaultCategory = categories.value.find(c => c.isDefault);
+      if (defaultCategory) {
+        form.value.category = defaultCategory.id;
+      }
+      dialogVisible.value = true;
+    } else {
+      // 如果没有自定义分类，直接添加到默认分类
+      await addFavorite();
+    }
+  }
+};
+
+const handleConfirm = async () => {
+  if (!form.value.category) {
+    ElMessage.warning('请选择收藏分类');
+    return;
+  }
+  
+  await addFavorite(form.value.category, form.value.notes);
+  dialogVisible.value = false;
+  form.value = { category: '', notes: '' };
+};
+
+const addFavorite = async (categoryId = '', notes = '') => {
   loading.value = true;
   try {
-    const success = isCollected.value 
-      ? await favoriteStore.removeFavorite(props.itemId)
-      : await favoriteStore.addFavorite(props.itemId, props.category, props.notes);
-
+    const success = await favoriteStore.addFavorite(props.itemId, categoryId, notes);
     if (success) {
-      isCollected.value = !isCollected.value;
-      emit('collection-change', isCollected.value);
+      isCollected.value = true;
+      emit('collection-change', true);
+      
+      if (props.autoRefresh) {
+        await favoriteStore.refreshFavoriteData();
+      }
     }
   } catch (error) {
-    console.error('Collection operation failed:', error);
-    ElMessage.error('操作失败，请稍后重试');
+    console.error('Add favorite failed:', error);
+    ElMessage.error('收藏失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const removeFavorite = async () => {
+  loading.value = true;
+  try {
+    const success = await favoriteStore.removeFavorite(props.itemId);
+    if (success) {
+      isCollected.value = false;
+      emit('collection-change', false);
+      
+      if (props.autoRefresh) {
+        await favoriteStore.refreshFavoriteData();
+      }
+    }
+  } catch (error) {
+    console.error('Remove favorite failed:', error);
+    ElMessage.error('取消收藏失败，请稍后重试');
   } finally {
     loading.value = false;
   }
@@ -147,6 +272,36 @@ const handleCollectionClick = async () => {
       opacity: 0.6;
       cursor: not-allowed;
     }
+  }
+}
+
+// 添加对话框样式
+:deep(.el-dialog) {
+  border-radius: 8px;
+  overflow: hidden;
+  
+  .el-dialog__header {
+    margin: 0;
+    padding: 20px;
+    background-color: var(--el-color-primary-light-9);
+    
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+    }
+  }
+  
+  .el-dialog__body {
+    padding: 20px;
+  }
+  
+  .el-select {
+    width: 100%;
+  }
+  
+  .el-form-item__label {
+    font-weight: 500;
   }
 }
 </style>
