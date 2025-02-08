@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, Folder, Edit, Delete, Plus, Rank } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
@@ -170,9 +170,15 @@ const sortedCategories = computed(() => favoriteStore.sortedCategories)
 const VueDraggable = draggable
 
 // 方法
-const handleCategorySelect = (category) => {
-  favoriteStore.selectedCategory = category.id
-  emit('select', category)
+const handleCategorySelect = async (category) => {
+  try {
+    // console.log('选择分类:', category)
+    favoriteStore.selectedCategory = category.id
+    emit('select', category)
+  } catch (error) {
+    // console.error('分类选择失败:', error)
+    ElMessage.error('分类选择失败')
+  }
 }
 
 const handleAdd = () => {
@@ -243,6 +249,11 @@ const handleDragEnd = async ({ oldIndex, newIndex }) => {
   
   await favoriteStore.updateCategorySort(category.id, newIndex)
 }
+
+// 监听分类变化
+watch(() => favoriteStore.categories, (newCategories) => {
+//   console.log('分类列表发生变化:', newCategories)
+}, { deep: true })
 </script>
 
 <style lang="scss" scoped>

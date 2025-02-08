@@ -76,20 +76,20 @@ export const useFavoriteStore = defineStore('favorite', () => {
   // 添加刷新方法
   const refreshFavoriteData = async () => {
     try {
-      // 如果当前在收藏页面，刷新收藏列表
-      if (selectedCategory.value) {
-        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
-      }
-      // 刷新分类列表和统计信息
+      // 只刷新分类列表和统计信息
       await Promise.all([
         getCategories(),
         getFavoriteStats()
       ])
+
       // 清除可能的缓存数据
-      favorites.value = favorites.value.filter(item => {
-        // 重新验证每个收藏的状态
-        return checkIsFavorite(item.id)
+      const promises = favorites.value.map(async item => {
+        const isStillFavorite = await checkIsFavorite(item.id)
+        return isStillFavorite ? item : null
       })
+      
+      const validFavorites = (await Promise.all(promises)).filter(Boolean)
+      favorites.value = validFavorites
     } catch (error) {
       console.error('Refresh favorite data failed:', error)
     }
@@ -195,29 +195,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 修改获取收藏列表方法
-  const getFavoriteList = async (page = 1, size = 10, categoryId = null) => {
-    try {
-      loading.value = true
-      currentPage.value = page
-      pageSize.value = size
-      
-      const res = await getFavoriteListAPI(page, size, categoryId)
-      if (res.code === 0) {
-        // 更新收藏列表
-        favorites.value = res.data.list.map(item => ({
-          ...item,
-          category: item.category || (categoryId || null) // 如果没有分类，使用当前选中的分类ID
-        }))
-        total.value = res.data.total
-      }
-    } catch (error) {
-      ElMessage.error(error.message || '获取收藏列表失败')
-    } finally {
-      loading.value = false
-    }
-  }
-
   // 创建收藏分类
   const createCategory = async (categoryData) => {
     try {
@@ -259,15 +236,36 @@ export const useFavoriteStore = defineStore('favorite', () => {
   // 获取分类列表
   const getCategories = async () => {
     try {
-      loading.value = true
+      // console.log('开始获取分类列表...')
       const res = await getCategoryListAPI()
       if (res.code === 0) {
+        // console.log('获取分类列表成功:', res.data)
         categories.value = res.data
+        
+        // 检查是否有默认分类
+        const hasDefault = categories.value.some(c => c.isDefault)
+        // console.log('是否存在默认分类:', hasDefault)
+        
+        // 如果没有默认分类，创建一个
+        if (!hasDefault) {
+          // console.log('创建默认分类...')
+          await createCategory({
+            name: '默认收藏',
+            isDefault: true,
+            sortOrder: 0
+          })
+        }
+        
+        return true
+      } else {
+        // console.error('获取分类列表失败:', res.message)
+        ElMessage.error(res.message || '获取分类列表失败')
+        return false
       }
     } catch (error) {
-      ElMessage.error(error.message || '获取分类列表失败')
-    } finally {
-      loading.value = false
+      // console.error('获取分类列表异常:', error)
+      ElMessage.error('获取分类列表失败')
+      return false
     }
   }
 
@@ -345,9 +343,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await batchUpdateCategoryAPI(favoriteIds, category)
       if (res.code === 0) {
         ElMessage.success('批量更新成功')
-        // 更新收藏列表
-        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
-        // 更新分类列表以刷新计数
+        // 只更新分类列表以刷新计数
         await getCategories()
         return true
       }
@@ -367,7 +363,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await batchDeleteFavoritesAPI(favoriteIds)
       if (res.code === 0) {
         ElMessage.success('批量删除成功')
-        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+        // 更新统计信息
         await getFavoriteStats()
         return true
       }
@@ -387,7 +383,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await updateFavoriteAPI(favoriteId, data)
       if (res.code === 0) {
         ElMessage.success('更新成功')
-        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
         return true
       }
       return false
@@ -401,13 +396,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
 
   return {
     // 状态
-    favorites,
     categories,
     favoriteStats,
     loading,
-    currentPage,
-    pageSize,
-    total,
     selectedCategory,
     
     // 计算属性
@@ -419,7 +410,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
     addFavorite,
     removeFavorite,
     checkIsFavorite,
-    getFavoriteList,
     createCategory,
     deleteCategory,
     getCategories,

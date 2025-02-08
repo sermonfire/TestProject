@@ -250,6 +250,7 @@ const addFavorite = async (categoryId = '', notes = '') => {
       emit('collection-change', true)
       
       if (props.autoRefresh) {
+        // 只刷新收藏状态，不再调用 getFavoriteList
         await favoriteStore.refreshFavoriteData()
       }
     }
@@ -273,7 +274,7 @@ const removeFavorite = async () => {
       emit('collection-change', false)
       
       if (props.autoRefresh) {
-        // 确保本地状态更新
+        // 只刷新收藏状态，不再调用 getFavoriteList
         await favoriteStore.refreshFavoriteData()
         // 重新检查收藏状态
         const status = await favoriteStore.checkIsFavorite(props.itemId)

@@ -32,23 +32,39 @@
           </div>
         </div>
         
-        <FavoriteList ref="listRef" />
+        <FavoriteList
+          ref="listRef"
+          :favorites="favorites"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          @page-change="handlePageChange"
+          @size-change="handleSizeChange"
+          @refresh="refreshData"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Calendar, DataLine } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import FavoriteCategory from '@/components/FavoriteCategory/FavoriteCategory.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
 import { ElMessage } from 'element-plus'
+import { getFavoriteListAPI } from '@/api/api'
 
 const favoriteStore = useFavoriteStore()
 const listRef = ref(null)
+
+// 添加收藏列表状态
+const favorites = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const loading = ref(false)
 
 // 计算属性
 const currentCategory = computed(() => {
@@ -57,67 +73,105 @@ const currentCategory = computed(() => {
 })
 
 const favoriteStats = computed(() => favoriteStore.favoriteStats)
-
-// 添加加载状态
-const loading = computed(() => favoriteStore.loading)
-
-// 添加计算属性
 const currentCategoryCount = computed(() => favoriteStore.currentCategoryCount)
 
-// 方法
-const handleCategorySelect = async (category) => {
-  // 切换分类时重新加载列表
-  await favoriteStore.getFavoriteList(1, favoriteStore.pageSize, category.id)
-}
-
-// 添加刷新方法
-const refreshData = async () => {
+// 添加获取收藏列表方法
+const getFavoriteList = async (page = currentPage.value, size = pageSize.value) => {
   try {
-    await Promise.all([
-      favoriteStore.getFavoriteStats(),
-      favoriteStore.getFavoriteList(
-        favoriteStore.currentPage,
-        favoriteStore.pageSize,
-        favoriteStore.selectedCategory
-      )
-    ])
+    loading.value = true
+    // console.log('获取收藏列表:', { page, size, categoryId: favoriteStore.selectedCategory })
+    const res = await getFavoriteListAPI(page, size, favoriteStore.selectedCategory)
+    if (res.code === 0) {
+      // console.log('获取收藏列表成功:', res.data)
+      favorites.value = res.data.list
+      total.value = res.data.total
+      currentPage.value = page
+      pageSize.value = size
+      
+      // 更新store中的计数
+      await favoriteStore.getCategories()
+    } else {
+      console.error('获取收藏列表失败:', res.message)
+      ElMessage.error(res.message || '获取收藏列表失败')
+    }
   } catch (error) {
-    console.error('Refresh failed:', error)
+    console.error('获取收藏列表异常:', error)
+    ElMessage.error('获取收藏列表失败')
+  } finally {
+    loading.value = false
   }
 }
 
-// 定期刷新数据
-let refreshTimer = null
+// 修改分类选择处理方法
+const handleCategorySelect = async (category) => {
+  try {
+    // console.log('选择分类:', category)
+    favoriteStore.selectedCategory = category.id
+    // 切换分类时重置页码并重新加载列表
+    currentPage.value = 1
+    await getFavoriteList(1, pageSize.value)
+  } catch (error) {
+    console.error('切换分类失败:', error)
+    ElMessage.error('切换分类失败，请重试')
+  }
+}
+
+// 添加分页处理方法
+const handlePageChange = async (page) => {
+  await getFavoriteList(page, pageSize.value)
+}
+
+const handleSizeChange = async (size) => {
+  await getFavoriteList(1, size)
+}
+
+// 修改刷新方法
+const refreshData = async () => {
+  try {
+    await Promise.all([
+      getFavoriteList(currentPage.value, pageSize.value),
+      favoriteStore.getFavoriteStats()
+    ])
+  } catch (error) {
+    console.error('刷新数据失败:', error)
+  }
+}
 
 // 生命周期钩子
 onMounted(async () => {
   try {
+    // console.log('开始初始化收藏页面数据...')
+    
     // 先获取分类列表
+    // console.log('正在获取分类列表...')
     await favoriteStore.getCategories()
+    // console.log('分类列表:', favoriteStore.categories)
     
     // 如果没有选中分类，默认选中默认分类
     if (!favoriteStore.selectedCategory && favoriteStore.categories.length) {
+      // console.log('未选中分类，寻找默认分类...')
       const defaultCategory = favoriteStore.categories.find(c => c.isDefault)
       if (defaultCategory) {
+        // console.log('找到默认分类:', defaultCategory)
         favoriteStore.selectedCategory = defaultCategory.id
-        // 获取默认分类的收藏列表
-        await favoriteStore.getFavoriteList(1, favoriteStore.pageSize, defaultCategory.id)
       }
     }
-    
-    // 获取统计信息
-    await favoriteStore.getFavoriteStats()
+
+    // 获取收藏列表和统计信息
+    await Promise.all([
+      getFavoriteList(),
+      favoriteStore.getFavoriteStats()
+    ])
   } catch (error) {
+    console.error('初始化数据失败:', error)
     ElMessage.error('初始化数据失败，请刷新页面重试')
-    console.error('Initialize failed:', error)
   }
 })
 
-onBeforeUnmount(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
+// 提供给子组件的方法
+defineExpose({
+  refreshData,
+  getFavoriteList
 })
 </script>
 

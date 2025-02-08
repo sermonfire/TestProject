@@ -3,26 +3,23 @@
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="left">
-        <el-button-group v-if="selectedItems.length">
+        <el-button-group>
           <el-button 
             type="primary" 
+            :disabled="!selectedItems.length"
             @click="handleBatchMove"
-            :loading="loading"
           >
-            <el-icon><FolderAdd /></el-icon>
-            移动到分类
+            移动到
           </el-button>
           <el-button 
             type="danger" 
+            :disabled="!selectedItems.length"
             @click="handleBatchDelete"
-            :loading="loading"
           >
-            <el-icon><Delete /></el-icon>
-            批量删除
+            删除
           </el-button>
         </el-button-group>
       </div>
-      
       <div class="right">
         <el-input
           v-model="searchKeyword"
@@ -31,11 +28,10 @@
           @clear="handleSearch"
           @keyup.enter="handleSearch"
         >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-          <template #append>
-            <el-button @click="handleSearch">搜索</el-button>
+          <template #suffix>
+            <el-icon class="el-input__icon" @click="handleSearch">
+              <Search />
+            </el-icon>
           </template>
         </el-input>
       </div>
@@ -44,28 +40,28 @@
     <!-- 列表内容 -->
     <div class="list-content">
       <el-table
+        ref="tableRef"
         v-loading="loading"
-        :data="favorites"
+        :data="props.favorites"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        
-        <el-table-column label="目的地" min-width="200">
+        <el-table-column label="景点信息" min-width="300">
           <template #default="{ row }">
             <div class="destination-info">
-              <el-image
-                :src="row.imageUrl"
-                :preview-src-list="[row.imageUrl]"
-                fit="cover"
-                class="destination-image"
-              >
-                <template #error>
-                  <div class="image-placeholder">
-                    <el-icon><Picture /></el-icon>
-                  </div>
-                </template>
-              </el-image>
+              <div class="destination-image">
+                <el-image 
+                  :src="row.imageUrl" 
+                  fit="cover"
+                >
+                  <template #error>
+                    <div class="image-placeholder">
+                      <el-icon><Picture /></el-icon>
+                    </div>
+                  </template>
+                </el-image>
+              </div>
               <div class="info">
                 <h3 class="name">{{ row.name }}</h3>
                 <div class="tags">
@@ -73,7 +69,6 @@
                     v-for="tag in row.tags" 
                     :key="tag"
                     size="small"
-                    effect="plain"
                   >
                     {{ tag }}
                   </el-tag>
@@ -82,18 +77,6 @@
             </div>
           </template>
         </el-table-column>
-        
-        <el-table-column label="分类" width="150">
-          <template #default="{ row }">
-            <el-tag 
-              :type="row.category === '默认收藏' ? '' : 'success'"
-              effect="plain"
-            >
-              {{ row.category || '默认收藏' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        
         <el-table-column label="备注" min-width="200">
           <template #default="{ row }">
             <el-input
@@ -105,47 +88,45 @@
             />
           </template>
         </el-table-column>
-        
-        <el-table-column label="收藏时间" width="180">
+        <el-table-column label="收藏时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button-group>
               <el-button 
+                link 
                 type="primary" 
-                link
                 @click="handleMove(row)"
               >
-                <el-icon><FolderAdd /></el-icon>
+                移动
               </el-button>
               <el-button 
+                link 
                 type="danger" 
-                link
                 @click="handleDelete(row)"
               >
-                <el-icon><Delete /></el-icon>
+                删除
               </el-button>
             </el-button-group>
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination
+        v-model:current-page="props.currentPage"
+        v-model:page-size="props.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="props.total"
+        layout="total, sizes, prev, pager, next"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
 
     <!-- 移动分类对话框 -->
@@ -154,26 +135,18 @@
       title="移动到分类"
       width="30%"
     >
-      <el-form>
-        <el-form-item label="选择分类">
-          <el-select v-model="selectedCategory" placeholder="请选择分类">
-            <el-option
-              v-for="category in categories"
-              :key="category.id"
-              :label="category.name"
-              :value="category.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
+      <el-select v-model="targetCategory" style="width: 100%">
+        <el-option
+          v-for="category in categories"
+          :key="category.id"
+          :label="category.name"
+          :value="category.id"
+        />
+      </el-select>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="moveDialogVisible = false">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="confirmMove"
-            :loading="loading"
-          >
+          <el-button type="primary" @click="confirmMove">
             确定
           </el-button>
         </span>
@@ -183,19 +156,15 @@
     <!-- 删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      :title="selectedItems.length > 1 ? '批量删除' : '删除收藏'"
+      title="删除确认"
       width="30%"
     >
-      <p>确定要删除选中的 {{ selectedItems.length }} 个收藏吗？</p>
+      <p>确定要删除选中的收藏吗？</p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button 
-            type="danger" 
-            @click="confirmDelete"
-            :loading="loading"
-          >
-            确定
+          <el-button type="danger" @click="confirmDelete">
+            确定删除
           </el-button>
         </span>
       </template>
@@ -204,67 +173,59 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
+import { Search, Picture } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { Search, Picture, Delete, FolderAdd } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import dayjs from 'dayjs'
 
 const favoriteStore = useFavoriteStore()
+const tableRef = ref(null)
 
 // 状态
+const loading = ref(false)
 const searchKeyword = ref('')
 const selectedItems = ref([])
 const moveDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
-const selectedCategory = ref(null)
-const itemToMove = ref(null)
+const targetCategory = ref('')
+
+// Props和事件
+const props = defineProps({
+  favorites: {
+    type: Array,
+    required: true
+  },
+  currentPage: {
+    type: Number,
+    required: true
+  },
+  pageSize: {
+    type: Number,
+    required: true
+  },
+  total: {
+    type: Number,
+    required: true
+  }
+})
+
+const emit = defineEmits(['page-change', 'size-change', 'refresh'])
 
 // 计算属性
-const loading = computed(() => favoriteStore.loading)
-const favorites = computed(() => favoriteStore.favorites)
 const categories = computed(() => favoriteStore.categories)
-const currentPage = computed({
-  get: () => favoriteStore.currentPage,
-  set: (val) => favoriteStore.currentPage = val
-})
-const pageSize = computed({
-  get: () => favoriteStore.pageSize,
-  set: (val) => favoriteStore.pageSize = val
-})
-const total = computed(() => favoriteStore.total)
-
-// 监听搜索关键词变化
-watch(searchKeyword, (val) => {
-  if (!val) {
-    handleSearch()
-  }
-})
 
 // 方法
+const handleSelectionChange = (items) => {
+  selectedItems.value = items
+}
+
 const handleSearch = async () => {
-  if (searchKeyword.value) {
-    await favoriteStore.searchFavorites(searchKeyword.value)
-  } else {
-    await favoriteStore.getFavoriteList()
-  }
-}
-
-const handleSelectionChange = (selection) => {
-  selectedItems.value = selection
-}
-
-const handleSizeChange = async (size) => {
-  await favoriteStore.getFavoriteList(1, size)
-}
-
-const handleCurrentChange = async (page) => {
-  await favoriteStore.getFavoriteList(page, pageSize.value)
+  emit('refresh')
 }
 
 const handleMove = (row) => {
-  itemToMove.value = row
-  selectedCategory.value = null
+  selectedItems.value = [row]
   moveDialogVisible.value = true
 }
 
@@ -273,34 +234,24 @@ const handleBatchMove = () => {
     ElMessage.warning('请选择要移动的收藏')
     return
   }
-  selectedCategory.value = null
   moveDialogVisible.value = true
 }
 
 const confirmMove = async () => {
-  if (!selectedCategory.value) {
+  if (!targetCategory.value) {
     ElMessage.warning('请选择目标分类')
     return
   }
 
   try {
-    if (itemToMove.value) {
-      // 移动单个收藏
-      await favoriteStore.updateCategory(itemToMove.value.id, {
-        category: selectedCategory.value
-      })
-    } else {
-      // 批量移动
-      await favoriteStore.batchUpdateCategory(
-        selectedItems.value.map(item => item.id),
-        selectedCategory.value
-      )
-    }
-    
+    await favoriteStore.batchUpdateCategory(
+      selectedItems.value.map(item => item.id),
+      targetCategory.value
+    )
     moveDialogVisible.value = false
-    itemToMove.value = null
-    selectedCategory.value = null
-    await refreshList()
+    targetCategory.value = ''
+    selectedItems.value = []
+    emit('refresh')
   } catch (error) {
     console.error('Move failed:', error)
   }
@@ -326,7 +277,7 @@ const confirmDelete = async () => {
     )
     deleteDialogVisible.value = false
     selectedItems.value = []
-    await refreshList()
+    emit('refresh')
   } catch (error) {
     console.error('Delete failed:', error)
   }
@@ -343,11 +294,12 @@ const handleNotesUpdate = async (row) => {
   }
 }
 
-const refreshList = () => {
-  return favoriteStore.getFavoriteList(
-    currentPage.value,
-    pageSize.value
-  )
+const handleCurrentChange = (page) => {
+  emit('page-change', page)
+}
+
+const handleSizeChange = (size) => {
+  emit('size-change', size)
 }
 
 const formatDate = (date) => {
