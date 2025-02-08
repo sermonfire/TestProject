@@ -226,11 +226,8 @@ const handleSelectionChange = (selection) => {
 
 // 清理函数
 const cleanup = () => {
-  if (favoriteListRef.value) {
-    favoriteListRef.value.clearSelection()
-  }
-  selectedItems.value = []
-  favorites.value = []
+  // 如果需要清理选中状态，应该通过 ref 调用子组件的方法
+  // 或者通过状态管理来处理
 }
 
 // 组件卸载前清理
@@ -352,6 +349,7 @@ const processedFavorites = computed(() => {
               font-size: 32px;
               font-weight: 700;
               background: linear-gradient(to right, #fff, rgba(255,255,255,0.8));
+              background-clip: text;
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
             }

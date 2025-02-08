@@ -42,109 +42,31 @@
       <template v-if="viewMode === 'grid'">
         <div class="grid-view">
           <div v-for="item in processedFavorites" :key="item.id" class="grid-item">
-            <div class="destination-card">
-              <div class="card-image">
-                <el-image 
-                  :src="item.imageUrl" 
-                  fit="cover"
-                  loading="lazy"
-                >
-                  <template #error>
-                    <div class="image-placeholder">
-                      <el-icon><Picture /></el-icon>
-                    </div>
-                  </template>
-                </el-image>
-                <div class="image-overlay">
-                  <div class="overlay-content">
-                    <h3 class="overlay-title">{{ item.name }}</h3>
-                    <div class="overlay-info">
-                      <span v-if="item.recommendedDuration" class="duration">
-                        <el-icon><Timer /></el-icon>
-                        建议游玩: {{ item.recommendedDuration }}
-                      </span>
-                      <span v-if="item.averageBudget" class="budget">
-                        <el-icon><Money /></el-icon>
-                        人均: ¥{{ item.averageBudget }}
-                      </span>
-                    </div>
-                    <div class="overlay-tags">
-                      <el-tag 
-                        v-for="tag in (item.tags || []).slice(0, 3)" 
-                        :key="tag"
-                        size="small"
-                        effect="plain"
-                      >
-                        {{ tag }}
-                      </el-tag>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-actions">
-                  <el-button-group>
-                    <el-button 
-                      type="primary" 
-                      @click.stop="handleEdit(item)"
-                      class="action-button"
-                      title="编辑备注"
-                    >
-                      <el-icon><Edit /></el-icon>
-                    </el-button>
-                    <el-button 
-                      type="danger" 
-                      @click.stop="handleDelete(item)"
-                      class="action-button"
-                      title="取消收藏"
-                    >
-                      <el-icon><Delete /></el-icon>
-                    </el-button>
-                  </el-button-group>
-                </div>
-              </div>
-              <div class="card-content">
-                <div class="content-header">
-                  <span class="category-tag">{{ item.categoryName }}</span>
-                  <span class="date">收藏于 {{ formatDate(item.createTime) }}</span>
-                </div>
-                <div class="destination-info">
-                  <div class="rating-popularity">
-                    <el-rate 
-                      v-model="item.rating" 
-                      disabled 
-                      show-score
-                      text-color="#ff9900"
-                      score-template="{value}分"
-                    />
-                    <span class="popularity">
-                      <el-icon><Star /></el-icon>
-                      热度: {{ item.popularity || 0 }}
-                    </span>
-                  </div>
-                  <div class="notes" v-if="item.notes">
-                    <el-icon><Memo /></el-icon>
-                    <span>{{ item.notes }}</span>
-                  </div>
-                </div>
-                <div class="seasonal-info">
-                  <div class="best-seasons" v-if="item.bestSeasons?.length">
-                    <span class="label">最佳季节:</span>
-                    <el-tag 
-                      v-for="season in item.bestSeasons" 
-                      :key="season"
-                      size="small"
-                      type="success"
-                      effect="light"
-                    >
-                      {{ season }}
-                    </el-tag>
-                  </div>
-                  <div class="seasonal-features" v-if="item.seasonalFeatures">
-                    <span class="label">当季特色:</span>
-                    <p>{{ item.seasonalFeatures[getCurrentSeason()] || '暂无特色信息' }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DestinationCard 
+              :destination="item.destination"
+              @collection-change="handleCollectionChange"
+            >
+              <template #actions>
+                <el-button-group>
+                  <el-button 
+                    type="primary" 
+                    @click.stop="handleEdit(item)"
+                    class="action-button"
+                    title="编辑备注"
+                  >
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                  <el-button 
+                    type="danger" 
+                    @click.stop="handleDelete(item)"
+                    class="action-button"
+                    title="取消收藏"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-button-group>
+              </template>
+            </DestinationCard>
           </div>
         </div>
       </template>
@@ -320,8 +242,9 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
-import { batchGetDestinationDetailsAPI } from '@/api/recommendApi'
 import dayjs from 'dayjs'
+import DestinationCard from '@/components/DestinationCard/DestinationCard.vue'
+import { getFavoriteListAPI } from '@/api/favoriteApi'
 
 const props = defineProps({
   favorites: {
@@ -367,9 +290,6 @@ const deleteDialogVisible = ref(false)
 const targetCategory = ref('')
 const tableRef = ref(null)
 
-// 添加目的地详情缓存
-const destinationDetails = ref(new Map())
-
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
 const tableData = computed(() => {
@@ -381,18 +301,20 @@ const tableData = computed(() => {
 
 const processedFavorites = computed(() => {
   return props.favorites.map(item => {
-    const destinationDetail = destinationDetails.value.get(item.destinationId) || {}
+    const destination = item.destination || {}
     return {
       ...item,
-      ...destinationDetail,
-      tags: destinationDetail.tags || [],
-      imageUrl: destinationDetail.imageUrl || '/path/to/default-image.jpg',
-      rating: destinationDetail.rating || 0,
-      popularity: destinationDetail.popularity || 0,
-      recommendedDuration: destinationDetail.recommendedDuration,
-      averageBudget: destinationDetail.averageBudget,
-      bestSeasons: destinationDetail.bestSeasons || [],
-      seasonalFeatures: destinationDetail.seasonalFeatures || {},
+      destination: {
+        ...destination,
+        tags: destination.tags || [],
+        imageUrl: destination.imageUrl || '/path/to/default-image.jpg',
+        rating: destination.rating || 0,
+        popularity: destination.popularity || 0,
+        recommendedDuration: destination.recommendedDuration,
+        averageBudget: destination.averageBudget,
+        bestSeasons: destination.bestSeasons || [],
+        seasonalFeatures: destination.seasonalFeatures || {},
+      },
       categoryName: item.categoryName || '默认收藏'
     }
   })
@@ -400,11 +322,7 @@ const processedFavorites = computed(() => {
 
 // 方法
 const handleSelectionChange = (selection) => {
-  selectedItems.value = selection
-  emit('selection-change', selection)
-  if (tableRef.value && selection.length === 0) {
-    tableRef.value.clearSelection()
-  }
+  favoriteStore.selectedItems = selection
 }
 
 const handleSearch = async () => {
@@ -608,45 +526,6 @@ const handleRefresh = (silent = false) => {
   emit('refresh', silent)
 }
 
-// 添加获取目的地详情的方法
-const fetchDestinationDetails = async (destinationIds) => {
-  try {
-    const uniqueIds = [...new Set(destinationIds)].filter(id => !destinationDetails.value.has(id))
-    if (!uniqueIds.length) return
-
-    const response = await batchGetDestinationDetailsAPI(uniqueIds)
-    if (response.code === 0 && response.data) {
-      response.data.forEach(detail => {
-        destinationDetails.value.set(detail.id, detail)
-      })
-    }
-  } catch (error) {
-    console.error('获取目的地详情失败:', error)
-  }
-}
-
-// 监听收藏列表变化，获取目的地详情
-watch(() => props.favorites, async (newFavorites) => {
-  if (newFavorites?.length) {
-    const destinationIds = newFavorites.map(item => item.destinationId)
-    await fetchDestinationDetails(destinationIds)
-  }
-}, { immediate: true })
-
-// 暴露方法给父组件
-defineExpose({
-  refreshData,
-  clearSelection
-})
-
-// 在组件卸载前清理表格实例
-onBeforeUnmount(() => {
-  if (tableRef.value) {
-    tableRef.value.clearSelection()
-    tableRef.value = null
-  }
-})
-
 // 获取当前季节
 const getCurrentSeason = () => {
   const month = new Date().getMonth() + 1
@@ -655,6 +534,35 @@ const getCurrentSeason = () => {
   if (month >= 9 && month <= 11) return 'autumn'
   return 'winter'
 }
+
+const handleCardClick = (destination) => {
+  // 处理卡片点击事件
+  // 可以跳转到详情页等
+}
+
+const favoriteList = ref([])
+
+const loadFavoriteList = async () => {
+  try {
+    const res = await getFavoriteListAPI()
+    if (res.code === 0) {
+      favoriteList.value = res.data.list
+    } else {
+      ElMessage.error(res.message || '获取收藏列表失败')
+    }
+  } catch (error) {
+    console.error('Failed to load favorite list:', error)
+    ElMessage.error('获取收藏列表失败')
+  }
+}
+
+const handleCollectionChange = () => {
+  loadFavoriteList()
+}
+
+onMounted(() => {
+  loadFavoriteList()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -666,237 +574,17 @@ const getCurrentSeason = () => {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
     padding: 16px;
-    
-    .destination-card {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      height: 100%;
-      
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-        
-        .card-image {
-          .image-overlay {
-            opacity: 1;
-          }
-          
-          .card-actions {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          
-          .el-image {
-            transform: scale(1.05);
-          }
-        }
-      }
-      
-      .card-image {
-        position: relative;
-        padding-top: 66.67%;
-        overflow: hidden;
-        
-        .el-image {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .image-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(to top, 
-            rgba(0, 0, 0, 0.8) 0%,
-            rgba(0, 0, 0, 0.4) 50%,
-            rgba(0, 0, 0, 0) 100%
-          );
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          display: flex;
-          align-items: flex-end;
-          padding: 24px;
-          
-          .overlay-content {
-            color: white;
-            width: 100%;
-            
-            .overlay-title {
-              font-size: 20px;
-              font-weight: 600;
-              margin: 0 0 12px;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            }
-            
-            .overlay-info {
-              display: flex;
-              gap: 16px;
-              margin: 8px 0;
-              font-size: 14px;
-              
-              .duration, .budget {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                color: rgba(255, 255, 255, 0.9);
-                
-                .el-icon {
-                  font-size: 16px;
-                }
-              }
-            }
-            
-            .overlay-tags {
-              display: flex;
-              gap: 8px;
-              flex-wrap: wrap;
-              
-              .el-tag {
-                background: rgba(255, 255, 255, 0.9);
-                border: none;
-                backdrop-filter: blur(4px);
-              }
-            }
-          }
-        }
-        
-        .card-actions {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          opacity: 0;
-          transform: translateY(-10px);
-          transition: all 0.3s ease;
-          
-          .action-button {
-            width: 36px;
-            height: 36px;
-            padding: 8px;
-            border: none;
-            backdrop-filter: blur(4px);
-            
-            &:hover {
-              transform: translateY(-2px);
-            }
-            
-            &.el-button--primary {
-              background: rgba(64, 158, 255, 0.9);
-            }
-            
-            &.el-button--danger {
-              background: rgba(245, 108, 108, 0.9);
-            }
-          }
-        }
-      }
-      
-      .card-content {
-        padding: 20px;
-        
-        .content-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-          
-          .category-tag {
-            color: #4f46e5;
-            font-weight: 500;
-            font-size: 14px;
-          }
-          
-          .date {
-            color: #94a3b8;
-            font-size: 14px;
-          }
-        }
-        
-        .destination-info {
-          margin-bottom: 16px;
-          
-          .rating-popularity {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            
-            .popularity {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              color: #fb923c;
-              font-size: 14px;
-              
-              .el-icon {
-                font-size: 16px;
-              }
-            }
-          }
-          
-          .notes {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.6;
-            
-            .el-icon {
-              margin-top: 3px;
-              flex-shrink: 0;
-            }
-          }
-        }
-        
-        .seasonal-info {
-          border-top: 1px solid #e2e8f0;
-          padding-top: 12px;
-          
-          .best-seasons {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            
-            .label {
-              color: #64748b;
-              font-size: 14px;
-            }
-            
-            .el-tag {
-              background: #f0fdf4;
-              border-color: #bbf7d0;
-              color: #16a34a;
-            }
-          }
-          
-          .seasonal-features {
-            .label {
-              color: #64748b;
-              font-size: 14px;
-              margin-bottom: 4px;
-              display: block;
-            }
-            
-            p {
-              color: #64748b;
-              font-size: 14px;
-              line-height: 1.6;
-              margin: 0;
-            }
-          }
-        }
-      }
-    }
+  }
+
+  .grid-item {
+    position: relative;
+  }
+
+  .toolbar {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 

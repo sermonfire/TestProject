@@ -30,6 +30,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const total = ref(0)
   const selectedCategory = ref(null)
   const favoriteStatus = ref(new Map()) // 用于存储所有项目的收藏状态
+  const selectedItems = ref([])
 
   // 添加收藏操作的状态跟踪
   const operationStatus = ref({
@@ -487,12 +488,17 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }, 300)
 
+  const clearSelection = () => {
+    selectedItems.value = []
+  }
+
   return {
     // 状态
     categories,
     favoriteStats,
     loading,
     selectedCategory,
+    selectedItems,
     
     // 计算属性
     hasDefaultCategory,
@@ -520,7 +526,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
     getFavoriteStatus,
     batchCheckFavoriteStatus,
     serializeFavoriteStatus,
-    deserializeFavoriteStatus
+    deserializeFavoriteStatus,
+    clearSelection
   }
 }, {
   persist: {

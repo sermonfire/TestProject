@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/userstore'
 import { ElMessage } from 'element-plus'
+import DestinationDetail from '@/views/Destination/DestinationDetail.vue'
 
 const routes = [
   {
@@ -62,6 +63,15 @@ const routes = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'destination/:id',
+        name: 'DestinationDetail',
+        component: DestinationDetail,
+        meta: {
+          title: '目的地详情',
+          requiresAuth: true
+        }
+      }
     ],
   },
   {

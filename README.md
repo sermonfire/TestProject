@@ -669,28 +669,8 @@ CREATE TABLE favorite_category (
 - 返回的数据按照请求的ID顺序排序
 - 如果某个ID不存在，则该ID对应的数据会被忽略
 
-3. 获取相关目的地推荐
-请求路径: /dev-api/recommend/destination/{destinationId}/related
-请求方法: GET
-请求头: Authorization: token
-请求参数:
-- destinationId: Integer (路径参数)
-- limit: Integer (可选，默认5，最大20)
-响应结果:
-{
-    "code": 0,
-    "message": "success",
-    "data": [
-        // 相关目的地列表，包含基本信息
-    ]
-}
-说明：
-- 根据目的地的标签、季节、预算等因素推荐相关目的地
-- 返回结果按相关度排序
-- 不会推荐当前目的地本身
-
-4. 更新目的地详情
-请求路径: /dev-api/recommend/destination/{destinationId}
+3. 更新目的地详情
+请求路径: /recommend/destination/{destinationId}
 请求方法: PUT
 请求头: 
 - Authorization: token
@@ -728,30 +708,6 @@ CREATE TABLE favorite_category (
 - 需要管理员权限
 - 支持部分字段更新
 - 图片上传需要先调用文件上传接口
-
-# 推荐算法说明
-
-系统采用基于规则的推荐算法，主要考虑以下因素：
-标签匹配度 (权重2分/个)
-预算匹配度 (权重3分)
-季节匹配度 (权重2分/个)
-目的地热度 (最高1分)
-目的地评分 (最高2分)
-
-相关推荐算法：
-1. 标签相似度 (权重40分)
-- 完全匹配：40分
-- 部分匹配：根据匹配标签数量比例计算
-
-2. 目的地评分 (权重25分)
-- 根据目的地评分(1-5分)计算
-
-3. 热度权重 (权重20分)
-- 根据目的地热度(0-100)计算
-
-4. 季节适配度 (权重15分)
-- 当前季节匹配：15分
-- 不匹配：0分
 
 # 开发注意事项
 

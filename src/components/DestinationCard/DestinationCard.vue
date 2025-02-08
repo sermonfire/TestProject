@@ -43,7 +43,7 @@
             <h3 class="destination-name" 
               @mouseenter="handleNameHover"
               @mouseleave="handleNameLeave"
-              @click="$emit('cardClick', destination)"
+              @click="handleCardClick(destination)"
             >
               {{ destination.name }}
               <div class="hover-tip">
@@ -95,6 +95,7 @@
 
 <script setup>
 import { ref, onUnmounted, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { Picture, ArrowRight } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
@@ -109,6 +110,8 @@ const props = defineProps({
 const emit = defineEmits(['cardClick', 'collection-change']);
 
 const favoriteStore = useFavoriteStore();
+
+const router = useRouter();
 
 const isFlipped = ref(false);
 const isHoveringButton = ref(false);
@@ -169,6 +172,13 @@ const handleImageHover = () => {
 const handleImageLeave = () => {
   isHoveringImage.value = false;
   isHoveringButton.value = false;
+};
+
+const handleCardClick = (destination) => {
+  router.push({
+    name: 'DestinationDetail',
+    params: { id: destination.id }
+  });
 };
 
 onMounted(async () => {
