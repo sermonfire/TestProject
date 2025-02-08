@@ -1,144 +1,338 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   addFavoriteAPI, 
   removeFavoriteAPI, 
-  removeAllFavoritesAPI,
   getFavoriteListAPI,
   checkIsFavoriteAPI,
+  createCategoryAPI,
+  deleteCategoryAPI,
+  getCategoryListAPI,
+  updateCategoryAPI,
+  getFavoriteStatsAPI,
+  searchFavoritesAPI,
+  batchUpdateCategoryAPI,
+  batchDeleteFavoritesAPI,
+  updateCategorySortAPI,
   updateFavoriteAPI
-} from '@/api/favoriteApi'
+} from '@/api/api'
 
 export const useFavoriteStore = defineStore('favorite', () => {
   // 状态
   const favorites = ref([])
-  const isLoading = ref(false)
-  const error = ref(null)
+  const categories = ref([])
+  const favoriteStats = ref(null)
+  const loading = ref(false)
+  const currentPage = ref(1)
+  const pageSize = ref(10)
+  const total = ref(0)
+  const selectedCategory = ref(null)
 
-  // Actions
+  // 计算属性
+  const hasDefaultCategory = computed(() => {
+    return categories.value.some(cat => cat.isDefault)
+  })
+
+  const sortedCategories = computed(() => {
+    return [...categories.value].sort((a, b) => {
+      // 默认分类始终排在第一位
+      if (a.isDefault) return -1
+      if (b.isDefault) return 1
+      // 其他按照sortOrder排序
+      return a.sortOrder - b.sortOrder
+    })
+  })
+
+  // 添加一个计算属性来获取当前分类的收藏数量
+  const currentCategoryCount = computed(() => {
+    const category = categories.value.find(c => c.id === selectedCategory.value)
+    return category?.count || 0
+  })
+
+  // 方法
+  // 添加收藏
   const addFavorite = async (destinationId, category = '', notes = '') => {
     try {
-      isLoading.value = true
-      const response = await addFavoriteAPI(destinationId, category, notes)
-
-      if (response.code === 0) {
+      loading.value = true
+      const res = await addFavoriteAPI(destinationId, category, notes)
+      if (res.code === 0) {
         ElMessage.success('收藏成功')
-        await getFavoriteList() // 刷新收藏列表
+        await getFavoriteStats()
         return true
       }
-      throw new Error(response.message || '收藏失败')
-    } catch (err) {
-      error.value = err.message
-      ElMessage.error(err.message || '收藏失败')
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '收藏失败')
       return false
     } finally {
-      isLoading.value = false
+      loading.value = false
     }
   }
 
+  // 取消收藏
   const removeFavorite = async (destinationId) => {
     try {
-      isLoading.value = true
-      const response = await removeFavoriteAPI(destinationId)
-
-      if (response.code === 0) {
+      loading.value = true
+      const res = await removeFavoriteAPI(destinationId)
+      if (res.code === 0) {
         ElMessage.success('已取消收藏')
-        await getFavoriteList() // 刷新收藏列表
+        await getFavoriteStats()
         return true
       }
-      throw new Error(response.message || '取消收藏失败')
-    } catch (err) {
-      error.value = err.message
-      ElMessage.error(err.message || '取消收藏失败')
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '取消收藏失败')
       return false
     } finally {
-      isLoading.value = false
+      loading.value = false
     }
   }
 
-  const removeAllFavorites = async () => {
-    try {
-      isLoading.value = true
-      const response = await removeAllFavoritesAPI()
-
-      if (response.code === 0) {
-        ElMessage.success('已清空收藏')
-        favorites.value = []
-        return true
-      }
-      throw new Error(response.message || '清空收藏失败')
-    } catch (err) {
-      error.value = err.message
-      ElMessage.error(err.message || '清空收藏失败')
-      return false
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  const getFavoriteList = async (pageNum = 1, pageSize = 10) => {
-    try {
-      isLoading.value = true
-      const response = await getFavoriteListAPI(pageNum, pageSize)
-
-      if (response.code === 0) {
-        favorites.value = response.data.list
-        return response.data
-      }
-      throw new Error(response.message || '获取收藏列表失败')
-    } catch (err) {
-      error.value = err.message
-      ElMessage.error(err.message || '获取收藏列表失败')
-      return null
-    } finally {
-      isLoading.value = false
-    }
-  }
-
+  // 检查是否已收藏
   const checkIsFavorite = async (destinationId) => {
     try {
-      const response = await checkIsFavoriteAPI(destinationId)
-      return response.code === 0 && response.data
-    } catch (err) {
-      console.error('Check favorite status error:', err)
+      const res = await checkIsFavoriteAPI(destinationId)
+      return res.code === 0 && res.data
+    } catch (error) {
+      console.error('Check favorite status failed:', error)
       return false
     }
   }
 
-  const updateFavorite = async (id, category, notes) => {
+  // 获取收藏列表
+  const getFavoriteList = async (page = 1, size = 10, categoryId = null) => {
     try {
-      isLoading.value = true
-      const response = await updateFavoriteAPI(id, category, notes)
+      loading.value = true
+      currentPage.value = page
+      pageSize.value = size
+      
+      // 如果没有指定分类ID，则获取所有收藏
+      const res = await getFavoriteListAPI(page, size, categoryId)
+      if (res.code === 0) {
+        favorites.value = res.data.list
+        total.value = res.data.total
+      }
+    } catch (error) {
+      ElMessage.error(error.message || '获取收藏列表失败')
+    } finally {
+      loading.value = false
+    }
+  }
 
-      if (response.code === 0) {
-        ElMessage.success('更新成功')
-        await getFavoriteList() // 刷新收藏列表
+  // 创建收藏分类
+  const createCategory = async (categoryData) => {
+    try {
+      loading.value = true
+      const res = await createCategoryAPI(categoryData)
+      if (res.code === 0) {
+        ElMessage.success('创建分类成功')
+        await getCategories()
         return true
       }
-      throw new Error(response.message || '更新失败')
-    } catch (err) {
-      error.value = err.message
-      ElMessage.error(err.message || '更新失败')
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '创建分类失败')
       return false
     } finally {
-      isLoading.value = false
+      loading.value = false
+    }
+  }
+
+  // 删除收藏分类
+  const deleteCategory = async (categoryId) => {
+    try {
+      loading.value = true
+      const res = await deleteCategoryAPI(categoryId)
+      if (res.code === 0) {
+        ElMessage.success('删除分类成功')
+        await getCategories()
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '删除分类失败')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 获取分类列表
+  const getCategories = async () => {
+    try {
+      loading.value = true
+      const res = await getCategoryListAPI()
+      if (res.code === 0) {
+        categories.value = res.data
+      }
+    } catch (error) {
+      ElMessage.error(error.message || '获取分类列表失败')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 更新分类信息
+  const updateCategory = async (categoryId, categoryData) => {
+    try {
+      loading.value = true
+      const res = await updateCategoryAPI(categoryId, categoryData)
+      if (res.code === 0) {
+        ElMessage.success('更新分类成功')
+        await getCategories()
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '更新分类失败')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 更新分类排序
+  const updateCategorySort = async (categoryId, sortOrder) => {
+    try {
+      loading.value = true
+      const res = await updateCategorySortAPI(categoryId, sortOrder)
+      if (res.code === 0) {
+        await getCategories()
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '更新排序失败')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 获取收藏统计
+  const getFavoriteStats = async () => {
+    try {
+      const res = await getFavoriteStatsAPI()
+      if (res.code === 0) {
+        favoriteStats.value = res.data
+      }
+    } catch (error) {
+      console.error('Get favorite stats failed:', error)
+    }
+  }
+
+  // 搜索收藏
+  const searchFavorites = async (keyword, page = 1, size = 10) => {
+    try {
+      loading.value = true
+      const res = await searchFavoritesAPI(keyword, page, size)
+      if (res.code === 0) {
+        favorites.value = res.data.list
+        total.value = res.data.total
+        currentPage.value = page
+        pageSize.value = size
+      }
+    } catch (error) {
+      ElMessage.error(error.message || '搜索失败')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 批量更新分类
+  const batchUpdateCategory = async (favoriteIds, category) => {
+    try {
+      loading.value = true
+      const res = await batchUpdateCategoryAPI(favoriteIds, category)
+      if (res.code === 0) {
+        ElMessage.success('批量更新成功')
+        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '批量更新失败')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 批量删除收藏
+  const batchDeleteFavorites = async (favoriteIds) => {
+    try {
+      loading.value = true
+      const res = await batchDeleteFavoritesAPI(favoriteIds)
+      if (res.code === 0) {
+        ElMessage.success('批量删除成功')
+        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+        await getFavoriteStats()
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '批量删除失败')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 更新收藏
+  const updateFavorite = async (favoriteId, data) => {
+    try {
+      loading.value = true
+      const res = await updateFavoriteAPI(favoriteId, data)
+      if (res.code === 0) {
+        ElMessage.success('更新成功')
+        await getFavoriteList(currentPage.value, pageSize.value, selectedCategory.value)
+        return true
+      }
+      return false
+    } catch (error) {
+      ElMessage.error(error.message || '更新失败')
+      return false
+    } finally {
+      loading.value = false
     }
   }
 
   return {
     // 状态
     favorites,
-    isLoading,
-    error,
-    // Actions
+    categories,
+    favoriteStats,
+    loading,
+    currentPage,
+    pageSize,
+    total,
+    selectedCategory,
+    
+    // 计算属性
+    hasDefaultCategory,
+    sortedCategories,
+    currentCategoryCount,
+    
+    // 方法
     addFavorite,
     removeFavorite,
-    removeAllFavorites,
-    getFavoriteList,
     checkIsFavorite,
+    getFavoriteList,
+    createCategory,
+    deleteCategory,
+    getCategories,
+    updateCategory,
+    updateCategorySort,
+    getFavoriteStats,
+    searchFavorites,
+    batchUpdateCategory,
+    batchDeleteFavorites,
     updateFavorite
   }
 }, {
-  persist: true
+  persist: {
+    key: 'favorite-store',
+    paths: ['categories', 'selectedCategory']
+  }
 }) 

@@ -1,4 +1,5 @@
 import './assets/main.css'
+import './styles/mixins.scss'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -9,9 +10,9 @@ import App from './App.vue'
 import router from './router'
 
 // Element Plus
-import ElementPlus from 'element-plus';
-import 'element-plus/dist/index.css';
-import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 // TDesign
 import { Button as TButton, Input as TInput } from 'tdesign-vue-next';
@@ -27,7 +28,7 @@ app.use(ElementPlus)
 app.component('t-button', TButton)
 app.component('t-input', TInput)
 
-// 注册所有图标，使用 markRaw 包装
+// 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, markRaw(component))
 }
