@@ -12,11 +12,11 @@
             移动到
           </el-button>
           <el-button 
-            type="danger" 
+            type="warning" 
             :disabled="!selectedItems.length"
             @click="handleBatchDelete"
           >
-            删除
+            取消收藏
           </el-button>
         </el-button-group>
       </div>
@@ -113,10 +113,10 @@
               </el-button>
               <el-button 
                 link 
-                type="danger" 
+                type="warning" 
                 @click="handleDelete(row)"
               >
-                删除
+                取消收藏
               </el-button>
             </el-button-group>
           </template>
@@ -181,15 +181,15 @@
     <!-- 删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      title="删除收藏"
+      title="取消收藏"
       width="30%"
     >
-      <p>确定要删除选中的收藏吗？</p>
+      <p>确定要取消收藏选中的景点吗？</p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
           <el-button 
-            type="danger" 
+            type="warning" 
             @click="confirmDelete"
             :loading="loading"
           >
@@ -204,7 +204,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Search, Picture, Star } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import dayjs from 'dayjs'
 
@@ -290,38 +290,76 @@ const confirmMove = async () => {
   }
 }
 
-const handleDelete = (row) => {
-//   console.log('选择删除项:', row)
-  selectedItems.value = [row]
-  deleteDialogVisible.value = true
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要取消收藏这个景点吗？',
+      '取消收藏确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '保留',
+        type: 'warning'
+      }
+    )
+    
+    loading.value = true
+    const success = await favoriteStore.removeFavorite(row.destinationId)
+    
+    if (success) {
+      ElMessage({
+        type: 'success',
+        message: '已取消收藏',
+        customClass: 'collection-message'
+      })
+      emit('refresh')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('取消收藏失败:', error)
+      ElMessage.error('取消收藏失败，请重试')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleBatchDelete = () => {
+const handleBatchDelete = async () => {
   if (!selectedItems.value.length) {
-    ElMessage.warning('请选择要删除的收藏')
+    ElMessage.warning('请先选择要取消收藏的景点')
     return
   }
-  deleteDialogVisible.value = true
-}
 
-const confirmDelete = async () => {
   try {
+    const count = selectedItems.value.length
+    await ElMessageBox.confirm(
+      `确定要取消收藏选中的 ${count} 个景点吗？`,
+      '批量取消收藏确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '保留',
+        type: 'warning'
+      }
+    )
+    
     loading.value = true
     const ids = selectedItems.value.map(item => item.destinationId)
-    // console.log('正在删除收藏:', ids)
-    
     const success = await favoriteStore.batchDeleteFavorites(ids)
     
     if (success) {
       deleteDialogVisible.value = false
       selectedItems.value = []
-      // 通知父组件刷新列表
       emit('refresh')
-      ElMessage.success('删除成功')
+      ElMessage({
+        type: 'success',
+        message: `已取消收藏 ${count} 个景点`,
+        customClass: 'collection-message'
+      })
     }
   } catch (error) {
-    console.error('删除失败:', error)
-    ElMessage.error('删除失败，请重试')
+    if (error !== 'cancel') {
+      console.error('批量取消收藏失败:', error)
+      ElMessage.error('批量取消收藏失败，请重试')
+    }
   } finally {
     loading.value = false
   }
@@ -458,6 +496,28 @@ const handleRowSelect = (row, selected) => {
   .el-empty__description {
     margin-top: 20px;
     color: var(--el-text-color-secondary);
+  }
+}
+
+:deep(.collection-message) {
+  min-width: 120px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  
+  &.el-message--success {
+    background-color: var(--el-color-success-light-9);
+    border-color: var(--el-color-success-light-7);
+  }
+  
+  &.el-message--warning {
+    background-color: var(--el-color-warning-light-9);
+    border-color: var(--el-color-warning-light-7);
+  }
+  
+  &.el-message--error {
+    background-color: var(--el-color-error-light-9);
+    border-color: var(--el-color-error-light-7);
   }
 }
 </style>

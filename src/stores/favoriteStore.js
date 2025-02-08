@@ -144,39 +144,34 @@ export const useFavoriteStore = defineStore('favorite', () => {
 
   // 修改取消收藏方法
   const removeFavorite = async (destinationId) => {
-    updateOperationStatus('remove', 'pending')
     try {
       loading.value = true
       const res = await removeFavoriteAPI(destinationId)
+      
       if (res.code === 0) {
+        // 添加取消收藏成功的提示
         ElMessage({
-          message: '已取消收藏',
           type: 'success',
+          message: '已取消收藏',
           customClass: 'collection-message'
         })
-        // 从当前列表中移除该收藏
-        favorites.value = favorites.value.filter(item => item.id !== destinationId)
-        // 刷新数据
-        await refreshFavoriteData()
-        updateOperationStatus('remove', 'success', '已取消收藏')
+        
+        // 从列表中移除
+        favorites.value = favorites.value.filter(
+          item => item.destinationId !== destinationId
+        )
+        // 更新统计信息
+        await getFavoriteStats()
+        // 更新分类列表
+        await getCategories()
         return true
       } else {
-        ElMessage({
-          message: res.message || '取消收藏失败',
-          type: 'error',
-          customClass: 'collection-message'
-        })
-        updateOperationStatus('remove', 'error', res.message || '取消收藏失败')
+        ElMessage.error(res.message || '取消收藏失败')
         return false
       }
     } catch (error) {
-      console.error('[取消收藏失败]:', error)
-      ElMessage({
-        message: '网络异常，请稍后重试',
-        type: 'error',
-        customClass: 'collection-message'
-      })
-      updateOperationStatus('remove', 'error', error.message)
+      console.error('取消收藏失败:', error)
+      ElMessage.error('取消收藏失败，请重试')
       return false
     } finally {
       loading.value = false
@@ -351,20 +346,24 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 批量删除收藏
+  // 修改批量取消收藏方法
   const batchDeleteFavorites = async (destinationIds) => {
     try {
       loading.value = true
-      // console.log('开始批量删除:', destinationIds)
       
       // 确保 destinationIds 是数组
       const ids = Array.isArray(destinationIds) ? destinationIds : [destinationIds]
       const res = await batchDeleteFavoritesAPI(ids)
-      // console.log('删除响应:', res)
       
       if (res.code === 0) {
-        ElMessage.success('批量删除成功')
-        // 从当前列表中移除已删除的项
+        // 添加批量取消收藏成功的提示
+        ElMessage({
+          type: 'success',
+          message: `已取消收藏 ${ids.length} 个景点`,
+          customClass: 'collection-message'
+        })
+        
+        // 从当前列表中移除已取消收藏的项
         favorites.value = favorites.value.filter(
           item => !ids.includes(item.destinationId)
         )
@@ -374,12 +373,12 @@ export const useFavoriteStore = defineStore('favorite', () => {
         await getCategories()
         return true
       } else {
-        ElMessage.error(res.message || '批量删除失败')
+        ElMessage.error(res.message || '批量取消收藏失败')
         return false
       }
     } catch (error) {
-      console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败，请重试')
+      console.error('批量取消收藏失败:', error)
+      ElMessage.error('批量取消收藏失败，请重试')
       return false
     } finally {
       loading.value = false

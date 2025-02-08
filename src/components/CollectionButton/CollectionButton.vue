@@ -26,7 +26,7 @@
     <!-- 收藏确认对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isCollected ? '修改收藏' : '添加收藏'"
+      :title="isCollected ? '取消收藏' : '添加收藏'"
       width="400px"
       :close-on-click-modal="false"
       :close-on-press-escape="true"
@@ -85,7 +85,7 @@
             @click="handleConfirm" 
             :loading="loading"
           >
-            确定{{ isCollected ? '修改' : '收藏' }}
+            确定{{ isCollected ? '取消' : '收藏' }}
           </el-button>
         </div>
       </template>
@@ -178,6 +178,11 @@ const hasCustomCategories = computed(() => {
   return categories.value.some(category => !category.isDefault);
 });
 
+// 添加计算属性检查是否只有默认分类
+const hasOnlyDefaultCategory = computed(() => {
+  return categories.value.length === 1 && categories.value[0].isDefault;
+});
+
 // 监听 initialState 的变化
 watch(() => props.initialState, (newValue) => {
   isCollected.value = newValue;
@@ -197,15 +202,6 @@ onMounted(async () => {
   }
 });
 
-// 优化收藏操作的防抖处理
-const debouncedAddFavorite = debounce(async (categoryId = '', notes = '') => {
-  await addFavorite(categoryId, notes)
-}, 300)
-
-const debouncedRemoveFavorite = debounce(async () => {
-  await removeFavorite()
-}, 300)
-
 const handleCollectionClick = async () => {
   if (loading.value || props.disabled) return
   
@@ -213,33 +209,43 @@ const handleCollectionClick = async () => {
     // 显示取消确认对话框
     confirmDialogVisible.value = true
   } else {
-    // 显示添加收藏对话框
-    const defaultCategory = categories.value.find(c => c.isDefault)
-    if (defaultCategory) {
-      form.value.category = defaultCategory.id
+    // 检查是否只有默认分类
+    if (hasOnlyDefaultCategory.value) {
+      // 直接使用默认分类收藏
+      const defaultCategory = categories.value[0]
+      // 直接调用 addFavorite，不再通过 debouncedAddFavorite
+      await addFavorite(defaultCategory.id, '')
+    } else {
+      // 有多个分类时显示选择对话框
+      const defaultCategory = categories.value.find(c => c.isDefault)
+      if (defaultCategory) {
+        form.value.category = defaultCategory.id
+      }
+      dialogVisible.value = true
     }
-    dialogVisible.value = true
   }
 }
 
-// 处理取消收藏
+// 修改取消收藏处理
 const handleRemoveFavorite = async () => {
+  // 直接调用 removeFavorite，不再通过 debouncedRemoveFavorite
   await removeFavorite()
   confirmDialogVisible.value = false
 }
 
-// 优化确认操作的防抖
+// 只保留一个防抖的确认操作
 const handleConfirm = debounce(async () => {
-  if (!form.value.category) {
+  if (dialogVisible.value && !form.value.category) {
     ElMessage.warning('请选择收藏分类')
     return
   }
   
-  await debouncedAddFavorite(form.value.category, form.value.notes)
+  await addFavorite(form.value.category, form.value.notes)
   dialogVisible.value = false
   form.value = { category: '', notes: '' }
 }, 300)
 
+// 修改收藏方法，移除本地的成功提示，统一由 store 处理
 const addFavorite = async (categoryId = '', notes = '') => {
   loading.value = true
   emit('collection-start')
@@ -250,7 +256,6 @@ const addFavorite = async (categoryId = '', notes = '') => {
       emit('collection-change', true)
       
       if (props.autoRefresh) {
-        // 只刷新收藏状态，不再调用 getFavoriteList
         await favoriteStore.refreshFavoriteData()
       }
     }
@@ -264,6 +269,7 @@ const addFavorite = async (categoryId = '', notes = '') => {
   }
 }
 
+// 修改取消收藏方法，移除本地的成功提示
 const removeFavorite = async () => {
   loading.value = true
   emit('collection-start')
@@ -274,9 +280,7 @@ const removeFavorite = async () => {
       emit('collection-change', false)
       
       if (props.autoRefresh) {
-        // 只刷新收藏状态，不再调用 getFavoriteList
         await favoriteStore.refreshFavoriteData()
-        // 重新检查收藏状态
         const status = await favoriteStore.checkIsFavorite(props.itemId)
         isCollected.value = status
       }
@@ -426,16 +430,31 @@ const handleDialogClose = () => {
 <style>
 /* 全局消息提示样式 */
 .collection-message {
-  background: linear-gradient(45deg, #f56c6c, #e64242) !important;
+  background: linear-gradient(45deg, var(--el-color-success), var(--el-color-success-light-3)) !important;
   border: none !important;
   color: white !important;
   padding: 12px 24px !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3) !important;
+  min-width: 120px !important;
+  text-align: center !important;
   
   .el-message__content {
     color: white !important;
     font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+  
+  /* 取消收藏时使用警告色 */
+  &.el-message--warning {
+    background: linear-gradient(45deg, var(--el-color-warning), var(--el-color-warning-light-3)) !important;
+    box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3) !important;
+  }
+  
+  /* 错误提示使用错误色 */
+  &.el-message--error {
+    background: linear-gradient(45deg, var(--el-color-danger), var(--el-color-danger-light-3)) !important;
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
   }
 }
 </style> 
