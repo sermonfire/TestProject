@@ -42,11 +42,18 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="props.favorites"
+        :data="favorites"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
+        <el-table-column type="selection" width="55">
+          <template #default="{ row }">
+            <el-checkbox 
+              v-model="row.selected"
+              @change="(val) => handleRowSelect(row, val)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="景点信息" min-width="300">
           <template #default="{ row }">
             <div class="destination-info">
@@ -54,6 +61,7 @@
                 <el-image 
                   :src="row.imageUrl" 
                   fit="cover"
+                  :preview-src-list="[row.imageUrl]"
                 >
                   <template #error>
                     <div class="image-placeholder">
@@ -77,7 +85,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="备注" min-width="200">
+        <el-table-column label="备注" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             <el-input
               v-model="row.notes"
@@ -88,7 +96,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="收藏时间" width="160">
+        <el-table-column label="收藏时间" width="160" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
@@ -114,18 +122,30 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 空状态 -->
+      <el-empty
+        v-if="!loading && (!favorites || !favorites.length)"
+        description="暂无收藏"
+      >
+        <template #image>
+          <el-icon :size="60"><Star /></el-icon>
+        </template>
+      </el-empty>
     </div>
 
     <!-- 分页 -->
-    <div class="pagination">
+    <div class="pagination" v-if="favorites && favorites.length">
       <el-pagination
-        v-model:current-page="props.currentPage"
-        v-model:page-size="props.pageSize"
+        :current-page="currentPage"
+        :page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        :total="props.total"
+        :total="total"
         layout="total, sizes, prev, pager, next"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
+        @update:current-page="(val) => emit('page-change', val)"
+        @update:page-size="(val) => emit('size-change', val)"
       />
     </div>
 
@@ -134,19 +154,24 @@
       v-model="moveDialogVisible"
       title="移动到分类"
       width="30%"
+      :close-on-click-modal="false"
     >
-      <el-select v-model="targetCategory" style="width: 100%">
-        <el-option
-          v-for="category in categories"
-          :key="category.id"
-          :label="category.name"
-          :value="category.id"
-        />
-      </el-select>
+      <el-form>
+        <el-form-item label="目标分类">
+          <el-select v-model="targetCategory" style="width: 100%">
+            <el-option
+              v-for="category in categories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="moveDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmMove">
+          <el-button type="primary" @click="confirmMove" :loading="loading">
             确定
           </el-button>
         </span>
@@ -156,15 +181,19 @@
     <!-- 删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      title="删除确认"
+      title="删除收藏"
       width="30%"
     >
       <p>确定要删除选中的收藏吗？</p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" @click="confirmDelete">
-            确定删除
+          <el-button 
+            type="danger" 
+            @click="confirmDelete"
+            :loading="loading"
+          >
+            确定
           </el-button>
         </span>
       </template>
@@ -174,27 +203,16 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Search, Picture } from '@element-plus/icons-vue'
+import { Search, Picture, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import dayjs from 'dayjs'
 
-const favoriteStore = useFavoriteStore()
-const tableRef = ref(null)
-
-// 状态
-const loading = ref(false)
-const searchKeyword = ref('')
-const selectedItems = ref([])
-const moveDialogVisible = ref(false)
-const deleteDialogVisible = ref(false)
-const targetCategory = ref('')
-
-// Props和事件
 const props = defineProps({
   favorites: {
     type: Array,
-    required: true
+    required: true,
+    default: () => []
   },
   currentPage: {
     type: Number,
@@ -211,13 +229,23 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['page-change', 'size-change', 'refresh'])
+const favoriteStore = useFavoriteStore()
+
+// 状态
+const loading = ref(false)
+const searchKeyword = ref('')
+const selectedItems = ref([])
+const moveDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const targetCategory = ref('')
+const tableRef = ref(null)
 
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
 
 // 方法
-const handleSelectionChange = (items) => {
-  selectedItems.value = items
+const handleSelectionChange = (selection) => {
+  selectedItems.value = selection
 }
 
 const handleSearch = async () => {
@@ -244,6 +272,7 @@ const confirmMove = async () => {
   }
 
   try {
+    loading.value = true
     await favoriteStore.batchUpdateCategory(
       selectedItems.value.map(item => item.id),
       targetCategory.value
@@ -252,12 +281,17 @@ const confirmMove = async () => {
     targetCategory.value = ''
     selectedItems.value = []
     emit('refresh')
+    ElMessage.success('移动成功')
   } catch (error) {
     console.error('Move failed:', error)
+    ElMessage.error('移动失败，请重试')
+  } finally {
+    loading.value = false
   }
 }
 
 const handleDelete = (row) => {
+//   console.log('选择删除项:', row)
   selectedItems.value = [row]
   deleteDialogVisible.value = true
 }
@@ -272,25 +306,39 @@ const handleBatchDelete = () => {
 
 const confirmDelete = async () => {
   try {
-    await favoriteStore.batchDeleteFavorites(
-      selectedItems.value.map(item => item.id)
-    )
-    deleteDialogVisible.value = false
-    selectedItems.value = []
-    emit('refresh')
+    loading.value = true
+    const ids = selectedItems.value.map(item => item.destinationId)
+    // console.log('正在删除收藏:', ids)
+    
+    const success = await favoriteStore.batchDeleteFavorites(ids)
+    
+    if (success) {
+      deleteDialogVisible.value = false
+      selectedItems.value = []
+      // 通知父组件刷新列表
+      emit('refresh')
+      ElMessage.success('删除成功')
+    }
   } catch (error) {
-    console.error('Delete failed:', error)
+    console.error('删除失败:', error)
+    ElMessage.error('删除失败，请重试')
+  } finally {
+    loading.value = false
   }
 }
 
 const handleNotesUpdate = async (row) => {
   try {
+    loading.value = true
     await favoriteStore.updateFavorite(row.id, {
       notes: row.notes
     })
     ElMessage.success('更新备注成功')
   } catch (error) {
     console.error('Update notes failed:', error)
+    ElMessage.error('更新备注失败，请重试')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -304,6 +352,14 @@ const handleSizeChange = (size) => {
 
 const formatDate = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
+const handleRowSelect = (row, selected) => {
+  if (selected) {
+    selectedItems.value.push(row)
+  } else {
+    selectedItems.value = selectedItems.value.filter(item => item.id !== row.id)
+  }
 }
 </script>
 
@@ -369,7 +425,6 @@ const formatDate = (date) => {
           margin: 0 0 8px;
           font-size: 16px;
           color: var(--el-text-color-primary);
-          
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -388,6 +443,21 @@ const formatDate = (date) => {
     margin-top: 16px;
     display: flex;
     justify-content: flex-end;
+  }
+}
+
+:deep(.el-empty) {
+  padding: 40px 0;
+  
+  .el-empty__image {
+    .el-icon {
+      color: var(--el-text-color-secondary);
+    }
+  }
+  
+  .el-empty__description {
+    margin-top: 20px;
+    color: var(--el-text-color-secondary);
   }
 }
 </style>

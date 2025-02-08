@@ -365,7 +365,7 @@ CREATE TABLE favorite_category (
 请求方法: GET
 请求头: Authorization: token
 请求参数:
-- categoryId: Integer (可选，不传表示获取所有收藏，0表示获取默认分类的收藏)
+- categoryId: Integer (可选，不传表示获取所有收藏，1表示获取默认分类的收藏)
 - pageNum: Integer (可选，默认1)
 - pageSize: Integer (可选，默认10)
 响应结果:
@@ -381,6 +381,7 @@ CREATE TABLE favorite_category (
             "status": true,
             "category": "想去",
             "notes": "下个月去玩",
+            "sortOrder": 0,
             "updateTime": "2024-01-01 12:00:00",
             "destination": {
                 "id": 1,
@@ -407,9 +408,13 @@ CREATE TABLE favorite_category (
 }
 说明：
 - categoryId不传时获取所有收藏
-- categoryId=0时获取默认分类（未分类）的收藏
-- categoryId>0时获取指定分类的收藏
+- categoryId=1时获取默认分类（未分类）的收藏
+- categoryId>1时获取指定分类的收藏
 - 返回结果按sort_order升序、create_time降序排序
+- 返回的收藏信息包含完整的目的地信息
+- 目的地信息中的tags、bestSeasons使用StringListTypeHandler处理
+- seasonalFeatures使用JsonTypeHandler处理
+- 所有时间字段格式为"yyyy-MM-dd HH:mm:ss"
 
 5. 搜索收藏
 请求路径: /favorite/search
@@ -711,3 +716,48 @@ src/main/java/com/travelrec/
 - 合理设计字段类型和长度
 - 使用唯一索引确保同一用户下分类名称唯一
 - 使用乐观锁控制并发更新
+
+# 旅游推荐系统优化记录
+
+## 最新优化 - 用户收藏分类查询功能
+
+### 优化内容
+1. 优化了用户收藏分类查询的SQL查询和结果映射
+2. 改进了异常处理和日志记录机制
+3. 提升了查询性能和代码可维护性
+
+### 具体改进
+1. SQL查询优化：
+   - 将LEFT JOIN改为INNER JOIN提升连接查询性能
+   - 使用EXISTS子查询确保分类存在且属于当前用户
+   - 优化了默认分类的处理逻辑，支持多种默认分类标识
+
+2. 结果映射优化：
+   - 移除了N+1查询问题，直接在联表查询中映射destination属性
+   - 完善了字段映射，确保数据完整性
+   - 添加了对复杂类型（List和JSON）的正确处理
+
+3. 异常处理优化：
+   - 添加了参数验证
+   - 完善了异常捕获和日志记录
+   - 统一了错误返回格式
+
+### 性能提升
+1. 减少了数据库查询次数
+2. 优化了JOIN操作性能
+3. 改进了分类查询逻辑
+
+### 代码维护性提升
+1. 统一了分类处理逻辑
+2. 完善了注释和日志
+3. 增强了代码的可读性和可维护性
+
+### 安全性提升
+1. 添加了用户权限验证
+2. 防止了SQL注入风险
+3. 确保用户只能访问自己的数据
+
+## 下一步优化计划
+1. 考虑添加缓存机制
+2. 优化批量操作性能
+3. 添加更多的数据验证和清理机制

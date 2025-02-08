@@ -236,17 +236,12 @@ export const useFavoriteStore = defineStore('favorite', () => {
   // 获取分类列表
   const getCategories = async () => {
     try {
-      // console.log('开始获取分类列表...')
       const res = await getCategoryListAPI()
       if (res.code === 0) {
-        // console.log('获取分类列表成功:', res.data)
         categories.value = res.data
-        
         // 检查是否有默认分类
         const hasDefault = categories.value.some(c => c.isDefault)
-        // console.log('是否存在默认分类:', hasDefault)
-        
-        // 如果没有默认分类，创建一个
+ 
         if (!hasDefault) {
           // console.log('创建默认分类...')
           await createCategory({
@@ -357,19 +352,34 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 批量删除收藏
-  const batchDeleteFavorites = async (favoriteIds) => {
+  const batchDeleteFavorites = async (destinationIds) => {
     try {
       loading.value = true
-      const res = await batchDeleteFavoritesAPI(favoriteIds)
+      // console.log('开始批量删除:', destinationIds)
+      
+      // 确保 destinationIds 是数组
+      const ids = Array.isArray(destinationIds) ? destinationIds : [destinationIds]
+      const res = await batchDeleteFavoritesAPI(ids)
+      // console.log('删除响应:', res)
+      
       if (res.code === 0) {
         ElMessage.success('批量删除成功')
+        // 从当前列表中移除已删除的项
+        favorites.value = favorites.value.filter(
+          item => !ids.includes(item.destinationId)
+        )
         // 更新统计信息
         await getFavoriteStats()
+        // 更新分类列表
+        await getCategories()
         return true
+      } else {
+        ElMessage.error(res.message || '批量删除失败')
+        return false
       }
-      return false
     } catch (error) {
-      ElMessage.error(error.message || '批量删除失败')
+      console.error('批量删除失败:', error)
+      ElMessage.error('批量删除失败，请重试')
       return false
     } finally {
       loading.value = false

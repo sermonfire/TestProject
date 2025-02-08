@@ -128,26 +128,22 @@ const handleSizeChange = async (size) => {
 // 修改刷新方法
 const refreshData = async () => {
   try {
+    // console.log('刷新收藏列表数据') // 添加日志
     await Promise.all([
       getFavoriteList(currentPage.value, pageSize.value),
       favoriteStore.getFavoriteStats()
     ])
   } catch (error) {
     console.error('刷新数据失败:', error)
+    ElMessage.error('刷新数据失败，请重试')
   }
 }
 
 // 生命周期钩子
 onMounted(async () => {
   try {
-    // console.log('开始初始化收藏页面数据...')
-    
-    // 先获取分类列表
-    // console.log('正在获取分类列表...')
     await favoriteStore.getCategories()
-    // console.log('分类列表:', favoriteStore.categories)
     
-    // 如果没有选中分类，默认选中默认分类
     if (!favoriteStore.selectedCategory && favoriteStore.categories.length) {
       // console.log('未选中分类，寻找默认分类...')
       const defaultCategory = favoriteStore.categories.find(c => c.isDefault)

@@ -124,22 +124,28 @@ export const searchFavoritesAPI = (keyword, pageNum = 1, pageSize = 10) => {
   })
 }
 
-// 批量更新分类
-export const batchUpdateCategoryAPI = (favoriteIds, category) => {
+// 批量删除收藏
+export const batchDeleteFavoritesAPI = (favoriteIds) => {
+  // console.log('调用批量删除API:', favoriteIds)
   return request({
-    url: 'dev-api/favorite/batch/category',
-    method: 'PUT',
-    data: { favoriteIds, category },
+    url: 'dev-api/favorite/batch',
+    method: 'DELETE',
+    params: {
+      favoriteIds: favoriteIds.join(',')  // 将数组转换为逗号分隔的字符串
+    },
     needToken: true
   })
 }
 
-// 批量删除收藏
-export const batchDeleteFavoritesAPI = (favoriteIds) => {
+// 批量更新分类
+export const batchUpdateCategoryAPI = (favoriteIds, categoryId) => {
   return request({
-    url: 'dev-api/favorite/batch',
-    method: 'DELETE',
-    data: { favoriteIds },
+    url: 'dev-api/favorite/batch/category',
+    method: 'PUT',
+    data: {
+      favoriteIds,
+      categoryId
+    },
     needToken: true
   })
-} 
+}
