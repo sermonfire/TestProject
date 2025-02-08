@@ -370,11 +370,21 @@ const handleBatchDelete = async () => {
         message: `已取消收藏 ${count} 个景点`,
         customClass: 'collection-message'
       })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: '批量取消收藏失败，请重试',
+        customClass: 'collection-error-message'
+      })
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量取消收藏失败:', error)
-      ElMessage.error('批量取消收藏失败，请重试')
+      ElMessage({
+        type: 'error',
+        message: '批量取消收藏失败，请重试',
+        customClass: 'collection-error-message'
+      })
     }
   } finally {
     loading.value = false

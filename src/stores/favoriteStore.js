@@ -442,24 +442,16 @@ export const useFavoriteStore = defineStore('favorite', () => {
           refreshFavoriteData()
         ])
         
-        ElMessage({
-          type: 'success',
-          message: `已取消收藏 ${ids.length} 个景点`,
-          customClass: 'collection-message'
-        })
-        
         return true
       } else {
         // 操作失败时恢复状态
         ids.forEach(id => updateFavoriteStatus(id, true))
-        ElMessage.error(res.message || '批量取消收藏失败')
         return false
       }
     } catch (error) {
       console.error('批量取消收藏失败:', error)
       // 发生错误时恢复状态
       destinationIds.forEach(id => updateFavoriteStatus(id, true))
-      ElMessage.error('批量取消收藏失败，请重试')
       return false
     } finally {
       loading.value = false
