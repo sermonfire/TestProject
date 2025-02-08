@@ -199,11 +199,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
       if (res.code === 0) {
         // 立即更新状态
         updateFavoriteStatus(destinationId, false)
-        ElMessage({
-          type: 'success',
-          message: '已取消收藏',
-          customClass: 'collection-message'
-        })
         
         // 从列表中移除
         favorites.value = favorites.value.filter(
@@ -217,13 +212,11 @@ export const useFavoriteStore = defineStore('favorite', () => {
       } else {
         // 失败时恢复状态
         updateFavoriteStatus(destinationId, true)
-        ElMessage.error(res.message || '取消收藏失败')
         return false
       }
     } catch (error) {
       console.error('取消收藏失败:', error)
       updateFavoriteStatus(destinationId, true)
-      ElMessage.error('取消收藏失败，请重试')
       return false
     } finally {
       loading.value = false

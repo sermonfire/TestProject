@@ -40,7 +40,7 @@
           :total="total"
           @page-change="handlePageChange"
           @size-change="handleSizeChange"
-          @refresh="refreshData"
+          @refresh="handleRefresh"
           @selection-change="handleSelectionChange"
         />
       </div>
@@ -128,16 +128,17 @@ const handleSizeChange = async (size) => {
 }
 
 // 修改刷新方法
-const refreshData = async () => {
+const refreshData = async (silent = false) => {
   try {
-    // console.log('刷新收藏列表数据') // 添加日志
     await Promise.all([
       getFavoriteList(currentPage.value, pageSize.value),
       favoriteStore.getFavoriteStats()
     ])
   } catch (error) {
     console.error('刷新数据失败:', error)
-    ElMessage.error('刷新数据失败，请重试')
+    if (!silent) {
+      ElMessage.error('刷新数据失败，请重试')
+    }
   }
 }
 
@@ -215,6 +216,10 @@ onBeforeUnmount(() => {
 const beforeRouteLeave = (to, from, next) => {
   cleanup()
   next()
+}
+
+const handleRefresh = (silent = false) => {
+  refreshData(silent)
 }
 </script>
 

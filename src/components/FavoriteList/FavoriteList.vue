@@ -321,17 +321,27 @@ const handleDelete = async (row) => {
     const success = await favoriteStore.removeFavorite(row.destinationId)
     
     if (success) {
+      await emit('refresh')
       ElMessage({
         type: 'success',
         message: '已取消收藏',
         customClass: 'collection-message'
       })
-      emit('refresh')
+    } else {
+      ElMessage({
+        type: 'error',
+        message: '取消收藏失败，请重试',
+        customClass: 'collection-error-message'
+      })
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('取消收藏失败:', error)
-      ElMessage.error('取消收藏失败，请重试')
+      ElMessage({
+        type: 'error',
+        message: '取消收藏失败，请重试',
+        customClass: 'collection-error-message'
+      })
     }
   } finally {
     loading.value = false
@@ -432,9 +442,29 @@ const clearSelection = () => {
   }
 }
 
+// 修改刷新方法
+const refreshData = async (silent = false) => {
+  try {
+    await Promise.all([
+      getFavoriteList(currentPage.value, pageSize.value),
+      favoriteStore.getFavoriteStats()
+    ])
+  } catch (error) {
+    console.error('刷新数据失败:', error)
+    if (!silent) {
+      ElMessage.error('刷新数据失败，请重试')
+    }
+  }
+}
+
+// 修改 emit 方法
+const handleRefresh = (silent = false) => {
+  emit('refresh', silent)
+}
+
 // 暴露方法给父组件
 defineExpose({
-  refreshData: () => emit('refresh'),
+  refreshData,
   clearSelection
 })
 
