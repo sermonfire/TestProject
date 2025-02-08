@@ -29,6 +29,14 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const total = ref(0)
   const selectedCategory = ref(null)
 
+  // 添加收藏操作的状态跟踪
+  const operationStatus = ref({
+    type: '', // 'add' | 'remove' | 'update'
+    status: '', // 'pending' | 'success' | 'error'
+    message: '',
+    timestamp: null
+  })
+
   // 计算属性
   const hasDefaultCategory = computed(() => {
     return categories.value.some(cat => cat.isDefault)
@@ -77,25 +85,57 @@ export const useFavoriteStore = defineStore('favorite', () => {
         getCategories(),
         getFavoriteStats()
       ])
+      // 清除可能的缓存数据
+      favorites.value = favorites.value.filter(item => {
+        // 重新验证每个收藏的状态
+        return checkIsFavorite(item.id)
+      })
     } catch (error) {
       console.error('Refresh favorite data failed:', error)
     }
   }
 
+  // 添加操作状态的更新方法
+  const updateOperationStatus = (type, status, message = '') => {
+    operationStatus.value = {
+      type,
+      status,
+      message,
+      timestamp: Date.now()
+    }
+  }
+
   // 修改添加收藏方法
   const addFavorite = async (destinationId, category = '', notes = '') => {
+    updateOperationStatus('add', 'pending')
     try {
       loading.value = true
       const res = await addFavoriteAPI(destinationId, category, notes)
       if (res.code === 0) {
-        ElMessage.success('收藏成功')
-        // 刷新数据
+        ElMessage({
+          message: '收藏成功',
+          type: 'success',
+          customClass: 'collection-message'
+        })
         await refreshFavoriteData()
+        updateOperationStatus('add', 'success', '收藏成功')
         return true
+      } else {
+        ElMessage({
+          message: res.message || '收藏失败',
+          type: 'error',
+          customClass: 'collection-message'
+        })
+        return false
       }
-      return false
     } catch (error) {
-      ElMessage.error(error.message || '收藏失败')
+      console.error('[收藏失败]:', error)
+      ElMessage({
+        message: '网络异常，请稍后重试',
+        type: 'error',
+        customClass: 'collection-message'
+      })
+      updateOperationStatus('add', 'error', error.message)
       return false
     } finally {
       loading.value = false
@@ -104,18 +144,39 @@ export const useFavoriteStore = defineStore('favorite', () => {
 
   // 修改取消收藏方法
   const removeFavorite = async (destinationId) => {
+    updateOperationStatus('remove', 'pending')
     try {
       loading.value = true
       const res = await removeFavoriteAPI(destinationId)
       if (res.code === 0) {
-        ElMessage.success('已取消收藏')
+        ElMessage({
+          message: '已取消收藏',
+          type: 'success',
+          customClass: 'collection-message'
+        })
+        // 从当前列表中移除该收藏
+        favorites.value = favorites.value.filter(item => item.id !== destinationId)
         // 刷新数据
         await refreshFavoriteData()
+        updateOperationStatus('remove', 'success', '已取消收藏')
         return true
+      } else {
+        ElMessage({
+          message: res.message || '取消收藏失败',
+          type: 'error',
+          customClass: 'collection-message'
+        })
+        updateOperationStatus('remove', 'error', res.message || '取消收藏失败')
+        return false
       }
-      return false
     } catch (error) {
-      ElMessage.error(error.message || '取消收藏失败')
+      console.error('[取消收藏失败]:', error)
+      ElMessage({
+        message: '网络异常，请稍后重试',
+        type: 'error',
+        customClass: 'collection-message'
+      })
+      updateOperationStatus('remove', 'error', error.message)
       return false
     } finally {
       loading.value = false
@@ -126,7 +187,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
   const checkIsFavorite = async (destinationId) => {
     try {
       const res = await checkIsFavoriteAPI(destinationId)
-      return res.code === 0 && res.data
+      // 确保返回正确的布尔值
+      return res.code === 0 && Boolean(res.data)
     } catch (error) {
       console.error('Check favorite status failed:', error)
       return false
@@ -368,7 +430,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
     batchUpdateCategory,
     batchDeleteFavorites,
     updateFavorite,
-    refreshFavoriteData
+    refreshFavoriteData,
+    operationStatus,
+    updateOperationStatus
   }
 }, {
   persist: {

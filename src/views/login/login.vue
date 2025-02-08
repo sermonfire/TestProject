@@ -283,7 +283,7 @@ const clientLogin = async () => {
 				console.error('登录后续操作失败:', error);
 				handleLoginFailure(error.message || '登录验证失败');
 				// 清理已保存的状态
-				userStore.clearUserInfo();
+				userStore.clear();
 				return;
 			}
 		} else {

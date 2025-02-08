@@ -1,39 +1,53 @@
 <template>
   <div class="collection-button">
-    <el-button
-      :type="isCollected ? 'danger' : 'primary'"
-      :icon="isCollected ? 'Star' : 'StarFilled'"
-      circle
-      @click.stop="handleCollectionClick"
-      :class="{ 'is-collected': isCollected }"
-      :loading="loading"
-      :disabled="disabled"
+    <!-- 添加工具提示 -->
+    <el-tooltip
+      :content="isCollected ? '取消收藏' : '添加收藏'"
+      placement="top"
+      :show-after="500"
     >
-      <template #icon>
-        <el-icon :size="24">
-          <Star v-if="isCollected" />
-          <StarFilled v-else />
-        </el-icon>
-      </template>
-    </el-button>
+      <el-button
+        :type="isCollected ? 'danger' : 'primary'"
+        circle
+        @click.stop="handleCollectionClick"
+        :class="{ 'is-collected': isCollected }"
+        :loading="loading"
+        :disabled="disabled"
+      >
+        <template #icon>
+          <el-icon :size="24">
+            <Star v-if="isCollected" />
+            <StarFilled v-else />
+          </el-icon>
+        </template>
+      </el-button>
+    </el-tooltip>
 
-    <!-- 添加分类选择对话框 -->
+    <!-- 收藏确认对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      title="选择收藏分类"
-      width="30%"
+      :title="isCollected ? '修改收藏' : '添加收藏'"
+      width="400px"
       :close-on-click-modal="false"
+      :close-on-press-escape="true"
+      :show-close="true"
+      @close="handleDialogClose"
+      append-to-body
+      center
+      destroy-on-close
     >
       <el-form
         ref="formRef"
         :model="form"
         label-width="80px"
+        @submit.prevent="handleConfirm"
       >
-        <el-form-item label="分类">
+        <el-form-item label="分类" required>
           <el-select 
             v-model="form.category"
             placeholder="请选择分类"
             style="width: 100%"
+            filterable
           >
             <el-option
               v-for="category in categories"
@@ -41,10 +55,13 @@
               :label="category.name"
               :value="category.id"
             >
-              <span style="float: left">{{ category.name }}</span>
-              <span style="float: right; color: var(--el-text-color-secondary)">
-                ({{ category.count || 0 }})
-              </span>
+              <div class="category-option">
+                <el-icon>
+                  <component :is="category.isDefault ? 'Star' : 'Folder'" />
+                </el-icon>
+                <span>{{ category.name }}</span>
+                <span class="count">({{ category.count || 0 }})</span>
+              </div>
             </el-option>
           </el-select>
         </el-form-item>
@@ -59,13 +76,44 @@
           />
         </el-form-item>
       </el-form>
+      
       <template #footer>
-        <span class="dialog-footer">
+        <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirm" :loading="loading">
-            确定
+          <el-button 
+            type="primary" 
+            @click="handleConfirm" 
+            :loading="loading"
+          >
+            确定{{ isCollected ? '修改' : '收藏' }}
           </el-button>
-        </span>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 取消收藏确认对话框 -->
+    <el-dialog
+      v-model="confirmDialogVisible"
+      title="取消收藏"
+      width="360px"
+      append-to-body
+      center
+    >
+      <div class="confirm-content">
+        <el-icon class="warning-icon" :size="48"><Warning /></el-icon>
+        <p>确定要取消收藏吗？</p>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="confirmDialogVisible = false">取消</el-button>
+          <el-button 
+            type="danger" 
+            @click="handleRemoveFavorite"
+            :loading="loading"
+          >
+            确定取消
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -73,9 +121,10 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
-import { Star, StarFilled } from '@element-plus/icons-vue';
+import { Star, StarFilled, Warning } from '@element-plus/icons-vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { ElMessage } from 'element-plus';
+import { debounce } from 'lodash-es'
 
 const props = defineProps({
   itemId: {
@@ -104,12 +153,18 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['collection-change']);
+const emit = defineEmits([
+  'collection-change',
+  'collection-start',  // 开始收藏操作
+  'collection-end',    // 结束收藏操作
+  'collection-error'   // 收藏操作出错
+]);
 const favoriteStore = useFavoriteStore();
 
 const isCollected = ref(props.initialState);
 const loading = ref(false);
 const dialogVisible = ref(false);
+const confirmDialogVisible = ref(false);
 const form = ref({
   category: '',
   notes: ''
@@ -142,78 +197,103 @@ onMounted(async () => {
   }
 });
 
+// 优化收藏操作的防抖处理
+const debouncedAddFavorite = debounce(async (categoryId = '', notes = '') => {
+  await addFavorite(categoryId, notes)
+}, 300)
+
+const debouncedRemoveFavorite = debounce(async () => {
+  await removeFavorite()
+}, 300)
+
 const handleCollectionClick = async () => {
-  if (loading.value || props.disabled) return;
+  if (loading.value || props.disabled) return
   
   if (isCollected.value) {
-    // 如果已收藏，直接取消收藏
-    await removeFavorite();
+    // 显示取消确认对话框
+    confirmDialogVisible.value = true
   } else {
-    // 如果未收藏且有自定义分类，显示分类选择对话框
-    if (hasCustomCategories.value) {
-      // 设置默认分类
-      const defaultCategory = categories.value.find(c => c.isDefault);
-      if (defaultCategory) {
-        form.value.category = defaultCategory.id;
-      }
-      dialogVisible.value = true;
-    } else {
-      // 如果没有自定义分类，直接添加到默认分类
-      await addFavorite();
+    // 显示添加收藏对话框
+    const defaultCategory = categories.value.find(c => c.isDefault)
+    if (defaultCategory) {
+      form.value.category = defaultCategory.id
     }
+    dialogVisible.value = true
   }
-};
+}
 
-const handleConfirm = async () => {
+// 处理取消收藏
+const handleRemoveFavorite = async () => {
+  await removeFavorite()
+  confirmDialogVisible.value = false
+}
+
+// 优化确认操作的防抖
+const handleConfirm = debounce(async () => {
   if (!form.value.category) {
-    ElMessage.warning('请选择收藏分类');
-    return;
+    ElMessage.warning('请选择收藏分类')
+    return
   }
   
-  await addFavorite(form.value.category, form.value.notes);
-  dialogVisible.value = false;
-  form.value = { category: '', notes: '' };
-};
+  await debouncedAddFavorite(form.value.category, form.value.notes)
+  dialogVisible.value = false
+  form.value = { category: '', notes: '' }
+}, 300)
 
 const addFavorite = async (categoryId = '', notes = '') => {
-  loading.value = true;
+  loading.value = true
+  emit('collection-start')
   try {
-    const success = await favoriteStore.addFavorite(props.itemId, categoryId, notes);
+    const success = await favoriteStore.addFavorite(props.itemId, categoryId, notes)
     if (success) {
-      isCollected.value = true;
-      emit('collection-change', true);
+      isCollected.value = true
+      emit('collection-change', true)
       
       if (props.autoRefresh) {
-        await favoriteStore.refreshFavoriteData();
+        await favoriteStore.refreshFavoriteData()
       }
     }
   } catch (error) {
-    console.error('Add favorite failed:', error);
-    ElMessage.error('收藏失败，请稍后重试');
+    console.error('Add favorite failed:', error)
+    emit('collection-error', error)
+    ElMessage.error('收藏失败，请稍后重试')
   } finally {
-    loading.value = false;
+    loading.value = false
+    emit('collection-end')
   }
-};
+}
 
 const removeFavorite = async () => {
-  loading.value = true;
+  loading.value = true
+  emit('collection-start')
   try {
-    const success = await favoriteStore.removeFavorite(props.itemId);
+    const success = await favoriteStore.removeFavorite(props.itemId)
     if (success) {
-      isCollected.value = false;
-      emit('collection-change', false);
+      isCollected.value = false
+      emit('collection-change', false)
       
       if (props.autoRefresh) {
-        await favoriteStore.refreshFavoriteData();
+        // 确保本地状态更新
+        await favoriteStore.refreshFavoriteData()
+        // 重新检查收藏状态
+        const status = await favoriteStore.checkIsFavorite(props.itemId)
+        isCollected.value = status
       }
     }
   } catch (error) {
-    console.error('Remove favorite failed:', error);
-    ElMessage.error('取消收藏失败，请稍后重试');
+    console.error('Remove favorite failed:', error)
+    emit('collection-error', error)
+    ElMessage.error('取消收藏失败，请稍后重试')
   } finally {
-    loading.value = false;
+    loading.value = false
+    emit('collection-end')
   }
-};
+}
+
+// 添加对话框关闭处理
+const handleDialogClose = () => {
+  form.value = { category: '', notes: '' }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -273,9 +353,41 @@ const removeFavorite = async () => {
       cursor: not-allowed;
     }
   }
+
+  .category-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .el-icon {
+      font-size: 16px;
+      color: var(--el-text-color-secondary);
+    }
+    
+    .count {
+      margin-left: auto;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+  }
 }
 
-// 添加对话框样式
+.confirm-content {
+  text-align: center;
+  padding: 20px 0;
+  
+  .warning-icon {
+    color: var(--el-color-warning);
+    margin-bottom: 16px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 16px;
+    color: var(--el-text-color-primary);
+  }
+}
+
 :deep(.el-dialog) {
   border-radius: 8px;
   overflow: hidden;
@@ -283,6 +395,7 @@ const removeFavorite = async () => {
   .el-dialog__header {
     margin: 0;
     padding: 20px;
+    text-align: center;
     background-color: var(--el-color-primary-light-9);
     
     .el-dialog__title {
@@ -293,16 +406,19 @@ const removeFavorite = async () => {
   }
   
   .el-dialog__body {
-    padding: 20px;
+    padding: 24px;
   }
   
-  .el-select {
-    width: 100%;
+  .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--el-border-color-lighter);
   }
-  
-  .el-form-item__label {
-    font-weight: 500;
-  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
 }
 </style>
 
