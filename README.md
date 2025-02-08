@@ -603,6 +603,132 @@ CREATE TABLE favorite_category (
 - 不能修改默认分类的排序
 - 同一用户下的分类排序值唯一
 
+## 7. 目的地详情接口
+
+1. 获取目的地详情
+请求路径: /dev-api/recommend/destination/{destinationId}
+请求方法: GET
+请求头: Authorization: token
+请求参数: 
+- destinationId: 目的地ID (路径参数)
+响应结果:
+{
+    "code": 0,
+    "message": "success",
+    "data": {
+        "id": 1,
+        "destinationId": 1,
+        "content": "详细介绍",
+        "trafficInfo": "交通信息",
+        "accommodationInfo": "住宿信息",
+        "foodInfo": "美食信息",
+        "attractions": [
+            {
+                "name": "景点名称",
+                "description": "景点描述",
+                "images": ["图片url"]
+            }
+        ],
+        "travelTips": "旅行建议",
+        "bestTravelTime": "最佳旅行时间",
+        "climateInfo": {
+            "spring": "春季气候描述",
+            "summer": "夏季气候描述",
+            "autumn": "秋季气候描述",
+            "winter": "冬季气候描述"
+        },
+        "localCustoms": "风土人情",
+        "shoppingInfo": "购物信息",
+        "destination": {
+            // 目的地基本信息，包含name、description等字段
+        }
+    }
+}
+说明：
+- 返回的数据包含目的地的详细信息和基本信息
+- attractions字段使用JsonTypeHandler处理
+- climateInfo字段使用JsonTypeHandler处理
+- 图片URL为腾讯云COS的访问地址
+
+2. 批量获取目的地详情
+请求路径: /dev-api/recommend/destinations/batch
+请求方法: GET
+请求头: Authorization: token
+请求参数:
+- ids: String (必需，逗号分隔的目的地ID列表，如"1,2,3")
+响应结果:
+{
+    "code": 0,
+    "message": "success",
+    "data": [
+        // 目的地详情列表，格式同单个目的地详情
+    ]
+}
+说明：
+- ids参数最多支持20个ID
+- 返回的数据按照请求的ID顺序排序
+- 如果某个ID不存在，则该ID对应的数据会被忽略
+
+3. 获取相关目的地推荐
+请求路径: /dev-api/recommend/destination/{destinationId}/related
+请求方法: GET
+请求头: Authorization: token
+请求参数:
+- destinationId: Integer (路径参数)
+- limit: Integer (可选，默认5，最大20)
+响应结果:
+{
+    "code": 0,
+    "message": "success",
+    "data": [
+        // 相关目的地列表，包含基本信息
+    ]
+}
+说明：
+- 根据目的地的标签、季节、预算等因素推荐相关目的地
+- 返回结果按相关度排序
+- 不会推荐当前目的地本身
+
+4. 更新目的地详情
+请求路径: /dev-api/recommend/destination/{destinationId}
+请求方法: PUT
+请求头: 
+- Authorization: token
+- Content-Type: application/json
+请求参数:
+{
+    "content": "详细介绍",
+    "trafficInfo": "交通信息",
+    "accommodationInfo": "住宿信息",
+    "foodInfo": "美食信息",
+    "attractions": [
+        {
+            "name": "景点名称",
+            "description": "景点描述",
+            "images": ["图片url"]
+        }
+    ],
+    "travelTips": "旅行建议",
+    "bestTravelTime": "最佳旅行时间",
+    "climateInfo": {
+        "spring": "春季气候描述",
+        "summer": "夏季气候描述",
+        "autumn": "秋季气候描述",
+        "winter": "冬季气候描述"
+    },
+    "localCustoms": "风土人情",
+    "shoppingInfo": "购物信息"
+}
+响应结果:
+{
+    "code": 0,
+    "message": "success"
+}
+说明：
+- 需要管理员权限
+- 支持部分字段更新
+- 图片上传需要先调用文件上传接口
+
 # 推荐算法说明
 
 系统采用基于规则的推荐算法，主要考虑以下因素：
@@ -719,45 +845,84 @@ src/main/java/com/travelrec/
 
 # 旅游推荐系统优化记录
 
-## 最新优化 - 用户收藏分类查询功能
+## 2024-02-08 优化 - 用户收藏分类查询功能
 
 ### 优化内容
-1. 优化了用户收藏分类查询的SQL查询和结果映射
-2. 改进了异常处理和日志记录机制
-3. 提升了查询性能和代码可维护性
+1. 重构了UserFavoriteMapper中的SQL查询逻辑
+2. 优化了查询性能和结果映射
+3. 增强了异常处理机制
 
 ### 具体改进
 1. SQL查询优化：
-   - 将LEFT JOIN改为INNER JOIN提升连接查询性能
-   - 使用EXISTS子查询确保分类存在且属于当前用户
-   - 优化了默认分类的处理逻辑，支持多种默认分类标识
+   - 使用INNER JOIN替代LEFT JOIN，提升连接查询性能
+   - 优化了默认分类的处理逻辑（支持NULL、空字符串和"默认收藏"）
+   - 添加了EXISTS子查询确保分类存在且属于当前用户
+   - 优化了排序逻辑，按sort_order和create_time排序
 
 2. 结果映射优化：
-   - 移除了N+1查询问题，直接在联表查询中映射destination属性
-   - 完善了字段映射，确保数据完整性
-   - 添加了对复杂类型（List和JSON）的正确处理
+   - 实现一次性加载所有相关数据，避免N+1查询问题
+   - 完善了字段映射配置，确保数据完整性
+   - 使用TypeHandler正确处理List和JSON类型数据
+   - 优化了destination关联对象的映射
 
 3. 异常处理优化：
-   - 添加了参数验证
+   - 增加了参数验证逻辑
    - 完善了异常捕获和日志记录
    - 统一了错误返回格式
+   - 添加了详细的错误信息
 
 ### 性能提升
-1. 减少了数据库查询次数
-2. 优化了JOIN操作性能
-3. 改进了分类查询逻辑
+1. 查询性能优化：
+   - 减少了数据库查询次数
+   - 优化了JOIN操作性能
+   - 改进了分类查询逻辑
+   - 合理利用索引提升查询效率
+
+2. 数据处理优化：
+   - 优化了数据映射过程
+   - 减少了内存占用
+   - 提高了大数据量处理能力
 
 ### 代码维护性提升
-1. 统一了分类处理逻辑
-2. 完善了注释和日志
-3. 增强了代码的可读性和可维护性
+1. 代码结构优化：
+   - 统一了分类处理逻辑
+   - 规范化了SQL语句格式
+   - 增加了详细的代码注释
+   - 提高了代码可读性
+
+2. 错误处理优化：
+   - 完善了异常处理机制
+   - 增加了详细的日志记录
+   - 优化了错误提示信息
 
 ### 安全性提升
-1. 添加了用户权限验证
-2. 防止了SQL注入风险
-3. 确保用户只能访问自己的数据
+1. 数据访问控制：
+   - 添加了用户权限验证
+   - 确保用户只能访问自己的数据
+   - 防止了SQL注入风险
+
+2. 查询安全性：
+   - 参数化SQL查询
+   - 验证输入参数
+   - 控制查询范围
 
 ## 下一步优化计划
-1. 考虑添加缓存机制
-2. 优化批量操作性能
-3. 添加更多的数据验证和清理机制
+1. 缓存优化：
+   - 实现Redis缓存机制
+   - 优化缓存策略
+   - 添加缓存更新机制
+
+2. 性能优化：
+   - 优化批量操作性能
+   - 实现分批处理机制
+   - 优化大数据量查询性能
+
+3. 功能优化：
+   - 添加更多的数据验证机制
+   - 完善数据清理功能
+   - 优化分类管理功能
+
+4. 监控优化：
+   - 添加性能监控指标
+   - 完善日志记录
+   - 优化异常监控

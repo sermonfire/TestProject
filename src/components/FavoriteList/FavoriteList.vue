@@ -1,5 +1,5 @@
 <template>
-  <div class="favorite-list">
+  <div class="favorite-list" :class="{ 'is-grid': viewMode === 'grid' }">
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="left">
@@ -38,29 +38,16 @@
     </div>
 
     <!-- 列表内容 -->
-    <div class="list-content">
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="tableData"
-        style="width: 100%"
-        @selection-change="handleSelectionChange"
-        row-key="id"
-        v-bind="$attrs"
-      >
-        <el-table-column
-          type="selection"
-          width="55"
-          :selectable="(row) => !row.disabled"
-        />
-        <el-table-column label="景点信息" min-width="300">
-          <template #default="{ row }">
-            <div class="destination-info">
-              <div class="destination-image">
+    <div class="list-content" v-loading="loading">
+      <template v-if="viewMode === 'grid'">
+        <div class="grid-view">
+          <div v-for="item in processedFavorites" :key="item.id" class="grid-item">
+            <div class="destination-card">
+              <div class="card-image">
                 <el-image 
-                  :src="row.imageUrl" 
+                  :src="item.imageUrl" 
                   fit="cover"
-                  :preview-src-list="[row.imageUrl]"
+                  loading="lazy"
                 >
                   <template #error>
                     <div class="image-placeholder">
@@ -68,59 +55,167 @@
                     </div>
                   </template>
                 </el-image>
+                <div class="image-overlay">
+                  <div class="overlay-content">
+                    <h3 class="overlay-title">{{ item.name }}</h3>
+                    <div class="overlay-info">
+                      <span v-if="item.location" class="location">
+                        <el-icon><Location /></el-icon>
+                        {{ item.location }}
+                      </span>
+                      <span v-if="item.price" class="price">
+                        <el-icon><Ticket /></el-icon>
+                        ¥{{ item.price }}起
+                      </span>
+                    </div>
+                    <div class="overlay-tags">
+                      <el-tag 
+                        v-for="tag in (item.tags || []).slice(0, 3)" 
+                        :key="tag"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ tag }}
+                      </el-tag>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-actions">
+                  <el-button-group>
+                    <el-button 
+                      type="primary" 
+                      @click.stop="handleEdit(item)"
+                      class="action-button"
+                    >
+                      <el-icon><Edit /></el-icon>
+                    </el-button>
+                    <el-button 
+                      type="danger" 
+                      @click.stop="handleDelete(item)"
+                      class="action-button"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </el-button-group>
+                </div>
               </div>
-              <div class="info">
-                <h3 class="name">{{ row.name }}</h3>
-                <div class="tags">
-                  <el-tag 
-                    v-for="tag in row.tags" 
-                    :key="tag"
-                    size="small"
-                  >
-                    {{ tag }}
-                  </el-tag>
+              <div class="card-content">
+                <div class="content-header">
+                  <span class="category-tag">{{ item.categoryName }}</span>
+                  <span class="date">{{ formatDate(item.createTime) }}</span>
+                </div>
+                <p class="description">{{ item.description }}</p>
+                <div class="content-footer">
+                  <el-rate 
+                    v-model="item.rating" 
+                    disabled 
+                    show-score
+                    text-color="#ff9900"
+                    score-template="{value}"
+                  />
+                  <div class="additional-info">
+                    <span v-if="item.openingHours" class="opening-hours">
+                      <el-icon><Clock /></el-icon>
+                      {{ item.openingHours }}
+                    </span>
+                    <span v-if="item.bestTimeToVisit" class="best-time">
+                      <el-icon><Calendar /></el-icon>
+                      最佳游览: {{ item.bestTimeToVisit }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="备注" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-input
-              v-model="row.notes"
-              type="textarea"
-              :rows="2"
-              placeholder="添加备注..."
-              @blur="handleNotesUpdate(row)"
+          </div>
+        </div>
+      </template>
+      
+      <template v-else>
+        <div class="list-view">
+          <el-table
+            ref="tableRef"
+            v-loading="loading"
+            :data="tableData"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+            row-key="id"
+            v-bind="$attrs"
+          >
+            <el-table-column
+              type="selection"
+              width="55"
+              :selectable="(row) => !row.disabled"
             />
-          </template>
-        </el-table-column>
-        <el-table-column label="收藏时间" width="160" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ formatDate(row.createTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button-group>
-              <el-button 
-                link 
-                type="primary" 
-                @click="handleMove(row)"
-              >
-                移动
-              </el-button>
-              <el-button 
-                link 
-                type="warning" 
-                @click="handleDelete(row)"
-              >
-                取消收藏
-              </el-button>
-            </el-button-group>
-          </template>
-        </el-table-column>
-      </el-table>
+            <el-table-column label="景点信息" min-width="300">
+              <template #default="{ row }">
+                <div class="destination-info">
+                  <div class="destination-image">
+                    <el-image 
+                      :src="row.imageUrl" 
+                      fit="cover"
+                      :preview-src-list="[row.imageUrl]"
+                    >
+                      <template #error>
+                        <div class="image-placeholder">
+                          <el-icon><Picture /></el-icon>
+                        </div>
+                      </template>
+                    </el-image>
+                  </div>
+                  <div class="info">
+                    <h3 class="name">{{ row.name }}</h3>
+                    <div class="tags">
+                      <el-tag 
+                        v-for="tag in row.tags" 
+                        :key="tag"
+                        size="small"
+                      >
+                        {{ tag }}
+                      </el-tag>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="备注" min-width="200" show-overflow-tooltip>
+              <template #default="{ row }">
+                <el-input
+                  v-model="row.notes"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="添加备注..."
+                  @blur="handleNotesUpdate(row)"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="收藏时间" width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ formatDate(row.createTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button-group>
+                  <el-button 
+                    link 
+                    type="primary" 
+                    @click="handleMove(row)"
+                  >
+                    移动
+                  </el-button>
+                  <el-button 
+                    link 
+                    type="warning" 
+                    @click="handleDelete(row)"
+                  >
+                    取消收藏
+                  </el-button>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </template>
 
       <!-- 空状态 -->
       <el-empty
@@ -134,17 +229,15 @@
     </div>
 
     <!-- 分页 -->
-    <div class="pagination" v-if="favorites && favorites.length">
+    <div class="pagination-wrapper">
       <el-pagination
         :current-page="currentPage"
         :page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
+        :page-sizes="[12, 24, 36, 48]"
         :total="total"
         layout="total, sizes, prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        @update:current-page="(val) => emit('page-change', val)"
-        @update:page-size="(val) => emit('size-change', val)"
+        @update:current-page="handlePageChange"
+        @update:page-size="handleSizeChange"
       />
     </div>
 
@@ -201,10 +294,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { Search, Picture, Star } from '@element-plus/icons-vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { Search, Picture, Star, Edit, Delete, Location, Ticket, Clock, Calendar } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import { batchGetDestinationDetailsAPI } from '@/api/recommendApi'
 import dayjs from 'dayjs'
 
 const props = defineProps({
@@ -224,10 +318,16 @@ const props = defineProps({
   total: {
     type: Number,
     required: true
+  },
+  viewMode: {
+    type: String,
+    required: true
   }
 })
 
 const emit = defineEmits([
+  'update:current-page',
+  'update:page-size',
   'page-change',
   'size-change',
   'refresh',
@@ -245,6 +345,9 @@ const deleteDialogVisible = ref(false)
 const targetCategory = ref('')
 const tableRef = ref(null)
 
+// 添加目的地详情缓存
+const destinationDetails = ref(new Map())
+
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
 const tableData = computed(() => {
@@ -252,6 +355,25 @@ const tableData = computed(() => {
     ...item,
     disabled: false // 可以根据需要设置是否禁用选择
   }))
+})
+
+const processedFavorites = computed(() => {
+  return props.favorites.map(item => {
+    const destinationDetail = destinationDetails.value.get(item.destinationId) || {}
+    return {
+      ...item,
+      ...destinationDetail,
+      tags: destinationDetail.tags || item.tags || [],
+      imageUrl: destinationDetail.imageUrl || item.imageUrl || '/path/to/default-image.jpg',
+      categoryName: item.categoryName || '未分类',
+      rating: destinationDetail.rating || 0,
+      description: destinationDetail.description || item.notes || '暂无描述',
+      location: destinationDetail.location || '',
+      price: destinationDetail.price,
+      openingHours: destinationDetail.openingHours,
+      bestTimeToVisit: destinationDetail.bestTimeToVisit
+    }
+  })
 })
 
 // 方法
@@ -416,11 +538,13 @@ const handleNotesUpdate = async (row) => {
   }
 }
 
-const handleCurrentChange = (page) => {
+const handlePageChange = (page) => {
+  emit('update:current-page', page)
   emit('page-change', page)
 }
 
 const handleSizeChange = (size) => {
+  emit('update:page-size', size)
   emit('size-change', size)
 }
 
@@ -462,6 +586,31 @@ const handleRefresh = (silent = false) => {
   emit('refresh', silent)
 }
 
+// 添加获取目的地详情的方法
+const fetchDestinationDetails = async (destinationIds) => {
+  try {
+    const uniqueIds = [...new Set(destinationIds)].filter(id => !destinationDetails.value.has(id))
+    if (!uniqueIds.length) return
+
+    const response = await batchGetDestinationDetailsAPI(uniqueIds)
+    if (response.code === 0 && response.data) {
+      response.data.forEach(detail => {
+        destinationDetails.value.set(detail.id, detail)
+      })
+    }
+  } catch (error) {
+    console.error('获取目的地详情失败:', error)
+  }
+}
+
+// 监听收藏列表变化，获取目的地详情
+watch(() => props.favorites, async (newFavorites) => {
+  if (newFavorites?.length) {
+    const destinationIds = newFavorites.map(item => item.destinationId)
+    await fetchDestinationDetails(destinationIds)
+  }
+}, { immediate: true })
+
 // 暴露方法给父组件
 defineExpose({
   refreshData,
@@ -479,84 +628,241 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .favorite-list {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  padding: 24px 32px;
   
-  .toolbar {
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    background-color: var(--el-bg-color);
-    border-radius: 8px;
-    margin-bottom: 16px;
-    
-    .right {
-      width: 300px;
-    }
-  }
-  
-  .list-content {
-    flex: 1;
-    overflow: hidden;
-    background-color: var(--el-bg-color);
-    border-radius: 8px;
+  .grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
     padding: 16px;
     
-    .destination-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .destination-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      height: 100%;
       
-      .destination-image {
-        width: 80px;
-        height: 60px;
-        border-radius: 4px;
-        overflow: hidden;
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
         
-        .image-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: var(--el-fill-color-lighter);
+        .card-image {
+          .image-overlay {
+            opacity: 1;
+          }
           
-          .el-icon {
-            font-size: 24px;
-            color: var(--el-text-color-secondary);
+          .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          
+          .el-image {
+            transform: scale(1.05);
           }
         }
       }
       
-      .info {
-        flex: 1;
-        min-width: 0;
+      .card-image {
+        position: relative;
+        padding-top: 66.67%;
+        overflow: hidden;
         
-        .name {
-          margin: 0 0 8px;
-          font-size: 16px;
-          color: var(--el-text-color-primary);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+        .el-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .tags {
+        .image-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(to top, 
+            rgba(0, 0, 0, 0.8) 0%,
+            rgba(0, 0, 0, 0.4) 50%,
+            rgba(0, 0, 0, 0) 100%
+          );
+          opacity: 0;
+          transition: opacity 0.3s ease;
           display: flex;
-          flex-wrap: wrap;
+          align-items: flex-end;
+          padding: 24px;
+          
+          .overlay-content {
+            color: white;
+            width: 100%;
+            
+            .overlay-title {
+              font-size: 20px;
+              font-weight: 600;
+              margin: 0 0 12px;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            
+            .overlay-info {
+              display: flex;
+              gap: 16px;
+              margin: 8px 0;
+              font-size: 14px;
+              
+              .location, .price {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: rgba(255, 255, 255, 0.9);
+                
+                .el-icon {
+                  font-size: 16px;
+                }
+              }
+            }
+            
+            .overlay-tags {
+              display: flex;
+              gap: 8px;
+              flex-wrap: wrap;
+              
+              .el-tag {
+                background: rgba(255, 255, 255, 0.9);
+                border: none;
+                backdrop-filter: blur(4px);
+              }
+            }
+          }
+        }
+        
+        .card-actions {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          opacity: 0;
+          transform: translateY(-10px);
+          transition: all 0.3s ease;
+          
+          .action-button {
+            width: 36px;
+            height: 36px;
+            padding: 8px;
+            border: none;
+            backdrop-filter: blur(4px);
+            
+            &:hover {
+              transform: translateY(-2px);
+            }
+            
+            &.el-button--primary {
+              background: rgba(64, 158, 255, 0.9);
+            }
+            
+            &.el-button--danger {
+              background: rgba(245, 108, 108, 0.9);
+            }
+          }
+        }
+      }
+      
+      .card-content {
+        padding: 20px;
+        
+        .content-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          
+          .category-tag {
+            color: #4f46e5;
+            font-weight: 500;
+            font-size: 14px;
+          }
+          
+          .date {
+            color: #94a3b8;
+            font-size: 14px;
+          }
+        }
+        
+        .description {
+          color: #64748b;
+          font-size: 14px;
+          line-height: 1.6;
+          margin: 0 0 16px;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          line-clamp: 2;
+          overflow: hidden;
+        }
+        
+        .content-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          
+          :deep(.el-rate) {
+            --el-rate-icon-size: 16px;
+            line-height: 1;
+            
+            .el-rate__text {
+              font-size: 14px;
+            }
+          }
+        }
+      }
+      
+      .additional-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        color: #64748b;
+        
+        .opening-hours, .best-time {
+          display: flex;
+          align-items: center;
           gap: 4px;
+          
+          .el-icon {
+            font-size: 14px;
+          }
         }
       }
     }
   }
+}
+
+.pagination-wrapper {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
   
-  .pagination {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
+  :deep(.el-pagination) {
+    --el-pagination-button-bg-color: #f8fafc;
+    
+    .el-pagination__sizes {
+      margin-right: 16px;
+    }
+    
+    button {
+      background: #f8fafc;
+      border-radius: 8px;
+      
+      &:hover {
+        background: #f1f5f9;
+      }
+      
+      &.is-active {
+        background: #4f46e5;
+        color: white;
+      }
+    }
   }
 }
 

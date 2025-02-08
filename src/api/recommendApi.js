@@ -115,3 +115,24 @@ export const getSearchResultsAPI = ({ tags, pageNum = 1, pageSize = 10 }) => {
 		needToken: true
 	});
 };
+
+// 获取目的地详情
+export const getDestinationDetailAPI = (destinationId) => {
+	return request({
+		url: `dev-api/recommend/destination/${destinationId}`,
+		method: 'GET',
+		needToken: true
+	})
+}
+
+// 批量获取目的地详情
+export const batchGetDestinationDetailsAPI = (destinationIds) => {
+	return request({
+		url: 'dev-api/recommend/destinations/batch',
+		method: 'GET',
+		params: {
+			ids: destinationIds.join(',')
+		},
+		needToken: true
+	})
+}
