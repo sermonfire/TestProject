@@ -112,41 +112,39 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { Picture } from '@element-plus/icons-vue'
 import { getDestinationDetailAPI } from '@/api/recommendApi'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
-const router = useRouter()
 const destinationData = ref(null)
 const loading = ref(true)
 
 const loadDestinationDetail = async () => {
   try {
-    const destinationId = route.params.id
-    if (!destinationId) {
-      ElMessage.error('目的地ID不能为空')
-      router.push('/')
-      return
+    const id = route.params.id
+    console.log('Loading destination detail for id:', id)
+    if (!id) {
+      throw new Error('目的地ID不能为空')
     }
-
-    const res = await getDestinationDetailAPI(destinationId)
-    if (res.code === 0) {
-      destinationData.value = res.data
+    const response = await getDestinationDetailAPI(id)
+    console.log('Destination detail response:', response)
+    if (response.code === 0) {
+      destinationData.value = response.data
     } else {
-      ElMessage.error(res.message || '获取目的地详情失败')
+      throw new Error(response.message || '获取目的地详情失败')
     }
   } catch (error) {
-    console.error('Failed to load destination detail:', error)
-    ElMessage.error('获取目的地详情失败')
+    console.error('Failed to fetch destination detail:', error)
+    ElMessage.error(error.message || '获取目的地详情失败')
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => {
-  loadDestinationDetail()
+onMounted(async () => {
+  await loadDestinationDetail()
 })
 </script>
 

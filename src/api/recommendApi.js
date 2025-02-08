@@ -118,8 +118,9 @@ export const getSearchResultsAPI = ({ tags, pageNum = 1, pageSize = 10 }) => {
 
 // 获取目的地详情
 export const getDestinationDetailAPI = (destinationId) => {
+	console.log('Destination ID:', destinationId);
 	return request({
-		url: `dev-api/recommend/destination/${destinationId}`,
+		url: `/dev-api/recommend/destination/${destinationId}`,
 		method: 'GET',
 		needToken: true
 	})

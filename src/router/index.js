@@ -66,7 +66,8 @@ const routes = [
       {
         path: 'destination/:id',
         name: 'DestinationDetail',
-        component: DestinationDetail,
+        component: () => import('@/views/Destination/DestinationDetail.vue'),
+        props: true,
         meta: {
           title: '目的地详情',
           requiresAuth: true
@@ -78,7 +79,7 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/views/login/login.vue'),
-  }
+  },
 ]
 
 const router = createRouter({
