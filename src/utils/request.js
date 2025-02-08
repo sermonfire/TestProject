@@ -96,8 +96,8 @@ const responseInterceptors = [
 class RequestQueue {
   constructor() {
     this.queue = new Map();
-    this.interval = 2000;
-    this.maxRequests = 3;
+    this.interval = 3000;
+    this.maxRequests = 10;
   }
 
   clean() {
@@ -124,6 +124,10 @@ class RequestQueue {
     }
     
     if (request.count >= this.maxRequests) {
+      ElMessage({
+        message: '操作太频繁，请稍后再试',
+        type: 'warning'
+      });
       return false;
     }
     
