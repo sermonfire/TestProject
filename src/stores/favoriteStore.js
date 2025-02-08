@@ -93,6 +93,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   // 添加刷新方法
   const refreshFavoriteData = async () => {
     try {
+      loading.value = true
       // 只刷新分类列表和统计信息
       await Promise.all([
         getCategories(),
@@ -100,6 +101,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       ])
 
       // 清除可能的缓存数据
+      statusCache.clear() // 清除状态缓存
       const promises = favorites.value.map(async item => {
         const isStillFavorite = await checkIsFavorite(item.id)
         return isStillFavorite ? item : null
@@ -107,8 +109,14 @@ export const useFavoriteStore = defineStore('favorite', () => {
       
       const validFavorites = (await Promise.all(promises)).filter(Boolean)
       favorites.value = validFavorites
+
+      // 触发状态更新
+      favoriteStatus.value = new Map(favoriteStatus.value)
     } catch (error) {
       console.error('Refresh favorite data failed:', error)
+      ElMessage.error('刷新数据失败，请重试')
+    } finally {
+      loading.value = false
     }
   }
 
@@ -414,6 +422,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await batchDeleteFavoritesAPI(ids)
       
       if (res.code === 0) {
+        // 立即更新每个项目的收藏状态
+        ids.forEach(id => updateFavoriteStatus(id, false))
+        
         // 添加批量取消收藏成功的提示
         ElMessage({
           type: 'success',
@@ -425,18 +436,28 @@ export const useFavoriteStore = defineStore('favorite', () => {
         favorites.value = favorites.value.filter(
           item => !ids.includes(item.destinationId)
         )
-        // 更新统计信息
-        await getFavoriteStats()
-        // 更新分类列表
-        await getCategories()
-        ids.forEach(id => updateFavoriteStatus(id, false))
+        
+        // 更新所有相关数据
+        await Promise.all([
+          // 更新统计信息
+          getFavoriteStats(),
+          // 更新分类列表
+          getCategories(),
+          // 刷新收藏数据
+          refreshFavoriteData()
+        ])
+        
         return true
       } else {
+        // 操作失败时恢复状态
+        ids.forEach(id => updateFavoriteStatus(id, true))
         ElMessage.error(res.message || '批量取消收藏失败')
         return false
       }
     } catch (error) {
       console.error('批量取消收藏失败:', error)
+      // 发生错误时恢复状态
+      destinationIds.forEach(id => updateFavoriteStatus(id, true))
       ElMessage.error('批量取消收藏失败，请重试')
       return false
     } finally {

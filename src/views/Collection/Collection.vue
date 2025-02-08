@@ -169,6 +169,33 @@ defineExpose({
   refreshData,
   getFavoriteList
 })
+
+// 处理批量删除
+const handleBatchDelete = async () => {
+  try {
+    const success = await favoriteStore.batchDeleteFavorites(selectedItems.value)
+    if (success) {
+      // 清空选中项
+      selectedItems.value = []
+      // 刷新列表数据
+      await loadFavorites()
+    }
+  } catch (error) {
+    console.error('Batch delete failed:', error)
+  }
+}
+
+// 添加加载收藏列表的方法
+const loadFavorites = async () => {
+  try {
+    // 重置页码
+    currentPage.value = 1
+    await getFavoriteList()
+  } catch (error) {
+    console.error('Load favorites failed:', error)
+    ElMessage.error('加载收藏列表失败')
+  }
+}
 </script>
 
 <style lang="scss" scoped>

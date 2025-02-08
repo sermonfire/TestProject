@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, onUnmounted } from 'vue';
 import { Star, StarFilled, Warning } from '@element-plus/icons-vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { ElMessage } from 'element-plus';
@@ -176,6 +176,9 @@ const isCollected = computed(() => {
 watch(() => favoriteStore.getFavoriteStatus(props.itemId), (newStatus) => {
   if (newStatus !== isCollected.value) {
     emit('collection-change', { id: props.itemId, isCollected: newStatus });
+    if (props.autoRefresh) {
+      favoriteStore.refreshFavoriteData()
+    }
   }
 });
 
@@ -338,6 +341,14 @@ const removeFavorite = async () => {
 const handleDialogClose = () => {
   form.value = { category: '', notes: '' }
 }
+
+// 组件卸载时清理
+onUnmounted(() => {
+  // 清理可能的定时器和监听器
+  if (loading.value) {
+    loading.value = false
+  }
+})
 </script>
 
 <style lang="scss" scoped>
