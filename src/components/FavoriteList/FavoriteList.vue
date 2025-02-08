@@ -59,13 +59,13 @@
                   <div class="overlay-content">
                     <h3 class="overlay-title">{{ item.name }}</h3>
                     <div class="overlay-info">
-                      <span v-if="item.location" class="location">
-                        <el-icon><Location /></el-icon>
-                        {{ item.location }}
+                      <span v-if="item.recommendedDuration" class="duration">
+                        <el-icon><Timer /></el-icon>
+                        建议游玩: {{ item.recommendedDuration }}
                       </span>
-                      <span v-if="item.price" class="price">
-                        <el-icon><Ticket /></el-icon>
-                        ¥{{ item.price }}起
+                      <span v-if="item.averageBudget" class="budget">
+                        <el-icon><Money /></el-icon>
+                        人均: ¥{{ item.averageBudget }}
                       </span>
                     </div>
                     <div class="overlay-tags">
@@ -86,6 +86,7 @@
                       type="primary" 
                       @click.stop="handleEdit(item)"
                       class="action-button"
+                      title="编辑备注"
                     >
                       <el-icon><Edit /></el-icon>
                     </el-button>
@@ -93,6 +94,7 @@
                       type="danger" 
                       @click.stop="handleDelete(item)"
                       class="action-button"
+                      title="取消收藏"
                     >
                       <el-icon><Delete /></el-icon>
                     </el-button>
@@ -102,26 +104,43 @@
               <div class="card-content">
                 <div class="content-header">
                   <span class="category-tag">{{ item.categoryName }}</span>
-                  <span class="date">{{ formatDate(item.createTime) }}</span>
+                  <span class="date">收藏于 {{ formatDate(item.createTime) }}</span>
                 </div>
-                <p class="description">{{ item.description }}</p>
-                <div class="content-footer">
-                  <el-rate 
-                    v-model="item.rating" 
-                    disabled 
-                    show-score
-                    text-color="#ff9900"
-                    score-template="{value}"
-                  />
-                  <div class="additional-info">
-                    <span v-if="item.openingHours" class="opening-hours">
-                      <el-icon><Clock /></el-icon>
-                      {{ item.openingHours }}
+                <div class="destination-info">
+                  <div class="rating-popularity">
+                    <el-rate 
+                      v-model="item.rating" 
+                      disabled 
+                      show-score
+                      text-color="#ff9900"
+                      score-template="{value}分"
+                    />
+                    <span class="popularity">
+                      <el-icon><Star /></el-icon>
+                      热度: {{ item.popularity || 0 }}
                     </span>
-                    <span v-if="item.bestTimeToVisit" class="best-time">
-                      <el-icon><Calendar /></el-icon>
-                      最佳游览: {{ item.bestTimeToVisit }}
-                    </span>
+                  </div>
+                  <div class="notes" v-if="item.notes">
+                    <el-icon><Memo /></el-icon>
+                    <span>{{ item.notes }}</span>
+                  </div>
+                </div>
+                <div class="seasonal-info">
+                  <div class="best-seasons" v-if="item.bestSeasons?.length">
+                    <span class="label">最佳季节:</span>
+                    <el-tag 
+                      v-for="season in item.bestSeasons" 
+                      :key="season"
+                      size="small"
+                      type="success"
+                      effect="light"
+                    >
+                      {{ season }}
+                    </el-tag>
+                  </div>
+                  <div class="seasonal-features" v-if="item.seasonalFeatures">
+                    <span class="label">当季特色:</span>
+                    <p>{{ item.seasonalFeatures[getCurrentSeason()] || '暂无特色信息' }}</p>
                   </div>
                 </div>
               </div>
@@ -295,7 +314,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { Search, Picture, Star, Edit, Delete, Location, Ticket, Clock, Calendar } from '@element-plus/icons-vue'
+import { 
+  Search, Picture, Star, Edit, Delete, Timer, 
+  Money, Location, Calendar, Memo 
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import { batchGetDestinationDetailsAPI } from '@/api/recommendApi'
@@ -363,15 +385,15 @@ const processedFavorites = computed(() => {
     return {
       ...item,
       ...destinationDetail,
-      tags: destinationDetail.tags || item.tags || [],
-      imageUrl: destinationDetail.imageUrl || item.imageUrl || '/path/to/default-image.jpg',
-      categoryName: item.categoryName || '未分类',
+      tags: destinationDetail.tags || [],
+      imageUrl: destinationDetail.imageUrl || '/path/to/default-image.jpg',
       rating: destinationDetail.rating || 0,
-      description: destinationDetail.description || item.notes || '暂无描述',
-      location: destinationDetail.location || '',
-      price: destinationDetail.price,
-      openingHours: destinationDetail.openingHours,
-      bestTimeToVisit: destinationDetail.bestTimeToVisit
+      popularity: destinationDetail.popularity || 0,
+      recommendedDuration: destinationDetail.recommendedDuration,
+      averageBudget: destinationDetail.averageBudget,
+      bestSeasons: destinationDetail.bestSeasons || [],
+      seasonalFeatures: destinationDetail.seasonalFeatures || {},
+      categoryName: item.categoryName || '默认收藏'
     }
   })
 })
@@ -624,6 +646,15 @@ onBeforeUnmount(() => {
     tableRef.value = null
   }
 })
+
+// 获取当前季节
+const getCurrentSeason = () => {
+  const month = new Date().getMonth() + 1
+  if (month >= 3 && month <= 5) return 'spring'
+  if (month >= 6 && month <= 8) return 'summer'
+  if (month >= 9 && month <= 11) return 'autumn'
+  return 'winter'
+}
 </script>
 
 <style lang="scss" scoped>
@@ -712,7 +743,7 @@ onBeforeUnmount(() => {
               margin: 8px 0;
               font-size: 14px;
               
-              .location, .price {
+              .duration, .budget {
                 display: flex;
                 align-items: center;
                 gap: 4px;
@@ -789,48 +820,79 @@ onBeforeUnmount(() => {
           }
         }
         
-        .description {
-          color: #64748b;
-          font-size: 14px;
-          line-height: 1.6;
-          margin: 0 0 16px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          line-clamp: 2;
-          overflow: hidden;
-        }
-        
-        .content-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        .destination-info {
+          margin-bottom: 16px;
           
-          :deep(.el-rate) {
-            --el-rate-icon-size: 16px;
-            line-height: 1;
+          .rating-popularity {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
             
-            .el-rate__text {
+            .popularity {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              color: #fb923c;
               font-size: 14px;
+              
+              .el-icon {
+                font-size: 16px;
+              }
+            }
+          }
+          
+          .notes {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            
+            .el-icon {
+              margin-top: 3px;
+              flex-shrink: 0;
             }
           }
         }
-      }
-      
-      .additional-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        font-size: 12px;
-        color: #64748b;
         
-        .opening-hours, .best-time {
-          display: flex;
-          align-items: center;
-          gap: 4px;
+        .seasonal-info {
+          border-top: 1px solid #e2e8f0;
+          padding-top: 12px;
           
-          .el-icon {
-            font-size: 14px;
+          .best-seasons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            
+            .label {
+              color: #64748b;
+              font-size: 14px;
+            }
+            
+            .el-tag {
+              background: #f0fdf4;
+              border-color: #bbf7d0;
+              color: #16a34a;
+            }
+          }
+          
+          .seasonal-features {
+            .label {
+              color: #64748b;
+              font-size: 14px;
+              margin-bottom: 4px;
+              display: block;
+            }
+            
+            p {
+              color: #64748b;
+              font-size: 14px;
+              line-height: 1.6;
+              margin: 0;
+            }
           }
         }
       }

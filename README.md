@@ -606,7 +606,7 @@ CREATE TABLE favorite_category (
 ## 7. 目的地详情接口
 
 1. 获取目的地详情
-请求路径: /dev-api/recommend/destination/{destinationId}
+请求路径: /recommend/destination/{destinationId}
 请求方法: GET
 请求头: Authorization: token
 请求参数: 
@@ -651,7 +651,7 @@ CREATE TABLE favorite_category (
 - 图片URL为腾讯云COS的访问地址
 
 2. 批量获取目的地详情
-请求路径: /dev-api/recommend/destinations/batch
+请求路径: /recommend/destinations/batch
 请求方法: GET
 请求头: Authorization: token
 请求参数:
@@ -926,3 +926,39 @@ src/main/java/com/travelrec/
    - 添加性能监控指标
    - 完善日志记录
    - 优化异常监控
+
+## 最近更新
+
+### JSON类型处理器重构 (2024-02-08)
+- 重构了JSON类型处理系统，提高了代码的可维护性和类型安全性
+- 新增了三个专门的类型处理器：
+  1. `BaseJsonTypeHandler<T>`: 抽象基类，提供通用的JSON处理功能
+  2. `MapTypeHandler`: 处理 Map<String, Object> 类型的JSON数据
+  3. `ListMapTypeHandler`: 处理 List<Map<String, Object>> 类型的JSON数据
+  4. `StringListTypeHandler`: 处理 List<String> 类型的JSON数据
+- 移除了通用的 `JsonTypeHandler` 类，改为使用更具体的实现
+- 更新了所有Mapper文件中的类型处理器配置
+
+### 主要改动
+1. 数据库映射优化
+   - 修正了 UserFavoriteMapper 中的列名映射
+   - 统一使用 d_ 前缀区分目的地相关字段
+2. 类型处理器改进
+   - 使用专门的类型处理器替代通用处理器
+   - 提高了类型安全性和代码可维护性
+
+## 项目介绍
+...(保留原有内容)...
+
+## 技术栈
+- Spring Boot 3.1.5
+- MyBatis
+- MySQL
+- Redis
+- 等
+
+## 功能特性
+...(保留原有内容)...
+
+## 开发指南
+...(保留原有内容)...
