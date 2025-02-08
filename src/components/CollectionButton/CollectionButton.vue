@@ -4,8 +4,10 @@
       :type="isCollected ? 'danger' : 'primary'"
       :icon="isCollected ? 'Star' : 'StarFilled'"
       circle
-      @click.stop="toggleCollection"
+      @click.stop="handleCollectionClick"
       :class="{ 'is-collected': isCollected }"
+      :loading="loading"
+      :disabled="disabled"
     >
       <template #icon>
         <el-icon :size="24">
@@ -18,9 +20,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, watch, onMounted } from 'vue';
 import { Star, StarFilled } from '@element-plus/icons-vue';
+import { useFavoriteStore } from '@/stores/favoriteStore';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   itemId: {
@@ -30,28 +33,61 @@ const props = defineProps({
   initialState: {
     type: Boolean,
     default: false
+  },
+  category: {
+    type: String,
+    default: ''
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 });
 
 const emit = defineEmits(['collection-change']);
+const favoriteStore = useFavoriteStore();
 
 const isCollected = ref(props.initialState);
+const loading = ref(false);
 
 // 监听 initialState 的变化
 watch(() => props.initialState, (newValue) => {
   isCollected.value = newValue;
 });
 
-const toggleCollection = () => {
-  isCollected.value = !isCollected.value;
-  emit('collection-change', isCollected.value);
+// 组件挂载时检查收藏状态
+onMounted(async () => {
+  try {
+    const status = await favoriteStore.checkIsFavorite(props.itemId);
+    isCollected.value = status;
+  } catch (error) {
+    console.error('Failed to check favorite status:', error);
+  }
+});
+
+const handleCollectionClick = async () => {
+  if (loading.value || props.disabled) return;
   
-  ElMessage({
-    type: 'success',
-    message: isCollected.value ? '已添加到收藏' : '已取消收藏',
-    duration: 2000,
-    customClass: 'collection-message'
-  });
+  loading.value = true;
+  try {
+    const success = isCollected.value 
+      ? await favoriteStore.removeFavorite(props.itemId)
+      : await favoriteStore.addFavorite(props.itemId, props.category, props.notes);
+
+    if (success) {
+      isCollected.value = !isCollected.value;
+      emit('collection-change', isCollected.value);
+    }
+  } catch (error) {
+    console.error('Collection operation failed:', error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
@@ -88,7 +124,7 @@ const toggleCollection = () => {
       }
     }
     
-    &:hover {
+    &:hover:not(:disabled) {
       transform: scale(1.1);
       background-color: #f56c6c;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -98,13 +134,18 @@ const toggleCollection = () => {
       }
     }
     
-    &:active {
+    &:active:not(:disabled) {
       transform: scale(1.05);
       background-color: #e64242;
       
       :deep(.el-icon) {
         transform: scale(0.95);
       }
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 }

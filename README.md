@@ -1,6 +1,7 @@
-# 本项目的对应旅游推荐系统后端服务
+旅游推荐系统后端服务
+本项目得到后端是一个基于Spring Boot的旅游目的地推荐系统后端服务，提供用户管理、偏好设置和个性化推荐等功能。
 
-## 数据库设计
+##数据库设计
 
 1. 用户表 (client_user)
 CREATE TABLE client_user (
@@ -51,6 +52,20 @@ CREATE TABLE destination (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='旅游目的地表';
 
+4. 用户收藏表 (user_favorite)
+CREATE TABLE user_favorite (
+    id int NOT NULL AUTO_INCREMENT,
+    user_id int NOT NULL COMMENT '用户ID',
+    destination_id int NOT NULL COMMENT '目的地ID',
+    create_time datetime DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+    status tinyint(1) DEFAULT 1 COMMENT '收藏状态(0:取消收藏,1:已收藏)',
+    category varchar(50) DEFAULT NULL COMMENT '收藏分类',
+    notes text DEFAULT NULL COMMENT '收藏备注',
+    update_time datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_user_destination (user_id, destination_id),
+    KEY idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收藏表';
 
 ##API接口文档
 
@@ -212,7 +227,7 @@ CREATE TABLE destination (
 
 目的地推荐接口
 1. 获取个性化推荐目的地
-请求路径: /recommend/destinations
+请求路径: /recommend/personalized
 请求方法: GET
 请求头: Authorization: token
 请求参数:
@@ -291,6 +306,101 @@ CREATE TABLE destination (
     }
 }
 
+收藏管理接口
+1. 添加收藏
+请求路径: /favorite/{destinationId}
+请求方法: POST
+请求头: Authorization: token
+请求参数: 
+- destinationId: 目的地ID (路径参数)
+- category: 收藏分类 (可选，查询参数)
+- notes: 收藏备注 (可选，查询参数)
+响应结果:
+{
+    "code": 0,
+    "message": "success"
+}
+
+2. 取消收藏
+请求路径: /favorite/{destinationId}
+请求方法: DELETE
+请求头: Authorization: token
+请求参数:
+- destinationId: 目的地ID (路径参数)
+响应结果:
+{
+    "code": 0,
+    "message": "success"
+}
+
+3. 取消所有收藏
+请求路径: /favorite/all
+请求方法: DELETE
+请求头: Authorization: token
+响应结果:
+{
+    "code": 0,
+    "message": "success"
+}
+
+4. 获取收藏列表
+请求路径: /favorite/list
+请求方法: GET
+请求头: Authorization: token
+请求参数:
+- pageNum: Integer (可选，默认1)
+- pageSize: Integer (可选，默认10)
+响应结果:
+{
+    "code": 0,
+    "message": "success",
+    "data": {
+        "list": [{
+            "id": 1,
+            "userId": 1,
+            "destinationId": 1,
+            "createTime": "2024-01-01 12:00:00",
+            "status": true,
+            "category": "想去",
+            "notes": "下个月去玩",
+            "updateTime": "2024-01-01 12:00:00",
+            "destination": {
+                "id": 1,
+                "name": "目的地名称",
+                "description": "描述",
+                "imageUrl": "图片url",
+                "rating": 4.5,
+                "recommendedDuration": "medium",
+                "averageBudget": 800.00,
+                "tags": ["标签1", "标签2"],
+                "bestSeasons": ["春季", "秋季"],
+                "seasonalFeatures": {
+                    "春季": "特色描述",
+                    "秋季": "特色描述"
+                },
+                "popularity": 90
+            }
+        }],
+        "pageNum": 1,
+        "pageSize": 10,
+        "total": 100,
+        "pages": 10
+    }
+}
+
+5. 检查是否已收藏
+请求路径: /favorite/check/{destinationId}
+请求方法: GET
+请求头: Authorization: token
+请求参数:
+- destinationId: 目的地ID (路径参数)
+响应结果:
+{
+    "code": 0,
+    "message": "success",
+    "data": true  // true表示已收藏，false表示未收藏
+}
+
 ##推荐算法说明
 
 系统采用基于规则的推荐算法，主要考虑以下因素：
@@ -323,4 +433,12 @@ MySQL 8.0
 Redis
 JWT
 
+##项目特点
+
+采用JWT实现无状态的用户认证
+使用Redis存储token实现token刷新和失效处理
+自定义TypeHandler处理JSON类型数据
+全局异常处理
+参数校验
+基于规则的个性化推荐算法
 
