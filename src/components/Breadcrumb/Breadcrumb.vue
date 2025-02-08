@@ -14,7 +14,7 @@
 <script setup>
 import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked } from '@element-plus/icons-vue'
+import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked, Location } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -29,7 +29,8 @@ const routeMap = {
   about: { title: '关于', icon: markRaw(HotWater) },
   userInfo: { title: '用户信息', icon: markRaw(UserFilled) },
   searchResults: { title: '搜索结果', icon: markRaw(Search) },
-  collection: { title: '我的收藏', icon: markRaw(StarFilled) }
+  collection: { title: '我的收藏', icon: markRaw(StarFilled) },
+  DestinationDetail: { title: '目的地详情', icon: markRaw(Location) }
 }
 
 // 监听路由变化更新面包屑
@@ -48,11 +49,20 @@ watch(() => route.matched, (newMatched) => {
     if (match.name && match.name !== 'home') {
       const routeInfo = routeMap[match.name]
       if (routeInfo) {
-        items.push({
-          title: routeInfo.title,
-          path: match.path,
-          icon: routeInfo.icon ? markRaw(routeInfo.icon) : undefined
-        })
+        // 如果是目的地详情页，尝试从路由参数中获取目的地名称
+        if (match.name === 'DestinationDetail' && route.params.name) {
+          items.push({
+            title: route.params.name,
+            path: match.path,
+            icon: routeInfo.icon
+          })
+        } else {
+          items.push({
+            title: routeInfo.title,
+            path: match.path,
+            icon: routeInfo.icon
+          })
+        }
       }
     }
   })
