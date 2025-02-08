@@ -251,24 +251,38 @@
       </template>
     </el-dialog>
 
-    <!-- 删除确认对话框 -->
+    <!-- 优化删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      title="取消收藏"
-      width="30%"
+      :title="batchDeleteItems.length ? '批量取消收藏' : '取消收藏'"
+      width="400px"
+      :close-on-click-modal="false"
     >
-      <p>确定要取消收藏选中的景点吗？</p>
+      <div class="delete-confirm">
+        <el-icon class="warning-icon" :size="48"><Warning /></el-icon>
+        <div class="confirm-content">
+          <template v-if="batchDeleteItems.length">
+            <h3>确定要取消收藏选中的 {{ batchDeleteItems.length }} 个项目吗？</h3>
+            <p class="sub-text">此操作不可恢复</p>
+          </template>
+          <template v-else>
+            <h3>确定要取消收藏 "{{ itemToDelete?.destination?.name }}" 吗？</h3>
+            <p class="sub-text">取消后可以重新收藏</p>
+          </template>
+        </div>
+      </div>
+      
       <template #footer>
-        <span class="dialog-footer">
+        <div class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
           <el-button 
             type="warning" 
             @click="confirmDelete"
             :loading="loading"
           >
-            确定
+            确定取消收藏
           </el-button>
-        </span>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -279,7 +293,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { 
   Search, Picture, Star, Edit, Delete, Timer, 
   Money, Location, Calendar, Memo, FolderAdd,
-  Grid, List
+  Grid, List, Warning
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
@@ -320,7 +334,9 @@ const emit = defineEmits([
   'size-change',
   'refresh',
   'selection-change',
-  'update:viewMode'
+  'update:viewMode',
+  'update:favorites',
+  'collection-change'
 ])
 
 const favoriteStore = useFavoriteStore()
@@ -334,6 +350,8 @@ const moveDialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const targetCategory = ref('')
 const tableRef = ref(null)
+const itemToDelete = ref(null)
+const batchDeleteItems = ref([])
 
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
@@ -417,6 +435,7 @@ const confirmMove = async () => {
     targetCategory.value = ''
     selectedItems.value = []
     emit('refresh')
+    emit('collection-change')
     ElMessage.success('移动成功')
   } catch (error) {
     console.error('Move failed:', error)
@@ -426,99 +445,86 @@ const confirmMove = async () => {
   }
 }
 
-const handleDelete = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要取消收藏这个景点吗？',
-      '取消收藏确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '保留',
-        type: 'warning'
-      }
-    )
-    
-    loading.value = true
-    const success = await favoriteStore.removeFavorite(row.destinationId)
-    
-    if (success) {
-      await emit('refresh')
-      ElMessage({
-        type: 'success',
-        message: '已取消收藏',
-        customClass: 'collection-message'
-      })
-    } else {
-      ElMessage({
-        type: 'error',
-        message: '取消收藏失败，请重试',
-        customClass: 'collection-error-message'
-      })
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('取消收藏失败:', error)
-      ElMessage({
-        type: 'error',
-        message: '取消收藏失败，请重试',
-        customClass: 'collection-error-message'
-      })
-    }
-  } finally {
-    loading.value = false
-  }
+const handleDelete = (item) => {
+  itemToDelete.value = item
+  deleteDialogVisible.value = true
 }
 
-const handleBatchDelete = async () => {
+const handleBatchDelete = () => {
   if (!selectedItems.value.length) {
-    ElMessage.warning('请先选择要取消收藏的景点')
+    ElMessage.warning('请先选择要取消收藏的项目')
     return
   }
+  batchDeleteItems.value = selectedItems.value
+  deleteDialogVisible.value = true
+}
 
+const confirmDelete = async () => {
   try {
-    const count = selectedItems.value.length
-    await ElMessageBox.confirm(
-      `确定要取消收藏选中的 ${count} 个景点吗？`,
-      '批量取消收藏确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '保留',
-        type: 'warning'
-      }
-    )
-    
     loading.value = true
-    const ids = selectedItems.value.map(item => item.destinationId)
-    const success = await favoriteStore.batchDeleteFavorites(ids)
     
-    if (success) {
-      deleteDialogVisible.value = false
-      clearSelection()
-      selectedItems.value = []
-      emit('refresh')
-      ElMessage({
-        type: 'success',
-        message: `已取消收藏 ${count} 个景点`,
-        customClass: 'collection-message'
-      })
-    } else {
-      ElMessage({
-        type: 'error',
-        message: '批量取消收藏失败，请重试',
-        customClass: 'collection-error-message'
-      })
+    if (batchDeleteItems.value.length) {
+      // 批量取消收藏
+      const itemIds = batchDeleteItems.value.map(item => item.id)
+      const success = await favoriteStore.batchDeleteFavorites(itemIds)
+      
+      if (success) {
+        ElMessage({
+          type: 'success',
+          message: `已取消收藏 ${itemIds.length} 个项目`,
+          customClass: 'collection-message'
+        })
+        
+        // 清空选择
+        selectedItems.value = []
+        batchDeleteItems.value = []
+        if (tableRef.value) {
+          tableRef.value.clearSelection()
+        }
+        
+        // 关闭对话框
+        deleteDialogVisible.value = false
+        
+        // 先触发收藏变化事件
+        emit('collection-change')
+        // 再触发刷新
+        emit('refresh')
+      } else {
+        throw new Error('批量取消收藏失败')
+      }
+    } else if (itemToDelete.value) {
+      // 单个取消收藏
+      const success = await favoriteStore.deleteFavorite(itemToDelete.value.id)
+      
+      if (success) {
+        ElMessage({
+          type: 'success',
+          message: '已取消收藏',
+          customClass: 'collection-message'
+        })
+        
+        // 关闭对话框
+        deleteDialogVisible.value = false
+        
+        // 先触发收藏变化事件
+        emit('collection-change')
+        // 再触发刷新
+        emit('refresh')
+      } else {
+        throw new Error('取消收藏失败')
+      }
     }
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量取消收藏失败:', error)
-      ElMessage({
-        type: 'error',
-        message: '批量取消收藏失败，请重试',
-        customClass: 'collection-error-message'
-      })
-    }
+    console.error('取消收藏失败:', error)
+    ElMessage({
+      type: 'error',
+      message: error.message || '取消收藏失败，请重试',
+      customClass: 'collection-message'
+    })
   } finally {
     loading.value = false
+    itemToDelete.value = null
+    batchDeleteItems.value = []
   }
 }
 
@@ -568,8 +574,9 @@ const clearSelection = () => {
 // 修改刷新方法
 const refreshData = async (silent = false) => {
   try {
+    loading.value = true
     await Promise.all([
-      getFavoriteList(currentPage.value, pageSize.value),
+      loadFavoriteList(),
       favoriteStore.getFavoriteStats()
     ])
   } catch (error) {
@@ -577,6 +584,8 @@ const refreshData = async (silent = false) => {
     if (!silent) {
       ElMessage.error('刷新数据失败，请重试')
     }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -606,6 +615,8 @@ const loadFavoriteList = async () => {
     const res = await getFavoriteListAPI()
     if (res.code === 0) {
       favoriteList.value = res.data.list
+      // 同步到 processedFavorites
+      emit('update:favorites', res.data.list)
     } else {
       ElMessage.error(res.message || '获取收藏列表失败')
     }
@@ -939,6 +950,58 @@ onMounted(() => {
     
     .grid-view .grid-container {
       grid-template-columns: 1fr;
+    }
+  }
+}
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 0;
+  
+  .warning-icon {
+    color: var(--el-color-warning);
+  }
+  
+  .confirm-content {
+    flex: 1;
+    
+    h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--el-text-color-primary);
+    }
+    
+    .sub-text {
+      margin: 0;
+      font-size: 14px;
+      color: var(--el-text-color-secondary);
+    }
+  }
+}
+
+// 优化消息提示样式
+:deep(.collection-message) {
+  min-width: 240px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  
+  &.el-message--success {
+    background: linear-gradient(45deg, var(--el-color-success), var(--el-color-success-light-3));
+    border: none;
+    
+    .el-message__content {
+      color: white;
+    }
+  }
+  
+  &.el-message--error {
+    background: linear-gradient(45deg, var(--el-color-danger), var(--el-color-danger-light-3));
+    border: none;
+    
+    .el-message__content {
+      color: white;
     }
   }
 }

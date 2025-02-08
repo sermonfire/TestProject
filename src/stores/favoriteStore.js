@@ -492,6 +492,27 @@ export const useFavoriteStore = defineStore('favorite', () => {
     selectedItems.value = []
   }
 
+  const deleteFavorite = async (id) => {
+    try {
+      const res = await removeFavoriteAPI(id)
+      if (res.code === 0) {
+        // 更新本地状态
+        favoriteStatus.value[id] = false
+        // 从收藏列表中移除该项
+        favorites.value = favorites.value.filter(item => item.id !== id)
+        // 更新统计信息
+        await getFavoriteStats()
+        // 更新分类列表
+        await getCategories()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Delete favorite failed:', error)
+      return false
+    }
+  }
+
   return {
     // 状态
     categories,
@@ -527,7 +548,8 @@ export const useFavoriteStore = defineStore('favorite', () => {
     batchCheckFavoriteStatus,
     serializeFavoriteStatus,
     deserializeFavoriteStatus,
-    clearSelection
+    clearSelection,
+    deleteFavorite
   }
 }, {
   persist: {
