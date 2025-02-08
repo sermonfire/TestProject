@@ -5,7 +5,7 @@ import { debounce } from 'lodash-es';
 // 保存用户偏好设置
 export const saveUserPreferencesAPI = (preferences) => {
 	return request({
-		url: 'dev-api/recommend/preferences',
+		url: '/dev-api/recommend/preferences',
 		method: 'POST',
 		data: preferences,
 		needToken: true
@@ -16,7 +16,7 @@ export const saveUserPreferencesAPI = (preferences) => {
 // 获取用户偏好设置
 export const getUserPreferencesAPI = () => {
 	return request({
-		url: 'dev-api/recommend/preferences',
+		url: '/dev-api/recommend/preferences',
 		method: 'GET',
 		needToken: true
 	})
@@ -45,7 +45,7 @@ export const getPersonalizedRecommendationsAPI = debounce((pageNum = 1, pageSize
 			(async () => {
 				try {
 					const response = await request({
-						url: 'dev-api/recommend/personalized',
+						url: '/dev-api/recommend/personalized',
 						method: 'GET',
 						params: { pageNum, pageSize },
 						needToken: true
@@ -95,7 +95,7 @@ export const getPersonalizedRecommendationsAPI = debounce((pageNum = 1, pageSize
 // 预览个性化推荐
 export const getPreviewRecommendationsAPI = () => {
 	return request({
-		url: 'dev-api/recommend//personalized/preview',
+		url: '/dev-api/recommend//personalized/preview',
 		method: 'GET',
 		needToken: true
 	});
@@ -107,7 +107,7 @@ export const getSearchResultsAPI = ({ tags, pageNum = 1, pageSize = 10 }) => {
 	const tagsArray = Array.isArray(tags) ? tags : [tags];	
 	// 构建查询字符串
 	const queryParams = tagsArray.map(tag => `tags=${encodeURIComponent(tag)}`).join('&');
-	const url = `dev-api/recommend/related?${queryParams}&pageNum=${pageNum}&pageSize=${pageSize}`;
+	const url = `/dev-api/recommend/related?${queryParams}&pageNum=${pageNum}&pageSize=${pageSize}`;
 	
 	return request({
 		url,
@@ -129,7 +129,7 @@ export const getDestinationDetailAPI = (destinationId) => {
 // 批量获取目的地详情
 export const batchGetDestinationDetailsAPI = (destinationIds) => {
 	return request({
-		url: 'dev-api/recommend/destinations/batch',
+		url: '/dev-api/recommend/destinations/batch',
 		method: 'GET',
 		params: {
 			ids: destinationIds.join(',')
