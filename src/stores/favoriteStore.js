@@ -422,15 +422,13 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await batchDeleteFavoritesAPI(ids)
       
       if (res.code === 0) {
+        // 先清除缓存状态
+        ids.forEach(id => {
+          statusCache.delete(id)
+        })
+        
         // 立即更新每个项目的收藏状态
         ids.forEach(id => updateFavoriteStatus(id, false))
-        
-        // 添加批量取消收藏成功的提示
-        ElMessage({
-          type: 'success',
-          message: `已取消收藏 ${ids.length} 个景点`,
-          customClass: 'collection-message'
-        })
         
         // 从当前列表中移除已取消收藏的项
         favorites.value = favorites.value.filter(
@@ -439,13 +437,16 @@ export const useFavoriteStore = defineStore('favorite', () => {
         
         // 更新所有相关数据
         await Promise.all([
-          // 更新统计信息
           getFavoriteStats(),
-          // 更新分类列表
           getCategories(),
-          // 刷新收藏数据
           refreshFavoriteData()
         ])
+        
+        ElMessage({
+          type: 'success',
+          message: `已取消收藏 ${ids.length} 个景点`,
+          customClass: 'collection-message'
+        })
         
         return true
       } else {

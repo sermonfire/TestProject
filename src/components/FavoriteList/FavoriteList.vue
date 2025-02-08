@@ -42,18 +42,17 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="favorites"
+        :data="tableData"
         style="width: 100%"
         @selection-change="handleSelectionChange"
+        row-key="id"
+        v-bind="$attrs"
       >
-        <el-table-column type="selection" width="55">
-          <template #default="{ row }">
-            <el-checkbox 
-              v-model="row.selected"
-              @change="(val) => handleRowSelect(row, val)"
-            />
-          </template>
-        </el-table-column>
+        <el-table-column
+          type="selection"
+          width="55"
+          :selectable="(row) => !row.disabled"
+        />
         <el-table-column label="景点信息" min-width="300">
           <template #default="{ row }">
             <div class="destination-info">
@@ -202,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Search, Picture, Star } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFavoriteStore } from '@/stores/favoriteStore'
@@ -228,7 +227,13 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['page-change', 'size-change', 'refresh'])
+const emit = defineEmits([
+  'page-change',
+  'size-change',
+  'refresh',
+  'selection-change'
+])
+
 const favoriteStore = useFavoriteStore()
 
 // 状态
@@ -242,10 +247,20 @@ const tableRef = ref(null)
 
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
+const tableData = computed(() => {
+  return props.favorites.map(item => ({
+    ...item,
+    disabled: false // 可以根据需要设置是否禁用选择
+  }))
+})
 
 // 方法
 const handleSelectionChange = (selection) => {
   selectedItems.value = selection
+  emit('selection-change', selection)
+  if (tableRef.value && selection.length === 0) {
+    tableRef.value.clearSelection()
+  }
 }
 
 const handleSearch = async () => {
@@ -347,6 +362,7 @@ const handleBatchDelete = async () => {
     
     if (success) {
       deleteDialogVisible.value = false
+      clearSelection()
       selectedItems.value = []
       emit('refresh')
       ElMessage({
@@ -399,6 +415,26 @@ const handleRowSelect = (row, selected) => {
     selectedItems.value = selectedItems.value.filter(item => item.id !== row.id)
   }
 }
+
+const clearSelection = () => {
+  if (tableRef.value) {
+    tableRef.value.clearSelection()
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  refreshData: () => emit('refresh'),
+  clearSelection
+})
+
+// 在组件卸载前清理表格实例
+onBeforeUnmount(() => {
+  if (tableRef.value) {
+    tableRef.value.clearSelection()
+    tableRef.value = null
+  }
+})
 </script>
 
 <style lang="scss" scoped>

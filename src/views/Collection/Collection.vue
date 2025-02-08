@@ -41,6 +41,7 @@
           @page-change="handlePageChange"
           @size-change="handleSizeChange"
           @refresh="refreshData"
+          @selection-change="handleSelectionChange"
         />
       </div>
     </div>
@@ -48,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { Calendar, DataLine } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import FavoriteCategory from '@/components/FavoriteCategory/FavoriteCategory.vue'
@@ -58,6 +59,7 @@ import { getFavoriteListAPI } from '@/api/api'
 
 const favoriteStore = useFavoriteStore()
 const listRef = ref(null)
+const selectedItems = ref([])
 
 // 添加收藏列表状态
 const favorites = ref([])
@@ -170,31 +172,49 @@ defineExpose({
   getFavoriteList
 })
 
-// 处理批量删除
+// 修改批量删除处理
 const handleBatchDelete = async () => {
   try {
     const success = await favoriteStore.batchDeleteFavorites(selectedItems.value)
     if (success) {
       // 清空选中项
       selectedItems.value = []
+      // 通知列表组件清空选择
+      if (listRef.value) {
+        listRef.value.clearSelection()
+      }
       // 刷新列表数据
-      await loadFavorites()
+      currentPage.value = 1
+      await getFavoriteList()
     }
   } catch (error) {
     console.error('Batch delete failed:', error)
   }
 }
 
-// 添加加载收藏列表的方法
-const loadFavorites = async () => {
-  try {
-    // 重置页码
-    currentPage.value = 1
-    await getFavoriteList()
-  } catch (error) {
-    console.error('Load favorites failed:', error)
-    ElMessage.error('加载收藏列表失败')
+// 添加选择变化处理方法
+const handleSelectionChange = (selection) => {
+  selectedItems.value = selection
+}
+
+// 清理函数
+const cleanup = () => {
+  if (listRef.value) {
+    listRef.value.clearSelection()
   }
+  selectedItems.value = []
+  favorites.value = []
+}
+
+// 组件卸载前清理
+onBeforeUnmount(() => {
+  cleanup()
+})
+
+// 修改路由离开守卫
+const beforeRouteLeave = (to, from, next) => {
+  cleanup()
+  next()
 }
 </script>
 

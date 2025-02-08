@@ -9,6 +9,10 @@
           item-key="id"
           handle=".drag-handle"
           @end="handleDragEnd"
+          :animation="200"
+          :group="{ name: 'categories' }"
+          :removeOnSpill="false"
+          :sort="true"
         >
           <template #item="{ element }">
             <div class="category-item" 
@@ -129,11 +133,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, Folder, Edit, Delete, Plus, Rank } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
-import draggable from 'vuedraggable'
+import VueDraggable from 'vuedraggable'
 
 const emit = defineEmits(['select'])
 const favoriteStore = useFavoriteStore()
@@ -144,6 +148,7 @@ const deleteDialogVisible = ref(false)
 const isEdit = ref(false)
 const categoryToDelete = ref(null)
 const formRef = ref(null)
+const draggableInstance = ref(null)
 
 const categoryForm = ref({
   name: '',
@@ -165,9 +170,6 @@ const formRules = {
 const loading = computed(() => favoriteStore.loading)
 const selectedCategory = computed(() => favoriteStore.selectedCategory)
 const sortedCategories = computed(() => favoriteStore.sortedCategories)
-
-// 重命名组件
-const VueDraggable = draggable
 
 // 方法
 const handleCategorySelect = async (category) => {
@@ -254,6 +256,13 @@ const handleDragEnd = async ({ oldIndex, newIndex }) => {
 watch(() => favoriteStore.categories, (newCategories) => {
 //   console.log('分类列表发生变化:', newCategories)
 }, { deep: true })
+
+// 在组件卸载前清理 Sortable 实例
+onBeforeUnmount(() => {
+  if (draggableInstance.value?.$el?.sortable) {
+    draggableInstance.value.$el.sortable.destroy()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
