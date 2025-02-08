@@ -8,6 +8,7 @@
         <div class="image-wrapper"
           @mouseenter="handleImageHover"
           @mouseleave="handleImageLeave"
+          @click="handleCardClick(destination)"
         >
           <el-image 
             :src="destination.imageUrl" 
@@ -43,7 +44,6 @@
             <h3 class="destination-name" 
               @mouseenter="handleNameHover"
               @mouseleave="handleNameLeave"
-              @click="handleCardClick(destination)"
             >
               {{ destination.name }}
               <div class="hover-tip">
@@ -73,7 +73,7 @@
                 {{ tag }}
               </el-tag>
             </div>
-            <span class="view-more">查看详情</span>
+            <span class="view-more" @click="handleCardClick(destination)">查看详情</span>
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@
           <div class="description-wrapper">
             <p class="description">{{ destination.description || '暂无描述' }}</p>
           </div>
-          <div class="action-btn">了解更多</div>
+          <div class="action-btn" @click="handleCardClick(destination)">了解更多</div>
         </div>
       </div>
     </div>
@@ -301,6 +301,7 @@ onUnmounted(() => {
           font-weight: 500;
           transition: all 0.3s ease;
           box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.2);
+          cursor: pointer;
           
           &:hover {
             transform: translateY(-2px);
@@ -318,6 +319,7 @@ onUnmounted(() => {
   overflow: hidden;
   border-radius: 12px 12px 0 0;
   height: 220px;
+  cursor: pointer;
 
   .destination-image {
     width: 100%;
@@ -574,6 +576,7 @@ onUnmounted(() => {
       padding: 4px 12px;
       border-radius: 4px;
       transition: all 0.3s ease;
+      cursor: pointer;
       
       &:hover {
         background-color: var(--el-color-primary-light-9);
