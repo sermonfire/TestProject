@@ -97,7 +97,7 @@
 
     <!-- 编辑弹窗 -->
     <el-dialog
-      v-model="showEditDialog"
+      v-model="isEditDialogVisible"
       title="编辑收藏信息"
       width="30%"
       destroy-on-close
@@ -129,7 +129,7 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button @click="isEditDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="handleEditSubmit">确定</el-button>
         </span>
       </template>
@@ -185,7 +185,7 @@ const pageSize = ref(10);
 const filterCategory = ref('');
 const sortBy = ref('time-desc');
 const showDetailDialog = ref(false);
-const showEditDialog = ref(false);
+const isEditDialogVisible = ref(false);
 const showClearDialog = ref(false);
 const selectedDestination = ref(null);
 const similarDestinations = ref([]);
@@ -274,12 +274,11 @@ const showEditDialog = (item) => {
     category: item.category || '',
     notes: item.notes || ''
   };
-  showEditDialog.value = true;
+  isEditDialogVisible.value = true;
 };
 
 const handleEditSubmit = async () => {
   try {
-    // 调用API更新收藏信息
     const success = await favoriteStore.updateFavorite(
       editForm.value.id,
       editForm.value.category,
@@ -288,7 +287,7 @@ const handleEditSubmit = async () => {
     
     if (success) {
       ElMessage.success('更新成功');
-      showEditDialog.value = false;
+      isEditDialogVisible.value = false;
       await fetchCollections();
     }
   } catch (err) {
