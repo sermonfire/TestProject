@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useUserStore } from '@/stores/userstore.js';
 import { ElMessage } from 'element-plus';
 import { ErrorMessage } from './errorHandler.js';
+import router from '@/router';
 
 // 基础配置
 const DEFAULT_CONFIG = {
@@ -92,116 +93,55 @@ const responseInterceptors = [
   }
 ];
 
-// 请求队列管理类
-class RequestQueue {
-  constructor() {
-    this.queue = new Map();
-    this.interval = 3000;
-    this.maxRequests = 10;
+// 创建axios实例
+const service = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000
+})
+
+// 请求拦截器
+service.interceptors.request.use(
+  config => {
+    
+    // 保留原有的token处理逻辑
+    const token = localStorage.getItem('token')
+    if (token && config.needToken !== false) {
+      config.headers.Authorization = `${token}`
+    }
+    return config
+  },
+  error => {
+    console.error('Request error:', error)
+    return Promise.reject(error)
   }
+)
 
-  clean() {
-    const now = Date.now();
-    for (const [key, value] of this.queue.entries()) {
-      if (now - value.timestamp > this.interval) {
-        this.queue.delete(key);
-      }
-    }
-  }
-
-  check(key) {
-    const now = Date.now();
-    const request = this.queue.get(key);
-    
-    if (!request) {
-      this.queue.set(key, { count: 1, timestamp: now });
-      return true;
-    }
-    
-    if (now - request.timestamp > this.interval) {
-      this.queue.set(key, { count: 1, timestamp: now });
-      return true;
-    }
-    
-    if (request.count >= this.maxRequests) {
-      ElMessage({
-        message: '操作太频繁，请稍后再试',
-        type: 'warning'
-      });
-      return false;
-    }
-    
-    request.count++;
-    return true;
-  }
-}
-
-// 创建axios实例的工厂函数
-export const createRequest = (customConfig = {}) => {
-  const config = { ...DEFAULT_CONFIG, ...customConfig };
-  const requestQueue = new RequestQueue();
-  const axiosInstance = axios.create(config);
-
-  // 添加请求拦截器
-  axiosInstance.interceptors.request.use(async (config) => {
-    let currentConfig = { ...config };
-    for (const interceptor of requestInterceptors) {
+// 响应拦截器
+service.interceptors.response.use(
+  async (response) => {
+    let currentResponse = response;
+    for (const interceptor of responseInterceptors) {
       try {
-        currentConfig = await interceptor.success(currentConfig);
+        currentResponse = await interceptor.success(currentResponse);
       } catch (error) {
-        console.error(`Request interceptor ${interceptor.name} failed:`, error);
+        if (interceptor.error) {
+          return interceptor.error(error);
+        }
         throw error;
       }
     }
-    return currentConfig;
-  });
+    return currentResponse;
+  },
+  error => Promise.reject(error)
+);
 
-  // 添加响应拦截器
-  axiosInstance.interceptors.response.use(
-    async (response) => {
-      let currentResponse = response;
-      for (const interceptor of responseInterceptors) {
-        try {
-          currentResponse = await interceptor.success(currentResponse);
-        } catch (error) {
-          if (interceptor.error) {
-            return interceptor.error(error);
-          }
-          throw error;
-        }
-      }
-      return currentResponse;
-    },
-    error => Promise.reject(error)
-  );
+// 导出实例
+export default service
 
-  return async (options) => {
-    const mergedOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-      headers: {
-        ...config.headers,
-        ...options.headers
-      }
-    };
-
-    const requestKey = `${mergedOptions.url}_${mergedOptions.method}_${JSON.stringify(mergedOptions.data)}`;
-    if (!requestQueue.check(requestKey)) {
-      return Promise.reject(new Error('请求过于频繁'));
-    }
-
-    try {
-      const response = await axiosInstance(mergedOptions);
-      return response;
-    } catch (error) {
-      return Promise.reject(error);
-    } finally {
-      requestQueue.clean();
-    }
-  };
-};
-
-// 创建默认请求实例
-const request = createRequest();
-
-export default request;
+// 如果有其他导出的工具函数，保持不变
+export const createRequest = (config) => {
+  return axios.create({
+    ...config,
+    timeout: 10000
+  })
+}
