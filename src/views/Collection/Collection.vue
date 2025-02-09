@@ -49,16 +49,6 @@
                 </template>
               </el-input>
             </div>
-            <div class="view-options">
-              <el-radio-group v-model="viewMode" size="large">
-                <el-radio-button :value="'grid'">
-                  <el-icon><Grid /></el-icon>
-                </el-radio-button>
-                <el-radio-button :value="'list'">
-                  <el-icon><List /></el-icon>
-                </el-radio-button>
-              </el-radio-group>
-            </div>
           </div>
         </div>
         
@@ -510,33 +500,6 @@ const handleAddCategory = () => {
                     color: #94a3b8;
                   }
                 }
-              }
-            }
-          }
-          
-          .view-options {
-            :deep(.el-radio-group) {
-              background: #f8fafc;
-              padding: 4px;
-              border-radius: 8px;
-              
-              .el-radio-button__inner {
-                border: none;
-                background: transparent;
-                padding: 8px 16px;
-                border-radius: 6px;
-                transition: all 0.3s ease;
-                
-                &:hover {
-                  color: #4f46e5;
-                  background: #f1f5f9;
-                }
-              }
-              
-              .el-radio-button__original-radio:checked + .el-radio-button__inner {
-                background: white;
-                color: #4f46e5;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
               }
             }
           }
