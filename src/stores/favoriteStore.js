@@ -15,9 +15,7 @@ import {
   batchUpdateCategoryAPI,
   batchDeleteFavoritesAPI,
   updateCategorySortAPI,
-  updateFavoriteAPI
 } from '@/api/api'
-import { debounce } from 'lodash-es'
 
 export const useFavoriteStore = defineStore('favorite', () => {
   // 状态
@@ -34,15 +32,14 @@ export const useFavoriteStore = defineStore('favorite', () => {
 
   // 添加收藏操作的状态跟踪
   const operationStatus = ref({
-    type: '', // 'add' | 'remove' | 'update'
-    status: '', // 'pending' | 'success' | 'error'
+    type: '', 
+    status: '', 
     message: '',
     timestamp: null
   })
 
   // 添加缓存
   const statusCache = new Map()
-  const CACHE_EXPIRE = 5 * 60 * 1000 // 5分钟缓存过期
 
   // 计算属性
   const hasDefaultCategory = computed(() => {
@@ -272,11 +269,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await getCategoryListAPI()
       if (res.code === 0) {
         categories.value = res.data
-        // 检查是否有默认分类
         const hasDefault = categories.value.some(c => c.isDefault)
  
         if (!hasDefault) {
-          // console.log('创建默认分类...')
           await createCategory({
             name: '默认收藏',
             isDefault: true,
@@ -286,12 +281,10 @@ export const useFavoriteStore = defineStore('favorite', () => {
         
         return true
       } else {
-        // console.error('获取分类列表失败:', res.message)
         ElMessage.error(res.message || '获取分类列表失败')
         return false
       }
     } catch (error) {
-      // console.error('获取分类列表异常:', error)
       ElMessage.error('获取分类列表失败')
       return false
     }
@@ -412,24 +405,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  // 更新收藏
-  const updateFavorite = async (favoriteId, data) => {
-    try {
-      loading.value = true
-      const res = await updateFavoriteAPI(favoriteId, data)
-      if (res.code === 0) {
-        ElMessage.success('更新成功')
-        return true
-      }
-      return false
-    } catch (error) {
-      ElMessage.error(error.message || '更新失败')
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
-
   // 优化批量检查方法
   const batchCheckFavoriteStatus = async (itemIds) => {
     if (!Array.isArray(itemIds) || !itemIds.length) return;
@@ -497,7 +472,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
     searchFavorites,
     batchUpdateCategory,
     batchDeleteFavorites,
-    updateFavorite,
     refreshFavoriteData,
     operationStatus,
     updateOperationStatus,

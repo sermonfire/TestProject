@@ -47,16 +47,6 @@ export const checkIsFavoriteAPI = (destinationId) => {
   })
 }
 
-// 更新收藏信息
-export const updateFavoriteAPI = (favoriteId, data) => {
-  return request({
-    url: `dev-api/favorite/${favoriteId}`,
-    method: 'PUT',
-    data,
-    needToken: true
-  })
-}
-
 // 创建收藏分类
 export const createCategoryAPI = (data) => {
   return request({

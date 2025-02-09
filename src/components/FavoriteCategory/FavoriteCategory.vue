@@ -192,11 +192,9 @@ const sortedCategories = computed(() => favoriteStore.sortedCategories)
 // 方法
 const handleCategorySelect = async (category) => {
   try {
-    // console.log('选择分类:', category)
     favoriteStore.selectedCategory = category.id
     emit('select', category)
   } catch (error) {
-    // console.error('分类选择失败:', error)
     ElMessage.error('分类选择失败')
   }
 }

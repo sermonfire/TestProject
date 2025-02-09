@@ -103,16 +103,17 @@ const currentCategory = computed(() => {
 const favoriteStats = computed(() => favoriteStore.favoriteStats)
 const currentCategoryCount = computed(() => favoriteStore.currentCategoryCount)
 
-// 修改加载收藏列表方法
+// 加载收藏列表方法
 const loadFavorites = async (silent = false) => {
   try {
     loading.value = true
     
     // 验证分页参数
     if (currentPage.value < 1) currentPage.value = 1
-    if (pageSize.value !== 9) pageSize.value = 9  // 确保每页显示9条数据
+    if (pageSize.value !== 9) pageSize.value = 9
     
     const categoryId = favoriteStore.selectedCategory
+    
     const res = await getFavoriteListAPI(currentPage.value, pageSize.value, categoryId)
     
     if (res.code === 0) {
@@ -173,7 +174,15 @@ watch(
 // 修改分类选择处理方法
 const handleCategorySelect = async (category) => {
   try {
+    console.log('选中的分类信息:', {
+      id: category.id,
+      name: category.name,
+      isDefault: category.isDefault
+    })
+    
     favoriteStore.selectedCategory = category.id
+    console.log('更新后的 store 中的选中分类 ID:', favoriteStore.selectedCategory)
+    
     currentPage.value = 1
     await loadFavorites()
   } catch (error) {
