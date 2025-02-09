@@ -28,7 +28,7 @@ export const removeAllFavoritesAPI = () => {
   })
 }
 
-// 获取收藏列表
+// 根据分类id获取不同分类下的收藏列表（不传代表获取所有收藏信息，0代表获取默认分类下的收藏信息，其他代表获取对应分类下的收藏信息）
 export const getFavoriteListAPI = (pageNum = 1, pageSize = 10, categoryId = null) => {
   return request({
     url: 'dev-api/favorite/list',
