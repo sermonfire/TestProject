@@ -324,16 +324,18 @@ const handleDialogOpened = () => {
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid var(--el-border-color-light);
+    background-color: var(--el-bg-color);
     
     .header-title {
       font-size: 14px;
       font-weight: 500;
-      color: var(--el-text-color-primary);
+      color: blue;
     }
     
     .add-button {
       padding: 4px 8px;
       font-size: 13px;
+      color: blue;
       
       .el-icon {
         margin-right: 4px;
@@ -341,7 +343,7 @@ const handleDialogOpened = () => {
       }
       
       &:hover {
-        background-color: var(--el-color-primary-light-9);
+        background-color: rgb(235, 217, 217);
       }
       
       &:active {
