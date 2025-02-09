@@ -113,6 +113,7 @@
             :data="processedFavorites"
             style="width: 100%"
             @selection-change="handleSelectionChange"
+            v-loading="loading"
           >
             <el-table-column type="selection" width="55" />
             
@@ -167,18 +168,18 @@
             <el-table-column label="操作" width="150" fixed="right">
               <template #default="{ row }">
                 <el-button-group>
-                  <el-button 
-                    type="primary" 
+                  <el-button
+                    type="primary"
                     link
-                    @click="handleEdit(row)"
+                    @click.stop="handleMove(row)"
                   >
-                    <el-icon><Edit /></el-icon>
-                    编辑
+                    <el-icon><FolderAdd /></el-icon>
+                    移动
                   </el-button>
-                  <el-button 
-                    type="danger" 
+                  <el-button
+                    type="danger"
                     link
-                    @click="handleDelete(row)"
+                    @click.stop="handleDelete(row)"
                   >
                     <el-icon><Delete /></el-icon>
                     删除
@@ -251,38 +252,36 @@
       </template>
     </el-dialog>
 
-    <!-- 优化删除确认对话框 -->
+    <!-- 修改删除确认对话框 -->
     <el-dialog
       v-model="deleteDialogVisible"
-      :title="batchDeleteItems.length ? '批量取消收藏' : '取消收藏'"
+      :title="dialogTitle"
       width="400px"
-      :close-on-click-modal="false"
     >
       <div class="delete-confirm">
         <el-icon class="warning-icon" :size="48"><Warning /></el-icon>
         <div class="confirm-content">
-          <template v-if="batchDeleteItems.length">
-            <h3>确定要取消收藏选中的 {{ batchDeleteItems.length }} 个项目吗？</h3>
+          <template v-if="batchDeleteItems?.value?.length">
+            <h3>确定要取消收藏选中的 {{ batchDeleteItems.value.length }} 个项目吗？</h3>
             <p class="sub-text">此操作不可恢复</p>
           </template>
           <template v-else>
-            <h3>确定要取消收藏 "{{ itemToDelete?.destination?.name }}" 吗？</h3>
-            <p class="sub-text">取消后可以重新收藏</p>
+            <h3>确定要取消收藏该项目吗？</h3>
+            <p class="sub-text">此操作不可恢复</p>
           </template>
         </div>
       </div>
-      
       <template #footer>
-        <div class="dialog-footer">
+        <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button 
-            type="warning" 
+          <el-button
+            type="danger"
             @click="confirmDelete"
             :loading="loading"
           >
-            确定取消收藏
+            确定取消
           </el-button>
-        </div>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -352,6 +351,7 @@ const targetCategory = ref('')
 const tableRef = ref(null)
 const itemToDelete = ref(null)
 const batchDeleteItems = ref([])
+const localViewMode = ref(props.viewMode)
 
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
@@ -383,9 +383,6 @@ const processedFavorites = computed(() => {
   })
 })
 
-// 创建本地响应式变量跟踪视图模式
-const localViewMode = ref(props.viewMode)
-
 // 监听 prop 变化更新本地变量
 watch(() => props.viewMode, (newValue) => {
   localViewMode.value = newValue
@@ -399,7 +396,7 @@ const handleViewModeChange = (value) => {
 
 // 方法
 const handleSelectionChange = (selection) => {
-  favoriteStore.selectedItems = selection
+  selectedItems.value = selection
 }
 
 const handleSearch = async () => {
@@ -446,7 +443,11 @@ const confirmMove = async () => {
 }
 
 const handleDelete = (item) => {
-  itemToDelete.value = item
+  if (!item || !item.id) {
+    ElMessage.warning('无效的收藏项')
+    return
+  }
+  itemToDelete.value = { ...item } // 创建副本
   deleteDialogVisible.value = true
 }
 
@@ -455,78 +456,63 @@ const handleBatchDelete = () => {
     ElMessage.warning('请先选择要取消收藏的项目')
     return
   }
-  batchDeleteItems.value = selectedItems.value
+  batchDeleteItems.value = [...selectedItems.value] // 创建副本
   deleteDialogVisible.value = true
 }
 
 const confirmDelete = async () => {
+  if (loading.value) return;
+  
   try {
-    loading.value = true
+    loading.value = true;
     
     if (batchDeleteItems.value.length) {
-      // 批量取消收藏
-      const itemIds = batchDeleteItems.value.map(item => item.id)
-      const success = await favoriteStore.batchDeleteFavorites(itemIds)
+      // 批量删除
+      const itemIds = batchDeleteItems.value.map(item => item.id);
+      await favoriteStore.batchDeleteFavorites(itemIds);
       
-      if (success) {
-        ElMessage({
-          type: 'success',
-          message: `已取消收藏 ${itemIds.length} 个项目`,
-          customClass: 'collection-message'
-        })
-        
-        // 清空选择
-        selectedItems.value = []
-        batchDeleteItems.value = []
-        if (tableRef.value) {
-          tableRef.value.clearSelection()
-        }
-        
-        // 关闭对话框
-        deleteDialogVisible.value = false
-        
-        // 先触发收藏变化事件
-        emit('collection-change')
-        // 再触发刷新
-        emit('refresh')
-      } else {
-        throw new Error('批量取消收藏失败')
-      }
-    } else if (itemToDelete.value) {
-      // 单个取消收藏
-      const success = await favoriteStore.deleteFavorite(itemToDelete.value.id)
+      ElMessage({
+        message: `已取消收藏 ${batchDeleteItems.value.length} 个项目`,
+        type: 'success',
+        duration: 2000
+      });
       
-      if (success) {
-        ElMessage({
-          type: 'success',
-          message: '已取消收藏',
-          customClass: 'collection-message'
-        })
-        
-        // 关闭对话框
-        deleteDialogVisible.value = false
-        
-        // 先触发收藏变化事件
-        emit('collection-change')
-        // 再触发刷新
-        emit('refresh')
-      } else {
-        throw new Error('取消收藏失败')
+      // 清空选中项
+      selectedItems.value = [];
+      batchDeleteItems.value = [];
+      
+      // 清空表格选择
+      if (tableRef.value) {
+        tableRef.value.clearSelection();
       }
+    } else if (itemToDelete.value && itemToDelete.value.id) {
+      // 单个删除
+      await favoriteStore.removeFavorite(itemToDelete.value.id);
+      
+      ElMessage({
+        message: '已取消收藏',
+        type: 'success',
+        duration: 2000
+      });
     }
+    
+    // 刷新列表数据
+    await favoriteStore.refreshFavoriteData();
+    
+    // 关闭对话框
+    deleteDialogVisible.value = false;
+    itemToDelete.value = null;
+    
+    // 触发刷新事件
+    emit('refresh');
+    
   } catch (error) {
-    console.error('取消收藏失败:', error)
-    ElMessage({
-      type: 'error',
-      message: error.message || '取消收藏失败，请重试',
-      customClass: 'collection-message'
-    })
+    console.error('Delete failed:', error);
+    ElMessage.error('取消收藏失败，请稍后重试');
   } finally {
-    loading.value = false
-    itemToDelete.value = null
-    batchDeleteItems.value = []
+    loading.value = false;
   }
-}
+};
 
 const handleNotesUpdate = async (row) => {
   try {
@@ -644,6 +630,13 @@ const goExplore = () => {
     name: 'explore'  // 确保路由中定义了这个名称
   })
 }
+
+// 修改删除对话框的标题计算属性
+const dialogTitle = computed(() => {
+  return (batchDeleteItems.value && batchDeleteItems.value.length > 0) 
+    ? '批量取消收藏' 
+    : '取消收藏'
+})
 
 onMounted(() => {
   loadFavoriteList()

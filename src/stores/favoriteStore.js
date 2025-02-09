@@ -192,35 +192,24 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 修改取消收藏方法
-  const removeFavorite = async (destinationId) => {
+  const removeFavorite = async (id) => {
+    if (!id || isNaN(Number(id))) {
+      throw new Error('无效的收藏ID');
+    }
+
     try {
-      loading.value = true
-      const res = await removeFavoriteAPI(destinationId)
-      
-      if (res.code === 0) {
-        // 立即更新状态
-        updateFavoriteStatus(destinationId, false)
-        
-        // 从列表中移除
-        favorites.value = favorites.value.filter(
-          item => item.destinationId !== destinationId
-        )
-        // 更新统计信息
-        await getFavoriteStats()
-        // 更新分类列表
-        await getCategories()
-        return true
-      } else {
-        // 失败时恢复状态
-        updateFavoriteStatus(destinationId, true)
-        return false
+      const response = await removeFavoriteAPI(Number(id)); // 确保转换为数字
+      if (response.code === 0) {
+        // 更新本地状态
+        updateFavoriteStatus(id, false);
+        // 从收藏列表中移除
+        favorites.value = favorites.value.filter(item => item.id !== id);
+        return true;
       }
+      throw new Error(response.message || '取消收藏失败');
     } catch (error) {
-      console.error('取消收藏失败:', error)
-      updateFavoriteStatus(destinationId, true)
-      return false
-    } finally {
-      loading.value = false
+      console.error('Remove favorite failed:', error);
+      throw error;
     }
   }
 
@@ -407,48 +396,30 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 修改批量取消收藏方法
-  const batchDeleteFavorites = async (destinationIds) => {
+  const batchDeleteFavorites = async (ids) => {
+    if (!Array.isArray(ids) || !ids.length) {
+      throw new Error('无效的收藏ID列表');
+    }
+
+    // 确保所有ID都是有效的数字
+    const validIds = ids.map(id => Number(id)).filter(id => !isNaN(id));
+    if (validIds.length !== ids.length) {
+      throw new Error('存在无效的收藏ID');
+    }
+
     try {
-      loading.value = true
-      
-      // 确保 destinationIds 是数组
-      const ids = Array.isArray(destinationIds) ? destinationIds : [destinationIds]
-      const res = await batchDeleteFavoritesAPI(ids)
-      
-      if (res.code === 0) {
-        // 先清除缓存状态
-        ids.forEach(id => {
-          statusCache.delete(id)
-        })
-        
-        // 立即更新每个项目的收藏状态
-        ids.forEach(id => updateFavoriteStatus(id, false))
-        
-        // 从当前列表中移除已取消收藏的项
-        favorites.value = favorites.value.filter(
-          item => !ids.includes(item.destinationId)
-        )
-        
-        // 更新所有相关数据
-        await Promise.all([
-          getFavoriteStats(),
-          getCategories(),
-          refreshFavoriteData()
-        ])
-        
-        return true
-      } else {
-        // 操作失败时恢复状态
-        ids.forEach(id => updateFavoriteStatus(id, true))
-        return false
+      const response = await batchDeleteFavoritesAPI(validIds);
+      if (response.code === 0) {
+        // 更新本地状态
+        validIds.forEach(id => updateFavoriteStatus(id, false));
+        // 从收藏列表中移除
+        favorites.value = favorites.value.filter(item => !validIds.includes(item.id));
+        return true;
       }
+      throw new Error(response.message || '批量取消收藏失败');
     } catch (error) {
-      console.error('批量取消收藏失败:', error)
-      // 发生错误时恢复状态
-      destinationIds.forEach(id => updateFavoriteStatus(id, true))
-      return false
-    } finally {
-      loading.value = false
+      console.error('Batch delete failed:', error);
+      throw error;
     }
   }
 

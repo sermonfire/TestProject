@@ -324,13 +324,25 @@ const removeFavorite = async () => {
   try {
     const success = await favoriteStore.removeFavorite(props.itemId);
     if (success) {
+      ElMessage({
+        message: '已取消收藏',
+        type: 'success',
+        duration: 2000,
+        customClass: 'collection-message'
+      });
+      
       if (props.autoRefresh) {
         await favoriteStore.refreshFavoriteData();
       }
     }
   } catch (error) {
     console.error('Remove favorite failed:', error);
-    ElMessage.error('取消收藏失败，请稍后重试');
+    ElMessage({
+      message: '取消收藏失败，请稍后重试',
+      type: 'error',
+      duration: 3000,
+      customClass: 'collection-message'
+    });
   } finally {
     loading.value = false;
     emit('collection-end');
