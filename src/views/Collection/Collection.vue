@@ -88,7 +88,7 @@ const selectedItems = ref([])
 // 添加收藏列表状态
 const favorites = ref([])
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(9)
 const total = ref(0)
 const loading = ref(false)
 
@@ -108,21 +108,28 @@ const currentCategoryCount = computed(() => favoriteStore.currentCategoryCount)
 const loadFavorites = async (silent = false) => {
   try {
     loading.value = true
+    
+    // 验证分页参数
+    if (currentPage.value < 1) currentPage.value = 1
+    if (pageSize.value !== 9) pageSize.value = 9  // 确保每页显示9条数据
+    
     const categoryId = favoriteStore.selectedCategory
     const res = await getFavoriteListAPI(currentPage.value, pageSize.value, categoryId)
     
     if (res.code === 0) {
-      // 直接更新列表数据
       favorites.value = res.data.list || []
       total.value = res.data.total || 0
       
-      // 同步更新 store 中的状态
+      // 如果当前页没有数据且不是第一页，则自动跳转到最后一页
+      if (favorites.value.length === 0 && currentPage.value > 1) {
+        const lastPage = Math.ceil(total.value / pageSize.value)
+        currentPage.value = lastPage
+        await loadFavorites()
+        return
+      }
+      
       favoriteStore.favorites = res.data.list
-      
-      // 更新统计信息
       await favoriteStore.getFavoriteStats()
-      
-      // 更新分类信息
       await favoriteStore.getCategories()
     } else {
       if (!silent) {
@@ -176,13 +183,26 @@ const handleCategorySelect = async (category) => {
   }
 }
 
-// 添加分页处理方法
+// 修改分页处理方法，添加更多的错误处理
 const handlePageChange = async (page) => {
-  await loadFavorites()
+  try {
+    currentPage.value = page
+    await loadFavorites()
+  } catch (error) {
+    console.error('切换页码失败:', error)
+    ElMessage.error('切换页码失败，请重试')
+  }
 }
 
 const handleSizeChange = async (size) => {
-  await loadFavorites()
+  try {
+    pageSize.value = size
+    currentPage.value = 1  // 切换每页数量时重置为第一页
+    await loadFavorites()
+  } catch (error) {
+    console.error('切换每页数量失败:', error)
+    ElMessage.error('切换每页数量失败，请重试')
+  }
 }
 
 // 生命周期钩子
