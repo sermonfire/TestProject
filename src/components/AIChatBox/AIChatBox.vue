@@ -171,13 +171,15 @@ const sendMessage = async () => {
 
         const response = await sendChatMessage(messageHistory);
 
-        if (!response?.choices?.[0]?.message?.content) {
+        const aiContent = response?.data?.choices?.[0]?.message?.content;
+        if (!aiContent) {
+            console.error('【Chat】无效的响应数据结构：', response);
             throw new Error('无效的回复内容');
         }
 
         const assistantMessage = {
             type: 'assistant',
-            content: response.choices[0].message.content,
+            content: aiContent,
             isNew: true
         };
 
@@ -185,6 +187,7 @@ const sendMessage = async () => {
         emit('update:messages', messages.value);
 
     } catch (error) {
+        console.error('【Chat】发送消息失败：', error);
         const errorMessage = error.message || '发送失败，请重试';
         ElMessage.error(errorMessage);
         if (messages.value.length > 0) {
@@ -212,11 +215,25 @@ const sendMessageWithRetry = async () => {
             return;
         } catch (error) {
             retryCount++;
-            if (retryCount === maxRetries) {
-                ElMessage.error('发送失败，请稍后重试');
+            console.error(`【Chat】第 ${retryCount} 次重试失败：`, error);
+            
+            // 如果不是超时错误，直接抛出
+            if (!error.message?.includes('timeout') && !error.message?.includes('network error')) {
+                ElMessage.error(error.message || '发送失败，请重试');
                 break;
             }
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            
+            // 如果是最后一次重试
+            if (retryCount === maxRetries) {
+                console.log('【Chat】达到最大重试次数');
+                ElMessage.error('网络连接不稳定，请稍后重试');
+                break;
+            }
+            
+            // 等待一段时间后重试
+            const delay = 1000 * retryCount;
+            console.log(`【Chat】等待 ${delay}ms 后重试`);
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
 };

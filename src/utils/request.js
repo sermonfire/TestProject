@@ -2,7 +2,6 @@ import axios from 'axios';
 import { useUserStore } from '@/stores/userstore.js';
 import { ElMessage } from 'element-plus';
 import { ErrorMessage } from './errorHandler.js';
-import router from '@/router';
 
 // 基础配置
 const DEFAULT_CONFIG = {
@@ -57,8 +56,14 @@ const responseInterceptors = [
   {
     name: 'handleStatus',
     success: (response) => {
-      const { status, data } = response;
+      const { status, data, config } = response;
       
+      // 如果是DeepSeek API的请求，直接返回原始响应
+      if (config.url?.includes('deepseek')) {
+        return data;
+      }
+      
+      // 对于其他API请求保持原有的处理逻辑
       if (status === 200 && data) {
         return {
           code: data.code || 0,
@@ -95,30 +100,34 @@ const responseInterceptors = [
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000
-})
+  ...DEFAULT_CONFIG,
+  timeoutErrorMessage: '请求超时，请重试'
+});
 
 // 请求拦截器
 service.interceptors.request.use(
-  config => {
+  async config => {
+    config = { ...DEFAULT_OPTIONS, ...config };
     
-    // 保留原有的token处理逻辑
-    const token = localStorage.getItem('token')
-    if (token && config.needToken !== false) {
-      config.headers.Authorization = `${token}`
+    // 应用所有请求拦截器
+    for (const interceptor of requestInterceptors) {
+      config = await interceptor.success(config);
     }
-    return config
+    
+    // 如果是AI请求，移除超时限制
+    if (config.url?.includes('deepseek')) {
+      config.timeout = 0;
+    }
+    
+    return config;
   },
-  error => {
-    console.error('Request error:', error)
-    return Promise.reject(error)
-  }
-)
+  error => Promise.reject(error)
+);
 
 // 响应拦截器
 service.interceptors.response.use(
   async (response) => {
+    
     let currentResponse = response;
     for (const interceptor of responseInterceptors) {
       try {
@@ -132,7 +141,9 @@ service.interceptors.response.use(
     }
     return currentResponse;
   },
-  error => Promise.reject(error)
+  error => {
+    return Promise.reject(error);
+  }
 );
 
 // 导出实例
@@ -142,6 +153,7 @@ export default service
 export const createRequest = (config) => {
   return axios.create({
     ...config,
-    timeout: 10000
+    // 如果是AI相关的请求，则不设置超时
+    timeout: config?.url?.includes('deepseek') ? 0 : 10000
   })
 }

@@ -16,51 +16,29 @@ const deepseekRequest = createRequest(DEEPSEEK_API_CONFIG);
 
 // 发送聊天请求
 export const sendChatMessage = async (messages) => {
+  
   try {
-    // 添加系统提示词
-    const messageHistory = [
-      {
-        role: 'system',
-        content: SYSTEM_PROMPT
-      },
+    const messagesWithSystem = [
+      { role: 'system', content: SYSTEM_PROMPT },
       ...messages
     ];
-
+    
     const response = await deepseekRequest({
       url: '/chat/completions',
       method: 'POST',
-      needToken: false,
-      isPublic: true,
-      headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_CONFIG.apiKey}`,
-        'Content-Type': 'application/json'
-      },
+      timeout: 0,  // 显式设置为0，表示无超时限制
       data: {
         model: DEEPSEEK_API_CONFIG.model,
-        messages: messageHistory,
+        messages: messagesWithSystem,
         temperature: DEEPSEEK_API_CONFIG.temperature,
         max_tokens: DEEPSEEK_API_CONFIG.max_tokens
+      },
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_CONFIG.apiKey}`
       }
     });
-    
-    // 检查响应格式并构造标准格式的返回值
-    if (response.code === 0) {
-      return {
-        choices: [{
-          message: {
-            content: response.data || '抱歉，暂时无法获取回复。'
-          }
-        }]
-      };
-    } else {
-      throw new Error(response.message || '无效的 API 响应格式');
-    }
-    
+    return response;
   } catch (error) {
-    const errorMessage = error.response?.status === 401 ? 'API 密钥无效或已过期' :
-                        error.response?.status === 429 ? '请求过于频繁，请稍后再试' :
-                        error.message || '请求失败，请稍后重试';
-                        
-    throw new Error(errorMessage);
+    throw error;
   }
 }; 
