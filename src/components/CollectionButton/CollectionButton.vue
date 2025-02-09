@@ -5,6 +5,7 @@
       :content="isCollected ? '取消收藏' : '添加收藏'"
       placement="top"
       :show-after="500"
+      :disabled="tooltipDisabled"
     >
       <el-button
         :type="isCollected ? 'danger' : 'primary'"
@@ -15,14 +16,13 @@
           'is-animating': isAnimating
         }"
         :loading="loading"
-        :disabled="disabled"
+        :disabled="buttonDisabled"
         v-loading.fullscreen.lock="loading"
         element-loading-text="处理中..."
       >
         <template #icon>
           <el-icon :size="24">
-            <Star v-if="isCollected" />
-            <StarFilled v-else />
+            <component :is="isCollected ? 'Star' : 'StarFilled'" />
           </el-icon>
         </template>
       </el-button>
@@ -141,46 +141,19 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  category: {
-    type: String,
-    default: ''
-  },
-  notes: {
-    type: String,
-    default: ''
+  autoRefresh: {
+    type: Boolean,
+    default: true
   },
   disabled: {
     type: Boolean,
     default: false
-  },
-  autoRefresh: {
-    type: Boolean,
-    default: true
   }
 });
 
-const emit = defineEmits([
-  'collection-change',
-  'collection-start',  // 开始收藏操作
-  'collection-end',    // 结束收藏操作
-  'collection-error'   // 收藏操作出错
-]);
+const emit = defineEmits(['collection-change', 'collection-start', 'collection-end', 'collection-error']);
 const favoriteStore = useFavoriteStore();
 const { favoriteStatus } = storeToRefs(favoriteStore);
-
-const isCollected = computed(() => {
-  return favoriteStore.getFavoriteStatus(props.itemId);
-});
-
-// 监听收藏状态变化
-watch(() => favoriteStore.getFavoriteStatus(props.itemId), (newStatus) => {
-  if (newStatus !== isCollected.value) {
-    emit('collection-change', { id: props.itemId, isCollected: newStatus });
-    if (props.autoRefresh) {
-      favoriteStore.refreshFavoriteData()
-    }
-  }
-});
 
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -203,24 +176,46 @@ const hasOnlyDefaultCategory = computed(() => {
   return categories.value.length === 1 && categories.value[0].isDefault;
 });
 
-// 监听 initialState 的变化
-watch(() => props.initialState, (newValue) => {
-  favoriteStore.updateFavoriteStatus(props.itemId, newValue);
+// 修改收藏状态的计算属性
+const isCollected = computed(() => {
+  if (!props.itemId) return false;
+  return Boolean(favoriteStore.getFavoriteStatus(props.itemId));
 });
 
-// 组件挂载时检查收藏状态
+// 修改初始化逻辑
 onMounted(async () => {
+  if (!props.itemId) return;
+  
   try {
+    // 设置初始状态
+    favoriteStore.updateFavoriteStatus(props.itemId, props.initialState);
+    
+    // 检查实际状态
+    if (props.autoRefresh) {
+      await checkFavoriteStatus();
+    }
+  } catch (error) {
+    console.error('Failed to initialize collection status:', error);
+  }
+});
+
+// 优化状态检查方法
+const checkFavoriteStatus = async () => {
+  if (!props.itemId) return;
+  
+  try {
+    loading.value = true;
     const status = await favoriteStore.checkIsFavorite(props.itemId);
-    favoriteStore.updateFavoriteStatus(props.itemId, status);
-    // 初始化时获取分类列表
-    if (!favoriteStore.categories.length) {
-      await favoriteStore.getCategories();
+    if (typeof status === 'boolean') {
+      favoriteStore.updateFavoriteStatus(props.itemId, status);
     }
   } catch (error) {
     console.error('Failed to check favorite status:', error);
+    emit('collection-error', error);
+  } finally {
+    loading.value = false;
   }
-});
+};
 
 const isAnimating = ref(false)
 
@@ -288,6 +283,14 @@ const retryOperation = async (operation, retries = 0) => {
   }
 }
 
+// 在状态变化时发出事件
+const handleStatusChange = (newStatus) => {
+  emit('collection-change', {
+    id: props.itemId,
+    isCollected: newStatus
+  });
+};
+
 // 修改收藏方法
 const addFavorite = async (categoryId = '', notes = '') => {
   loading.value = true;
@@ -297,20 +300,21 @@ const addFavorite = async (categoryId = '', notes = '') => {
       favoriteStore.addFavorite(props.itemId, categoryId, notes)
     );
     if (success) {
+      handleStatusChange(true);
       if (props.autoRefresh) {
         await favoriteStore.refreshFavoriteData();
       }
     }
   } catch (error) {
-    console.error('Add favorite failed:', error)
-    emit('collection-error', error)
+    console.error('Add favorite failed:', error);
+    emit('collection-error', error);
     ElMessage({
       message: '收藏失败，请稍后重试',
       type: 'error',
       duration: 3000,
       showClose: true,
       customClass: 'collection-error-message'
-    })
+    });
   } finally {
     loading.value = false;
     emit('collection-end');
@@ -324,6 +328,7 @@ const removeFavorite = async () => {
   try {
     const success = await favoriteStore.removeFavorite(props.itemId);
     if (success) {
+      handleStatusChange(false);
       ElMessage({
         message: '已取消收藏',
         type: 'success',
@@ -337,6 +342,7 @@ const removeFavorite = async () => {
     }
   } catch (error) {
     console.error('Remove favorite failed:', error);
+    emit('collection-error', error);
     ElMessage({
       message: '取消收藏失败，请稍后重试',
       type: 'error',
@@ -361,6 +367,10 @@ onUnmounted(() => {
     loading.value = false
   }
 })
+
+// 计算属性
+const buttonDisabled = computed(() => props.disabled || loading.value);
+const tooltipDisabled = computed(() => props.disabled || loading.value);
 </script>
 
 <style lang="scss" scoped>

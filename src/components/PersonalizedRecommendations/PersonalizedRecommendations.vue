@@ -13,42 +13,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
-import { storeToRefs } from 'pinia';
 
 const props = defineProps({
   recommendations: {
     type: Array,
-    required: true
+    required: true,
+    default: () => []
   }
 });
 
 const favoriteStore = useFavoriteStore();
-const { favoriteStatus } = storeToRefs(favoriteStore);
 
-// 添加计算收藏状态的方法
+// 优化收藏状态检查方法
 const isItemCollected = (id) => {
-  return favoriteStore.getFavoriteStatus(id);
+  if (!id) return false;
+  return Boolean(favoriteStore.getFavoriteStatus(id));
 };
 
-// 处理收藏状态变化
+// 优化收藏状态变化处理
 const handleCollectionChange = ({ id, isCollected }) => {
+  if (!id) return;
   favoriteStore.updateFavoriteStatus(id, isCollected);
 };
 
-// 监听推荐列表变化，更新收藏状态
+// 添加批量检查状态的方法
+const checkAllItemsStatus = async () => {
+  if (!props.recommendations?.length) return;
+  
+  try {
+    const itemIds = props.recommendations
+      .map(item => item.id)
+      .filter(Boolean);
+      
+    if (itemIds.length) {
+      await favoriteStore.batchCheckFavoriteStatus(itemIds);
+    }
+  } catch (error) {
+    console.error('Failed to check items status:', error);
+  }
+};
+
+// 监听推荐列表变化
 watch(() => props.recommendations, async (newRecommendations) => {
   if (newRecommendations?.length) {
-    const itemIds = newRecommendations.map(item => item.id);
-    await favoriteStore.batchCheckFavoriteStatus(itemIds);
+    await checkAllItemsStatus();
   }
 }, { immediate: true });
 
-onMounted(async () => {
-  // 批量检查推荐项目的收藏状态
-  const itemIds = props.recommendations.map(item => item.id);
-  await favoriteStore.batchCheckFavoriteStatus(itemIds);
-});
+onMounted(checkAllItemsStatus);
 </script> 

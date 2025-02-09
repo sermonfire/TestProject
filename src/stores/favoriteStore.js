@@ -132,22 +132,37 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 更新收藏状态
-  const updateFavoriteStatus = (itemId, status) => {
-    // 创建新的 Map 实例以触发响应式更新
-    const newMap = new Map(favoriteStatus.value)
-    newMap.set(itemId, status)
-    favoriteStatus.value = newMap
-    // 同时更新缓存
-    statusCache.set(itemId, {
-      status,
-      timestamp: Date.now()
-    })
-  }
+  const updateFavoriteStatus = (id, status) => {
+    if (id == null) return;
+    const statusKey = String(id);
+    const currentStatus = favoriteStatus.value.get(statusKey);
+    const newStatus = Boolean(status);
+    
+    if (currentStatus !== newStatus) {
+      favoriteStatus.value.set(statusKey, newStatus);
+    }
+  };
 
   // 获取收藏状态
-  const getFavoriteStatus = (itemId) => {
-    return favoriteStatus.value.get(itemId) || false
-  }
+  const getFavoriteStatus = (id) => {
+    if (id == null) return false;
+    return favoriteStatus.value.get(String(id)) ?? false;
+  };
+
+  // 检查收藏状态
+  const checkIsFavorite = async (id) => {
+    if (!id) return false;
+    
+    try {
+      const res = await checkIsFavoriteAPI(id);
+      const status = res.code === 0 && Boolean(res.data);
+      updateFavoriteStatus(id, status);
+      return status;
+    } catch (error) {
+      console.error('Check favorite status failed:', error);
+      return false;
+    }
+  };
 
   // 修改添加收藏方法
   const addFavorite = async (destinationId, category = '', notes = '') => {
@@ -210,32 +225,6 @@ export const useFavoriteStore = defineStore('favorite', () => {
     } catch (error) {
       console.error('Remove favorite failed:', error);
       throw error;
-    }
-  }
-
-  // 检查是否已收藏
-  const checkIsFavorite = async (itemId) => {
-    try {
-      // 检查缓存
-      const cached = statusCache.get(itemId)
-      if (cached && Date.now() - cached.timestamp < CACHE_EXPIRE) {
-        return cached.status
-      }
-
-      const res = await checkIsFavoriteAPI(itemId)
-      if (res.code === 0) {
-        updateFavoriteStatus(itemId, res.data)
-        // 更新缓存
-        statusCache.set(itemId, {
-          status: res.data,
-          timestamp: Date.now()
-        })
-        return res.data
-      }
-      return false
-    } catch (error) {
-      console.error('Check favorite status failed:', error)
-      return false
     }
   }
 
@@ -442,22 +431,20 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   // 优化批量检查方法
-  const batchCheckFavoriteStatus = debounce(async (itemIds) => {
+  const batchCheckFavoriteStatus = async (itemIds) => {
+    if (!Array.isArray(itemIds) || !itemIds.length) return;
+    
     try {
-      // 过滤掉已缓存的ID
-      const uncachedIds = itemIds.filter(id => {
-        const cached = statusCache.get(id)
-        return !cached || Date.now() - cached.timestamp >= CACHE_EXPIRE
-      })
-
-      if (uncachedIds.length === 0) return
-
-      const promises = uncachedIds.map(id => checkIsFavorite(id))
-      await Promise.all(promises)
+      const validIds = itemIds
+        .map(id => String(id))
+        .filter(Boolean);
+        
+      const promises = validIds.map(id => checkIsFavorite(id));
+      await Promise.all(promises);
     } catch (error) {
-      console.error('Batch check favorite status failed:', error)
+      console.error('Batch check favorite status failed:', error);
     }
-  }, 300)
+  };
 
   const clearSelection = () => {
     selectedItems.value = []
@@ -468,7 +455,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       const res = await removeFavoriteAPI(id)
       if (res.code === 0) {
         // 更新本地状态
-        favoriteStatus.value[id] = false
+        favoriteStatus.value.delete(id)
         // 从收藏列表中移除该项
         favorites.value = favorites.value.filter(item => item.id !== id)
         // 更新统计信息
