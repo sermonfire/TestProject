@@ -1,26 +1,8 @@
 <template>
-  <div class="favorite-list" :class="{ 'is-grid': localViewMode === 'grid' }">
+  <div class="favorite-list">
     <!-- 工具栏优化 -->
     <div class="toolbar">
       <div class="left">
-        <el-radio-group 
-          :model-value="localViewMode"
-          @update:model-value="handleViewModeChange"
-          size="large" 
-          class="view-mode"
-        >
-          <el-radio-button value="grid">
-            <el-icon><Grid /></el-icon>
-            网格视图
-          </el-radio-button>
-          <el-radio-button value="list">
-            <el-icon><List /></el-icon>
-            列表视图
-          </el-radio-button>
-        </el-radio-group>
-
-        <el-divider direction="vertical" />
-
         <el-button-group class="action-group">
           <el-button 
             type="primary" 
@@ -58,138 +40,50 @@
       </div>
     </div>
 
-    <!-- 列表内容区域优化 -->
+    <!-- 网格视图内容区域 -->
     <div class="list-content" v-loading="loading">
-      <template v-if="localViewMode === 'grid'">
-        <div class="grid-view" :class="{ 'is-empty': !processedFavorites.length }">
-          <TransitionGroup 
-            name="grid-fade" 
-            tag="div"
-            class="grid-container"
+      <div class="grid-view" :class="{ 'is-empty': !processedFavorites.length }">
+        <TransitionGroup 
+          name="grid-fade" 
+          tag="div"
+          class="grid-container"
+        >
+          <div 
+            v-for="item in processedFavorites" 
+            :key="item.id" 
+            class="grid-item"
           >
-            <div 
-              v-for="item in processedFavorites" 
-              :key="item.id" 
-              class="grid-item"
+            <DestinationCard 
+              :destination="item.destination"
+              @collection-change="handleCollectionChange"
+              class="card-wrapper"
             >
-              <DestinationCard 
-                :destination="item.destination"
-                @collection-change="handleCollectionChange"
-                class="card-wrapper"
-              >
-                <template #actions>
-                  <div class="card-actions">
-                    <el-button-group>
-                      <el-button 
-                        type="primary" 
-                        @click.stop="handleEdit(item)"
-                        class="action-button"
-                        title="编辑备注"
-                      >
-                        <el-icon><Edit /></el-icon>
-                      </el-button>
-                      <el-button 
-                        type="danger" 
-                        @click.stop="handleDelete(item)"
-                        class="action-button"
-                        title="取消收藏"
-                      >
-                        <el-icon><Delete /></el-icon>
-                      </el-button>
-                    </el-button-group>
-                  </div>
-                </template>
-              </DestinationCard>
-            </div>
-          </TransitionGroup>
-        </div>
-      </template>
-
-      <!-- 添加列表视图 -->
-      <template v-else>
-        <div class="list-view">
-          <el-table
-            ref="tableRef"
-            :data="processedFavorites"
-            style="width: 100%"
-            @selection-change="handleSelectionChange"
-            v-loading="loading"
-          >
-            <el-table-column type="selection" width="55" />
-            
-            <el-table-column label="景点信息" min-width="300">
-              <template #default="{ row }">
-                <div class="destination-info">
-                  <div class="destination-image">
-                    <el-image 
-                      :src="row.destination.imageUrl" 
-                      fit="cover"
-                      :preview-src-list="[row.destination.imageUrl]"
+              <template #actions>
+                <div class="card-actions">
+                  <el-button-group>
+                    <el-button 
+                      type="primary" 
+                      @click.stop="handleEdit(item)"
+                      class="action-button"
+                      title="编辑备注"
                     >
-                      <template #error>
-                        <div class="image-placeholder">
-                          <el-icon><Picture /></el-icon>
-                        </div>
-                      </template>
-                    </el-image>
-                  </div>
-                  <div class="info">
-                    <h3 class="name">{{ row.destination.name }}</h3>
-                    <div class="tags">
-                      <el-tag 
-                        v-for="tag in row.destination.tags" 
-                        :key="tag"
-                        size="small"
-                        effect="light"
-                      >
-                        {{ tag }}
-                      </el-tag>
-                    </div>
-                  </div>
+                      <el-icon><Edit /></el-icon>
+                    </el-button>
+                    <el-button 
+                      type="danger" 
+                      @click.stop="handleDelete(item)"
+                      class="action-button"
+                      title="取消收藏"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </el-button-group>
                 </div>
               </template>
-            </el-table-column>
-            
-            <el-table-column label="分类" width="120">
-              <template #default="{ row }">
-                <el-tag size="small" effect="plain">
-                  {{ row.categoryName || '默认分类' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <el-table-column 
-              prop="createTime" 
-              label="收藏时间" 
-              width="180"
-              :formatter="(row) => dayjs(row.createTime).format('YYYY-MM-DD HH:mm')"
-            />
-            
-            <el-table-column label="操作" width="150" fixed="right">
-              <template #default="{ row }">
-                <el-button-group>
-                  <el-button
-                    type="primary"
-                    link
-                    @click.stop="handleMove(row)"
-                  >
-                    <el-icon><FolderAdd /></el-icon>
-                    移动
-                  </el-button>
-                  <el-button
-                    type="danger"
-                    link
-                    @click.stop="handleDelete(row)"
-                  >
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
-                </el-button-group>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </template>
+            </DestinationCard>
+          </div>
+        </TransitionGroup>
+      </div>
 
       <!-- 空状态优化 -->
       <div v-if="!loading && !processedFavorites.length" class="empty-state">
@@ -387,12 +281,6 @@ const processedFavorites = computed(() => {
 watch(() => props.viewMode, (newValue) => {
   localViewMode.value = newValue
 })
-
-// 处理视图模式变化
-const handleViewModeChange = (value) => {
-  localViewMode.value = value
-  emit('update:viewMode', value)
-}
 
 // 方法
 const handleSelectionChange = (selection) => {
@@ -644,49 +532,21 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/styles/mixins.scss' as mixins;
-
 .favorite-list {
-  min-height: calc(100vh - 200px);
-  padding: 24px;
-  background: #f8fafc;
+  padding: 20px;
 
   .toolbar {
-    background: white;
-    padding: 16px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
     gap: 16px;
-
+    
     .left {
       display: flex;
       align-items: center;
       gap: 16px;
-
-      .view-mode {
-        .el-radio-button {
-          :deep(.el-radio-button__inner) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 8px 16px;
-            
-            .el-icon {
-              font-size: 16px;
-            }
-          }
-        }
-      }
-
-      .el-divider {
-        height: 24px;
-        margin: 0;
-      }
-
+      
       .action-group {
         .batch-button {
           display: inline-flex;
@@ -708,130 +568,29 @@ onMounted(() => {
 
     .search-input {
       width: 300px;
-      
-      :deep(.el-input__wrapper) {
-        box-shadow: 0 0 0 1px var(--el-border-color) inset;
-        
-        &:hover {
-          box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-        }
-        
-        &.is-focus {
-          box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-        }
-      }
     }
   }
 
-  .list-content {
-    position: relative;
-    min-height: 400px;
-    
-    .grid-view {
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 24px;
-        padding: 8px;
-      }
-
-      .grid-item {
-        transition: all 0.3s ease;
-        
-        &:hover {
-          transform: translateY(-4px);
-        }
-        
-        .card-wrapper {
-          height: 100%;
-          
-          .card-actions {
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
-            z-index: 2;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            
-            .action-button {
-              padding: 8px;
-              border-radius: 4px;
-              
-              .el-icon {
-                font-size: 16px;
-              }
-            }
-          }
-          
-          &:hover .card-actions {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      }
+  .grid-view {
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 8px;
     }
 
-    .list-view {
-      .destination-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        
-        .destination-image {
-          width: 80px;
-          height: 60px;
-          border-radius: 4px;
-          overflow: hidden;
-          
-          .el-image {
-            width: 100%;
-            height: 100%;
-          }
-          
-          .image-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--el-fill-color-lighter);
-            
-            .el-icon {
-              font-size: 24px;
-              color: var(--el-text-color-secondary);
-            }
-          }
-        }
-        
-        .info {
-          flex: 1;
-          min-width: 0;
-          
-          .name {
-            margin: 0 0 8px;
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--el-text-color-primary);
-            @include mixins.text-ellipsis;
-          }
-          
-          .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            
-            .el-tag {
-              margin: 0;
-            }
-          }
-        }
+    .grid-item {
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-4px);
       }
     }
   }
 
   .empty-state {
     padding: 60px 0;
+    text-align: center;
     
     .empty-text {
       margin-top: 16px;
@@ -854,60 +613,8 @@ onMounted(() => {
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    
-    :deep(.el-pagination) {
-      justify-content: center;
-      
-      .el-pagination__total {
-        margin-right: 16px;
-      }
-      
-      .el-pagination__sizes {
-        margin-right: 16px;
-      }
-      
-      button {
-        &:not(:disabled):hover {
-          color: var(--el-color-primary);
-        }
-      }
-      
-      .el-pager li {
-        &:not(.is-active):hover {
-          color: var(--el-color-primary);
-        }
-        
-        &.is-active {
-          background-color: var(--el-color-primary);
-          color: white;
-        }
-      }
-    }
-  }
-
-  &:not(.is-grid) {
-    .list-content {
-      .list-view {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-
-        :deep(.el-table) {
-          --el-table-border-color: var(--el-border-color-lighter);
-          
-          .el-table__header {
-            background-color: var(--el-fill-color-light);
-          }
-          
-          .el-table__row {
-            &:hover {
-              background-color: var(--el-fill-color-lighter);
-            }
-          }
-        }
-      }
-    }
+    display: flex;
+    justify-content: center;
   }
 }
 
@@ -970,31 +677,6 @@ onMounted(() => {
       margin: 0;
       font-size: 14px;
       color: var(--el-text-color-secondary);
-    }
-  }
-}
-
-// 优化消息提示样式
-:deep(.collection-message) {
-  min-width: 240px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  
-  &.el-message--success {
-    background: linear-gradient(45deg, var(--el-color-success), var(--el-color-success-light-3));
-    border: none;
-    
-    .el-message__content {
-      color: white;
-    }
-  }
-  
-  &.el-message--error {
-    background: linear-gradient(45deg, var(--el-color-danger), var(--el-color-danger-light-3));
-    border: none;
-    
-    .el-message__content {
-      color: white;
     }
   }
 }
