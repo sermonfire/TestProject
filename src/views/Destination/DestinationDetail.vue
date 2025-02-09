@@ -124,12 +124,12 @@ const loading = ref(true)
 const loadDestinationDetail = async () => {
   try {
     const id = route.params.id
-    console.log('Loading destination detail for id:', id)
+    // console.log('Loading destination detail for id:', id)
     if (!id) {
       throw new Error('目的地ID不能为空')
     }
     const response = await getDestinationDetailAPI(id)
-    console.log('Destination detail response:', response)
+    // console.log('Destination detail response:', response)
     if (response.code === 0) {
       destinationData.value = response.data
     } else {
