@@ -1,5 +1,20 @@
 <template>
   <div class="favorite-category">
+    <!-- 分类列表头部 -->
+    <div class="category-header">
+      <div class="header-title">分类列表</div>
+      <el-button 
+        type="primary" 
+        link
+        class="add-button"
+        @click="handleAdd"
+        :loading="loading"
+      >
+        <el-icon><Plus /></el-icon>
+        新建分类
+      </el-button>
+    </div>
+
     <!-- 分类列表 -->
     <div class="category-list">
       <div class="scrollbar-wrapper">
@@ -54,55 +69,57 @@
       </div>
     </div>
 
-    <!-- 添加分类按钮 -->
-    <div class="category-actions">
-      <el-button 
-        type="primary" 
-        @click="handleAdd"
-        :loading="loading"
-      >
-        <el-icon><Plus /></el-icon>
-        新建分类
-      </el-button>
-    </div>
-
-    <!-- 分类表单对话框 -->
+    <!-- 修改分类表单对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑分类' : '新建分类'"
-      width="30%"
+      width="400px"
       :close-on-click-modal="false"
+      :append-to-body="true"
+      destroy-on-close
+      class="category-dialog"
+      @opened="handleDialogOpened"
     >
       <el-form
         ref="formRef"
         :model="categoryForm"
         :rules="formRules"
         label-width="80px"
+        @submit.prevent="handleSubmit"
+        status-icon
       >
         <el-form-item label="分类名称" prop="name">
           <el-input 
+            ref="nameInputRef"
             v-model="categoryForm.name"
             placeholder="请输入分类名称"
             maxlength="50"
             show-word-limit
+            clearable
           />
         </el-form-item>
         <el-form-item label="分类描述" prop="description">
           <el-input
             v-model="categoryForm.description"
             type="textarea"
-            placeholder="请输入分类描述"
+            placeholder="请输入分类描述（选填）"
             maxlength="255"
             show-word-limit
             :rows="3"
+            resize="none"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="loading">
-            确定
+          <el-button @click="closeDialog">取消</el-button>
+          <el-button 
+            type="primary" 
+            @click="handleSubmit" 
+            :loading="loading"
+            :disabled="!categoryForm.name"
+          >
+            {{ isEdit ? '保存' : '创建' }}
           </el-button>
         </span>
       </template>
@@ -133,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, Folder, Edit, Delete, Plus, Rank } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
@@ -149,6 +166,7 @@ const isEdit = ref(false)
 const categoryToDelete = ref(null)
 const formRef = ref(null)
 const draggableInstance = ref(null)
+const nameInputRef = ref(null)
 
 const categoryForm = ref({
   name: '',
@@ -189,7 +207,12 @@ const handleAdd = () => {
     name: '',
     description: ''
   }
-  dialogVisible.value = true
+  nextTick(() => {
+    if (formRef.value) {
+      formRef.value.resetFields()
+    }
+    dialogVisible.value = true
+  })
 }
 
 const handleEdit = (category) => {
@@ -207,6 +230,17 @@ const handleDelete = (category) => {
   deleteDialogVisible.value = true
 }
 
+const closeDialog = () => {
+  dialogVisible.value = false
+  if (formRef.value) {
+    formRef.value.resetFields()
+  }
+  categoryForm.value = {
+    name: '',
+    description: ''
+  }
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
   
@@ -215,13 +249,18 @@ const handleSubmit = async () => {
     
     if (isEdit.value) {
       await favoriteStore.updateCategory(categoryForm.value.id, categoryForm.value)
+      ElMessage.success('分类修改成功')
     } else {
       await favoriteStore.createCategory(categoryForm.value)
+      ElMessage.success('分类创建成功')
     }
     
-    dialogVisible.value = false
+    closeDialog()
   } catch (error) {
     console.error('Form validation failed:', error)
+    if (error.message) {
+      ElMessage.error(error.message)
+    }
   }
 }
 
@@ -263,6 +302,15 @@ onBeforeUnmount(() => {
     draggableInstance.value.$el.sortable.destroy()
   }
 })
+
+// 添加对话框打开后的处理方法
+const handleDialogOpened = () => {
+  nextTick(() => {
+    if (nameInputRef.value?.$el?.querySelector('input')) {
+      nameInputRef.value.$el.querySelector('input').focus()
+    }
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -271,12 +319,45 @@ onBeforeUnmount(() => {
   flex-direction: column;
   height: 100%;
   
+  // 添加分类头部样式
+  .category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--el-border-color-light);
+    
+    .header-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+    }
+    
+    .add-button {
+      padding: 4px 8px;
+      font-size: 13px;
+      
+      .el-icon {
+        margin-right: 4px;
+        font-size: 14px;
+      }
+      
+      &:hover {
+        background-color: var(--el-color-primary-light-9);
+      }
+      
+      &:active {
+        background-color: var(--el-color-primary-light-8);
+      }
+    }
+  }
+  
   .category-list {
     flex: 1;
     overflow: hidden;
     
     .scrollbar-wrapper {
-      height: calc(100vh - 280px);
+      height: calc(100vh - 240px);
       overflow-y: auto;
       
       // 自定义滚动条样式
@@ -389,20 +470,94 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
-  .category-actions {
-    padding: 16px;
-    border-top: 1px solid var(--el-border-color-light);
-    
-    .el-button {
-      width: 100%;
-    }
-  }
 }
 
 .delete-warning {
   color: var(--el-color-danger);
   font-size: 12px;
   margin-top: 8px;
+}
+
+// 添加对话框样式
+:deep(.category-dialog) {
+  .el-dialog__header {
+    margin: 0;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--el-border-color-light);
+    
+    .el-dialog__title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+  
+  .el-dialog__body {
+    padding: 24px;
+  }
+  
+  .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--el-border-color-light);
+    
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+  }
+  
+  .el-form {
+    .el-form-item {
+      margin-bottom: 20px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .el-form-item__label {
+        font-weight: 500;
+      }
+      
+      .el-input__wrapper,
+      .el-textarea__inner {
+        box-shadow: none;
+        border: 1px solid var(--el-border-color);
+        transition: all 0.3s ease;
+        
+        &:hover,
+        &:focus {
+          border-color: var(--el-color-primary);
+          box-shadow: 0 0 0 1px var(--el-color-primary-light-5);
+        }
+      }
+      
+      .el-input__count {
+        background: transparent;
+      }
+    }
+  }
+}
+
+// 暗色主题适配
+:root[data-theme='dark'] {
+  .favorite-category {
+    .category-header {
+      border-color: var(--el-border-color-darker);
+      
+      .header-title {
+        color: var(--el-text-color-primary);
+      }
+      
+      .add-button {
+        &:hover {
+          background-color: var(--el-color-primary-light-9);
+        }
+        
+        &:active {
+          background-color: var(--el-color-primary-light-8);
+        }
+      }
+    }
+  }
 }
 </style>

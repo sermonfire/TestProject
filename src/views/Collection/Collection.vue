@@ -1,18 +1,23 @@
 <template>
   <div class="collection-page">
     <div class="collection-container">
-      <!-- 左侧分类栏优化 -->
+      <!-- 优化左侧分类栏 -->
       <div class="category-panel">
+        <!-- 面板头部 -->
         <div class="panel-header">
-          <h3 class="title">我的收藏</h3>
+          <div class="header-content">
+            <h3 class="title">我的收藏</h3>
+            <p class="subtitle">管理您的收藏内容</p>
+          </div>
           <div class="stats">
             <div class="stat-item">
-              <span class="value">{{ favoriteStats?.totalCount || 0 }}</span>
-              <span class="label">总收藏</span>
+              <div class="stat-value">{{ favoriteStats?.totalCount || 0 }}</div>
+              <div class="stat-label">总收藏</div>
             </div>
+            <div class="divider"></div>
             <div class="stat-item">
-              <span class="value">{{ favoriteStats?.todayCount || 0 }}</span>
-              <span class="label">今日</span>
+              <div class="stat-value">{{ favoriteStats?.todayCount || 0 }}</div>
+              <div class="stat-label">今日</div>
             </div>
           </div>
         </div>
@@ -330,11 +335,12 @@ const handleAddCategory = () => {
       
       .panel-header {
         flex-shrink: 0;
-        padding: 24px;
+        padding: 32px;
         background: linear-gradient(135deg, #4f46e5, #6366f1);
         position: relative;
         overflow: hidden;
         
+        // 优化背景图案
         &::before {
           content: '';
           position: absolute;
@@ -342,43 +348,72 @@ const handleAddCategory = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
-                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
-                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%);
-          background-size: 20px 20px;
-          background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-          opacity: 0.1;
+          background: 
+            radial-gradient(circle at 0% 0%, rgba(255,255,255,0.1) 20%, transparent 20.5%),
+            radial-gradient(circle at 100% 0%, rgba(255,255,255,0.1) 20%, transparent 20.5%),
+            radial-gradient(circle at 100% 100%, rgba(255,255,255,0.1) 20%, transparent 20.5%),
+            radial-gradient(circle at 0% 100%, rgba(255,255,255,0.1) 20%, transparent 20.5%);
+          background-size: 50% 50%;
+          background-position: 0 0;
+          opacity: 0.3;
         }
         
-        .title {
-          margin: 0 0 20px;
-          font-size: 24px;
-          font-weight: 600;
-          color: white;
+        .header-content {
           position: relative;
+          margin-bottom: 24px;
+          
+          .title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+          }
+          
+          .subtitle {
+            margin: 8px 0 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+          }
         }
         
         .stats {
-          display: flex;
-          gap: 24px;
           position: relative;
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          padding: 16px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          backdrop-filter: blur(8px);
           
           .stat-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex: 1;
+            text-align: center;
             
-            .value {
-              font-size: 28px;
-              font-weight: 600;
+            .stat-value {
+              font-size: 32px;
+              font-weight: 700;
               color: white;
+              line-height: 1.2;
+              margin-bottom: 4px;
             }
             
-            .label {
+            .stat-label {
               font-size: 13px;
               color: rgba(255, 255, 255, 0.9);
+              font-weight: 500;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
             }
+          }
+          
+          .divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
           }
         }
       }
@@ -386,7 +421,7 @@ const handleAddCategory = () => {
       .category-list-wrapper {
         flex: 1;
         overflow-y: auto;
-        padding: 20px;
+        padding: 24px;
         background: #fff;
         
         // 优化滚动条样式
@@ -407,12 +442,13 @@ const handleAddCategory = () => {
           }
         }
         
-        // 添加渐变遮罩
-        mask-image: linear-gradient(to bottom, 
-          transparent 0%,
+        // 优化渐变遮罩
+        mask-image: linear-gradient(
+          to bottom,
+          transparent,
           black 5%,
           black 95%,
-          transparent 100%
+          transparent
         );
       }
     }
@@ -510,7 +546,7 @@ const handleAddCategory = () => {
   }
 }
 
-// 响应式布局优化
+// 优化响应式布局
 @media screen and (max-width: 1400px) {
   .collection-container {
     grid-template-columns: 280px 1fr !important;
@@ -542,14 +578,46 @@ const handleAddCategory = () => {
       top: 0;
       margin-bottom: 16px;
       
+      .panel-header {
+        padding: 24px;
+        
+        .header-content {
+          margin-bottom: 20px;
+          
+          .title {
+            font-size: 24px;
+          }
+        }
+        
+        .stats {
+          padding: 12px;
+          gap: 16px;
+          
+          .stat-item {
+            .stat-value {
+              font-size: 24px;
+            }
+            
+            .stat-label {
+              font-size: 12px;
+            }
+          }
+          
+          .divider {
+            height: 32px;
+          }
+        }
+      }
+      
       .category-list-wrapper {
         max-height: 300px;
+        padding: 20px;
       }
     }
   }
 }
 
-// 暗色主题优化
+// 优化暗色主题
 :root[data-theme='dark'] {
   .collection-page {
     background-color: #0f172a;
@@ -557,6 +625,14 @@ const handleAddCategory = () => {
     .collection-container {
       .category-panel {
         background: #1e293b;
+        
+        .panel-header {
+          background: linear-gradient(135deg, #3730a3, #4f46e5);
+          
+          .stats {
+            background: rgba(0, 0, 0, 0.2);
+          }
+        }
         
         .category-list-wrapper {
           background: #1e293b;
