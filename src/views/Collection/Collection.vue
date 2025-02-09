@@ -427,6 +427,7 @@ const handleAddCategory = () => {
     gap: 32px;
     max-width: 1600px;
     margin: 0 auto;
+    user-select: none;
     
     .category-panel {
       background: white;

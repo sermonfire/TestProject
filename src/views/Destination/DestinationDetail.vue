@@ -1,76 +1,91 @@
 <template>
   <div class="destination-detail">
-    <div v-if="loading" class="loading-wrapper">
+    <div v-if="loading" class="loading-wrapper glass-card">
       <el-skeleton :rows="10" animated />
     </div>
     
     <template v-else>
-      <div class="detail-header">
-        <el-image :src="destinationData?.destination?.imageUrl" fit="cover">
-          <template #error>
-            <div class="image-placeholder">
-              <el-icon><Picture /></el-icon>
+      <div class="detail-header glass-card">
+        <div class="cover-image">
+          <el-image :src="destinationData?.destination?.imageUrl" fit="cover">
+            <template #error>
+              <div class="image-placeholder">
+                <el-icon><Picture /></el-icon>
+              </div>
+            </template>
+          </el-image>
+          
+          <div class="header-content glass-effect">
+            <h1 class="title">{{ destinationData?.destination?.name }}</h1>
+            <div class="rating-row">
+              <el-rate 
+                :model-value="destinationData?.destination?.rating || 0"
+                disabled 
+                show-score
+                text-color="#ff9900"
+                score-template="{value}"
+              />
             </div>
-          </template>
-        </el-image>
-        
-        <div class="header-content">
-          <h1>{{ destinationData?.destination?.name }}</h1>
-          <div class="rating-row">
-            <el-rate 
-              :model-value="destinationData?.destination?.rating || 0"
-              disabled 
-              show-score
-              text-color="#ff9900"
-              score-template="{value}"
-            />
-          </div>
-          <div class="tags">
-            <el-tag 
-              v-for="tag in destinationData?.destination?.tags" 
-              :key="tag"
-              effect="plain"
-              class="tag-item"
-            >
-              {{ tag }}
-            </el-tag>
+            <div class="tags">
+              <el-tag 
+                v-for="tag in destinationData?.destination?.tags" 
+                :key="tag"
+                effect="plain"
+                class="tag-item glass-tag"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="detail-content">
-        <el-tabs>
+      <div class="detail-content glass-card">
+        <el-tabs class="custom-tabs">
           <el-tab-pane label="概览">
-            <div class="overview-section">
-              <h3>目的地介绍</h3>
-              <p>{{ destinationData?.content || '暂无介绍' }}</p>
+            <div class="overview-section content-card">
+              <div class="info-block">
+                <h3>目的地介绍</h3>
+                <p>{{ destinationData?.content || '暂无介绍' }}</p>
+              </div>
               
-              <h3>最佳旅行时间</h3>
-              <p>{{ destinationData?.bestTravelTime || '暂无信息' }}</p>
+              <div class="info-block">
+                <h3>最佳旅行时间</h3>
+                <p>{{ destinationData?.bestTravelTime || '暂无信息' }}</p>
+              </div>
               
-              <h3>气候信息</h3>
-              <el-descriptions :column="2" border>
-                <el-descriptions-item v-for="(desc, season) in destinationData?.climateInfo || {}"
-                  :key="season" :label="season">
-                  {{ desc }}
-                </el-descriptions-item>
-              </el-descriptions>
+              <div class="info-block">
+                <h3>气候信息</h3>
+                <el-descriptions :column="2" border class="custom-descriptions">
+                  <el-descriptions-item 
+                    v-for="(desc, season) in destinationData?.climateInfo || {}"
+                    :key="season" 
+                    :label="season"
+                  >
+                    {{ desc }}
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
             </div>
           </el-tab-pane>
 
           <el-tab-pane label="景点">
             <div class="attractions-section">
-              <el-card v-for="attraction in destinationData?.attractions || []"
-                :key="attraction.name" class="attraction-card">
-                <template #header>
-                  <h4>{{ attraction.name }}</h4>
-                </template>
-                <el-carousel v-if="attraction.images?.length" height="200px">
+              <el-card 
+                v-for="attraction in destinationData?.attractions || []"
+                :key="attraction.name" 
+                class="attraction-card glass-card"
+                :body-style="{ padding: '0px' }"
+              >
+                <el-carousel v-if="attraction.images?.length" height="240px">
                   <el-carousel-item v-for="img in attraction.images" :key="img">
-                    <el-image :src="img" fit="cover" />
+                    <el-image :src="img" fit="cover" class="carousel-image" />
                   </el-carousel-item>
                 </el-carousel>
-                <p>{{ attraction.description || '暂无描述' }}</p>
+                <div class="attraction-info">
+                  <h4>{{ attraction.name }}</h4>
+                  <p>{{ attraction.description || '暂无描述' }}</p>
+                </div>
               </el-card>
             </div>
           </el-tab-pane>
@@ -150,116 +165,188 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .destination-detail {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
 
-  .loading-wrapper {
-    padding: 40px;
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  }
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
   }
 
   .detail-header {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
     margin-bottom: 24px;
+    overflow: hidden;
     
-    .el-image {
-      width: 100%;
-      height: 400px;
-      
-      .image-placeholder {
+    .cover-image {
+      position: relative;
+      height: 480px;
+
+      .el-image {
+        width: 100%;
         height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f5f5f5;
+      }
+
+      .header-content {
+        position: absolute;
+        bottom: 32px;
+        left: 32px;
+        right: 32px;
+        padding: 32px;
+        color: white;
         
-        .el-icon {
-          font-size: 48px;
-          color: #999;
+        .title {
+          font-size: 42px;
+          font-weight: 600;
+          margin: 0 0 16px;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-      }
-    }
 
-    .header-content {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 24px;
-      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-      color: white;
+        .rating-row {
+          margin-bottom: 16px;
+        }
 
-      h1 {
-        margin: 0 0 12px;
-        font-size: 32px;
-      }
+        .tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
 
-      .rating-row {
-        margin-bottom: 12px;
-      }
-
-      .tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-
-        .tag-item {
-          background: rgba(255,255,255,0.2);
-          border: 1px solid rgba(255,255,255,0.3);
-          color: white;
+          .glass-tag {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            backdrop-filter: blur(4px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 500;
+          }
         }
       }
     }
   }
 
   .detail-content {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 32px;
 
-    :deep(.el-tabs__nav-wrap::after) {
-      height: 1px;
-    }
+    .custom-tabs {
+      :deep(.el-tabs__nav-wrap::after) {
+        height: 2px;
+        background-color: rgba(0,0,0,0.05);
+      }
 
-    h3 {
-      color: var(--el-color-primary);
-      margin: 24px 0 16px;
-      font-size: 20px;
-      
-      &:first-child {
-        margin-top: 0;
+      :deep(.el-tabs__item) {
+        font-size: 16px;
+        padding: 0 24px;
+        height: 48px;
+        line-height: 48px;
+        
+        &.is-active {
+          font-weight: 600;
+        }
       }
     }
 
-    p {
-      color: #666;
-      line-height: 1.8;
-      margin: 0 0 16px;
+    .content-card {
+      background: rgba(255,255,255,0.5);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .info-block {
+      margin-bottom: 32px;
+
+      h3 {
+        color: var(--el-color-primary);
+        font-size: 24px;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+
+      p {
+        color: #4a5568;
+        line-height: 1.8;
+        font-size: 16px;
+      }
     }
 
     .attractions-section {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+      padding: 24px 0;
 
       .attraction-card {
-        .el-carousel {
-          margin-bottom: 16px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: translateY(-4px);
         }
 
-        h4 {
-          margin: 0;
-          color: var(--el-color-primary);
+        .carousel-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .attraction-info {
+          padding: 20px;
+
+          h4 {
+            font-size: 20px;
+            color: var(--el-color-primary);
+            margin: 0 0 12px;
+          }
+
+          p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .destination-detail {
+    padding: 12px;
+
+    .detail-header {
+      .cover-image {
+        height: 320px;
+
+        .header-content {
+          padding: 20px;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+
+          .title {
+            font-size: 32px;
+          }
         }
       }
     }
 
-    .info-section, .tips-section {
-      max-width: 800px;
-      margin: 0 auto;
+    .detail-content {
+      padding: 20px;
+
+      .attractions-section {
+        grid-template-columns: 1fr;
+      }
     }
   }
 }
