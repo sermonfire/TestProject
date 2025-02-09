@@ -1,7 +1,7 @@
 <template>
   <div class="collection-page">
     <div class="collection-container">
-      <!-- 左侧分类栏 -->
+      <!-- 左侧分类栏优化 -->
       <div class="category-panel">
         <div class="panel-header">
           <h3 class="title">我的收藏</h3>
@@ -16,7 +16,11 @@
             </div>
           </div>
         </div>
-        <FavoriteCategory @select="handleCategorySelect" />
+
+        <!-- 分类列表区域 -->
+        <div class="category-list-wrapper">
+          <FavoriteCategory @select="handleCategorySelect" />
+        </div>
       </div>
 
       <!-- 右侧收藏列表 -->
@@ -73,7 +77,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import { Grid, List, Search } from '@element-plus/icons-vue'
+import { Grid, List, Search, Plus } from '@element-plus/icons-vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import FavoriteCategory from '@/components/FavoriteCategory/FavoriteCategory.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
@@ -292,6 +296,11 @@ const processedFavorites = computed(() => {
     categoryName: item.categoryName || '未分类'
   }))
 })
+
+// 新增分类管理方法
+const handleAddCategory = () => {
+  // Implement add category functionality
+}
 </script>
 
 <style lang="scss" scoped>
@@ -312,11 +321,16 @@ const processedFavorites = computed(() => {
       border-radius: 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
       overflow: hidden;
-      height: fit-content;
+      min-height: calc(100vh - 64px);
+      position: sticky;
+      top: 32px;
+      display: flex;
+      flex-direction: column;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       
       .panel-header {
-        padding: 32px;
+        flex-shrink: 0;
+        padding: 24px;
         background: linear-gradient(135deg, #4f46e5, #6366f1);
         position: relative;
         overflow: hidden;
@@ -328,46 +342,78 @@ const processedFavorites = computed(() => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: url('/path/to/pattern.svg') center/cover;
+          background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%);
+          background-size: 20px 20px;
+          background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
           opacity: 0.1;
         }
         
         .title {
-          margin: 0 0 24px;
-          font-size: 28px;
-          font-weight: 700;
+          margin: 0 0 20px;
+          font-size: 24px;
+          font-weight: 600;
           color: white;
           position: relative;
         }
         
         .stats {
           display: flex;
-          gap: 32px;
+          gap: 24px;
           position: relative;
           
           .stat-item {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
             
             .value {
-              font-size: 32px;
-              font-weight: 700;
-              background: linear-gradient(to right, #fff, rgba(255,255,255,0.8));
-              background-clip: text;
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
+              font-size: 28px;
+              font-weight: 600;
+              color: white;
             }
             
             .label {
-              font-size: 14px;
-              font-weight: 500;
-              color: rgba(255,255,255,0.9);
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
+              font-size: 13px;
+              color: rgba(255, 255, 255, 0.9);
             }
           }
         }
+      }
+      
+      .category-list-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #fff;
+        
+        // 优化滚动条样式
+        &::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+          
+          &:hover {
+            background: #94a3b8;
+          }
+        }
+        
+        // 添加渐变遮罩
+        mask-image: linear-gradient(to bottom, 
+          transparent 0%,
+          black 5%,
+          black 95%,
+          transparent 100%
+        );
       }
     }
     
@@ -491,21 +537,13 @@ const processedFavorites = computed(() => {
     gap: 16px;
     
     .category-panel {
-      position: sticky;
-      top: 16px;
-      z-index: 10;
+      min-height: auto;
+      position: relative;
+      top: 0;
+      margin-bottom: 16px;
       
-      .panel-header {
-        padding: 20px;
-        
-        .title {
-          font-size: 20px;
-          margin-bottom: 12px;
-        }
-        
-        .stats .stat-item .value {
-          font-size: 20px;
-        }
+      .category-list-wrapper {
+        max-height: 300px;
       }
     }
   }
@@ -516,20 +554,20 @@ const processedFavorites = computed(() => {
   .collection-page {
     background-color: #0f172a;
     
-    .category-panel,
-    .content-panel {
-      background-color: #1e293b;
-      border: none;
-      
-      .panel-header {
-        background: linear-gradient(135deg, #3730a3, #4f46e5);
-      }
-      
-      .content-header {
-        border-color: #334155;
+    .collection-container {
+      .category-panel {
+        background: #1e293b;
         
-        h2 {
-          color: #f8fafc;
+        .category-list-wrapper {
+          background: #1e293b;
+          
+          &::-webkit-scrollbar-thumb {
+            background: #334155;
+            
+            &:hover {
+              background: #475569;
+            }
+          }
         }
       }
     }
