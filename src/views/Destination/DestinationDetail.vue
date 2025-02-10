@@ -1,11 +1,25 @@
 <template>
   <div class="destination-detail">
-    <div v-if="loading" class="loading-wrapper glass-card">
-      <el-skeleton :rows="10" animated />
-    </div>
+    <template v-if="loading">
+      <div class="loading-wrapper glass-card">
+        <el-skeleton :rows="10" animated />
+      </div>
+    </template>
     
     <template v-else>
       <div class="detail-header glass-card">
+        <div class="nav-actions">
+          <el-button 
+            class="back-button" 
+            @click="handleBack"
+            type="primary"
+            text
+          >
+            <el-icon><ArrowLeft /></el-icon>
+            返回上页
+          </el-button>
+        </div>
+
         <div class="cover-image">
           <el-image :src="destinationData?.destination?.imageUrl" fit="cover">
             <template #error>
@@ -127,12 +141,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { Picture } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Picture, ArrowLeft } from '@element-plus/icons-vue'
 import { getDestinationDetailAPI } from '@/api/recommendApi'
 import { ElMessage } from 'element-plus'
+import CollectionButton from '@/components/CollectionButton/CollectionButton.vue'
 
 const route = useRoute()
+const router = useRouter()
 const destinationData = ref(null)
 const loading = ref(true)
 
@@ -155,6 +171,18 @@ const loadDestinationDetail = async () => {
     ElMessage.error(error.message || '获取目的地详情失败')
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * 处理返回按钮点击事件
+ * 如果有历史记录则返回上一页，否则跳转到探索页面
+ */
+const handleBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/explore')
   }
 }
 
@@ -185,9 +213,51 @@ onMounted(async () => {
   }
 
   .detail-header {
+    position: relative;
     margin-bottom: 24px;
     overflow: hidden;
     
+    .nav-actions {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      .back-button {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 16px;
+        padding: 8px 0;
+        
+        .el-icon {
+          font-size: 18px;
+        }
+
+        &:hover {
+          transform: translateX(-4px);
+        }
+      }
+
+      .collection-button {
+        margin-left: 8px;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      }
+    }
+
     .cover-image {
       position: relative;
       height: 480px;
@@ -325,6 +395,20 @@ onMounted(async () => {
     padding: 12px;
 
     .detail-header {
+      .nav-actions {
+        top: 12px;
+        right: 12px;
+        padding: 6px 12px;
+
+        .back-button {
+          font-size: 14px;
+          padding: 6px 0;
+        }
+      }
+    }
+
+    .detail-header {
+      margin-top: 32px;
       .cover-image {
         height: 320px;
 
