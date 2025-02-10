@@ -114,8 +114,7 @@ const createNewTrip = () => {
     startDate: '',
     endDate: '',
     description: '',
-    totalBudget: 0,
-    status: 0
+    totalBudget: 0
   }
   dialogVisible.value = true
 }
@@ -123,7 +122,14 @@ const createNewTrip = () => {
 // 编辑行程
 const editTrip = (trip) => {
   isEdit.value = true
-  currentTrip.value = { ...trip }
+  currentTrip.value = {
+    id: trip.id,
+    name: trip.name,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    description: trip.description,
+    totalBudget: trip.totalBudget
+  }
   dialogVisible.value = true
 }
 

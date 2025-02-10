@@ -14,7 +14,7 @@
 <script setup>
 import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked, Location } from '@element-plus/icons-vue'
+import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked, Location, Calendar } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -30,7 +30,8 @@ const routeMap = {
   userInfo: { title: '用户信息', icon: markRaw(UserFilled) },
   searchResults: { title: '搜索结果', icon: markRaw(Search) },
   collection: { title: '我的收藏', icon: markRaw(StarFilled) },
-  DestinationDetail: { title: '目的地详情', icon: markRaw(Location) }
+  DestinationDetail: { title: '目的地详情', icon: markRaw(Location) },
+  TripPlanner: { title: '行程规划', icon: markRaw(Calendar) }
 }
 
 // 监听路由变化更新面包屑

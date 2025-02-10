@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取行程列表
 export const getTripsAPI = () => {
   return request({
-    url: '/dev-api/trips',
+    url: '/dev-api/trip/list',
     method: 'GET'
   })
 }
@@ -11,26 +11,55 @@ export const getTripsAPI = () => {
 // 创建行程
 export const createTripAPI = (data) => {
   return request({
-    url: '/dev-api/trips',
+    url: '/dev-api/trip',
     method: 'POST',
-    data
+    data: {
+      name: data.name,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      description: data.description,
+      totalBudget: data.totalBudget
+    }
   })
 }
 
 // 更新行程
 export const updateTripAPI = (data) => {
   return request({
-    url: `/dev-api/trips/${data.id}`,
+    url: `/dev-api/trip/${data.id}`,
     method: 'PUT',
-    data
+    data: {
+      name: data.name,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      description: data.description,
+      totalBudget: data.totalBudget
+    }
   })
 }
 
 // 删除行程
 export const deleteTripAPI = (id) => {
   return request({
-    url: `/dev-api/trips/${id}`,
+    url: `/dev-api/trip/${id}`,
     method: 'DELETE'
+  })
+}
+
+// 获取行程详情
+export const getTripDetailAPI = (id) => {
+  return request({
+    url: `/dev-api/trip/${id}`,
+    method: 'GET'
+  })
+}
+
+// 更新行程状态
+export const updateTripStatusAPI = (tripId, status) => {
+  return request({
+    url: `/dev-api/trip/${tripId}/status`,
+    method: 'PUT',
+    params: { status }
   })
 }
 

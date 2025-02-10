@@ -18,6 +18,7 @@
         start-placeholder="开始日期"
         end-placeholder="结束日期"
         :disabled-date="disabledDate"
+        value-format="YYYY-MM-DD"
       />
     </el-form-item>
 
@@ -25,8 +26,18 @@
       <el-input
         v-model="form.description"
         type="textarea"
-        rows="4"
+        :rows="4"
         placeholder="请输入行程描述"
+      />
+    </el-form-item>
+
+    <el-form-item label="总预算" prop="totalBudget">
+      <el-input-number 
+        v-model="form.totalBudget" 
+        :min="0" 
+        :precision="2" 
+        :step="100"
+        placeholder="请输入预算金额"
       />
     </el-form-item>
 
@@ -37,7 +48,7 @@
         filterable
         remote
         reserve-keyword
-        placeholder="请输入目的地"
+        placeholder="请输入关键词搜索目的地"
         :remote-method="searchDestinations"
         :loading="loading">
         <el-option
@@ -57,9 +68,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import { searchDestinationsAPI } from '@/api/tripApi'
 
 const props = defineProps({
   trip: {
@@ -81,7 +93,8 @@ const form = reactive({
     ? [props.trip.startDate, props.trip.endDate]
     : [],
   description: props.trip.description || '',
-  destinations: props.trip.destinations || []
+  destinations: props.trip.destinations || [],
+  totalBudget: props.trip.totalBudget || 0
 })
 
 // 表单验证规则
@@ -96,8 +109,9 @@ const rules = {
   description: [
     { max: 500, message: '描述不能超过500个字符', trigger: 'blur' }
   ],
-  destinations: [
-    { type: 'array', required: true, message: '请选择目的地', trigger: 'change' }
+  destinations: [],
+  totalBudget: [
+    { type: 'number', min: 0, message: '预算不能小于0', trigger: 'change' }
   ]
 }
 
@@ -111,12 +125,13 @@ const searchDestinations = async (query) => {
   if (query) {
     loading.value = true
     try {
-      // TODO: 调用目的地搜索API
       const res = await searchDestinationsAPI(query)
-      destinationOptions.value = res.data.map(item => ({
-        value: item.id,
-        label: item.name
-      }))
+      if (res.code === 0 && res.data) {
+        destinationOptions.value = res.data.map(item => ({
+          value: item.id,
+          label: item.name
+        }))
+      }
     } catch (error) {
       ElMessage.error('搜索目的地失败')
     } finally {
@@ -135,12 +150,12 @@ const submitForm = async () => {
     await formRef.value.validate()
     
     const tripData = {
-      ...props.trip,
+      id: props.trip.id,
       name: form.name,
       startDate: form.dateRange[0],
       endDate: form.dateRange[1],
       description: form.description,
-      destinations: form.destinations
+      totalBudget: Number(form.totalBudget)
     }
     
     emit('submit', tripData)
@@ -148,6 +163,17 @@ const submitForm = async () => {
     console.error('表单验证失败:', error)
   }
 }
+
+// 监听trip属性变化
+watch(() => props.trip, (newTrip) => {
+  form.name = newTrip.name
+  form.dateRange = newTrip.startDate && newTrip.endDate 
+    ? [newTrip.startDate, newTrip.endDate] 
+    : []
+  form.description = newTrip.description
+  form.destinations = newTrip.destinations || []
+  form.totalBudget = newTrip.totalBudget || 0
+}, { deep: true })
 
 // 初始化目的地选项
 onMounted(async () => {
