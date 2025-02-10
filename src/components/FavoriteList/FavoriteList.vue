@@ -55,7 +55,7 @@
           >
             <DestinationCard 
               :destination="item.destination"
-              @collection-change="handleCollectionChange"
+              @collection-change="(isCollected) => handleCollectionChange(item.id, isCollected)"
               class="card-wrapper"
             >
               <template #actions>
@@ -193,7 +193,7 @@ import { useFavoriteStore } from '@/stores/favoriteStore'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import DestinationCard from '@/components/DestinationCard/DestinationCard.vue'
-import { getFavoriteListAPI } from '@/api/favoriteApi'
+import { getFavoriteListAPI, checkIsFavoriteAPI } from '@/api/favoriteApi'
 import '@/styles/mixins.scss'
 
 const props = defineProps({
@@ -500,9 +500,38 @@ const loadFavoriteList = async () => {
   }
 }
 
-const handleCollectionChange = () => {
-  loadFavoriteList()
-}
+const handleCollectionChange = async (event) => {
+  try {
+    const { id, isCollected } = event;
+    if (!isCollected) {
+      // 等待检查收藏状态
+      const checkRes = await checkIsFavoriteAPI(id);
+      if (checkRes.code === 0 && !checkRes.data) {
+        // 确认未收藏，从列表中移除该项
+        const updatedFavorites = processedFavorites.value.filter(item => item.id !== id);
+        emit('update:favorites', updatedFavorites);
+        
+        // 更新总数
+        emit('update:total', props.total - 1);
+        
+        // 处理空页面情况
+        if (updatedFavorites.length === 0 && props.currentPage > 1) {
+          emit('page-change', props.currentPage - 1);
+        }
+        
+        // 强制触发父组件刷新
+        emit('refresh');
+      } else {
+        // 如果检查结果不一致，强制刷新
+        emit('refresh');
+      }
+    }
+  } catch (error) {
+    console.error('Collection change failed:', error);
+    // 发生错误时强制刷新列表
+    emit('refresh');
+  }
+};
 
 // 添加空状态图片
 const emptyImage = `data:image/svg+xml;base64,${btoa(`
@@ -525,6 +554,17 @@ const dialogTitle = computed(() => {
     ? '批量取消收藏' 
     : '取消收藏'
 })
+
+// 添加监听器确保列表同步
+watch(
+  () => props.favorites,
+  (newVal) => {
+    if (newVal) {
+      favoriteList.value = newVal;
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   loadFavoriteList()

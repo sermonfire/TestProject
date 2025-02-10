@@ -30,6 +30,7 @@
               :initial-state="destination.isCollected"
               :auto-refresh="true"
               @collection-change="handleCollectionChange"
+              @collection-error="handleCollectionError"
               @click.stop
               @mouseenter="handleButtonHover"
               @mouseleave="handleButtonLeave"
@@ -107,7 +108,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['cardClick', 'collection-change']);
+const emit = defineEmits(['cardClick', 'collection-change', 'collection-error']);
 
 const favoriteStore = useFavoriteStore();
 
@@ -153,8 +154,12 @@ const handleCardLeave = () => {
   }
 };
 
-const handleCollectionChange = ({ id, isCollected }) => {
-  favoriteStore.updateFavoriteStatus(id, isCollected);
+const handleCollectionChange = (event) => {
+  emit('collection-change', event);
+};
+
+const handleCollectionError = (error) => {
+  emit('collection-error', error);
 };
 
 const handleButtonHover = () => {

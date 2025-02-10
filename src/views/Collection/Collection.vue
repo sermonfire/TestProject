@@ -103,51 +103,22 @@ const favoriteStats = computed(() => favoriteStore.favoriteStats)
 const currentCategoryCount = computed(() => favoriteStore.currentCategoryCount)
 
 // 加载收藏列表方法
-const loadFavorites = async (silent = false, forceRefresh = false) => {
+const loadFavorites = async () => {
   try {
     loading.value = true
-    
-    // 验证分页参数
-    if (currentPage.value < 1) currentPage.value = 1
-    if (pageSize.value !== 9) pageSize.value = 9
-    
     const categoryId = favoriteStore.selectedCategory
-    
     const res = await getFavoriteListAPI(currentPage.value, pageSize.value, categoryId)
     
     if (res.code === 0) {
       favorites.value = res.data.list || []
       total.value = res.data.total || 0
       
-      // 如果当前页没有数据且不是第一页，则自动跳转到最后一页
-      if (favorites.value.length === 0 && currentPage.value > 1) {
-        const lastPage = Math.ceil(total.value / pageSize.value)
-        currentPage.value = lastPage
-        await loadFavorites()
-        return
-      }
-      
-      // 强制刷新或非静默模式时更新 store
-      if (forceRefresh || !silent) {
-        await Promise.all([
-          favoriteStore.getFavoriteStats(),
-          favoriteStore.getCategories(),
-          // 强制刷新时重新检查所有显示项的收藏状态
-          forceRefresh && favorites.value.length > 0 
-            ? favoriteStore.batchCheckFavoriteStatus(favorites.value.map(item => item.id))
-            : Promise.resolve()
-        ])
-      }
-    } else {
-      if (!silent) {
-        ElMessage.error(res.message || '加载收藏列表失败')
-      }
+      // 更新收藏统计
+      await favoriteStore.getFavoriteStats()
     }
   } catch (error) {
     console.error('Failed to load favorites:', error)
-    if (!silent) {
-      ElMessage.error('加载收藏列表失败，请重试')
-    }
+    ElMessage.error('获取收藏列表失败')
   } finally {
     loading.value = false
   }
@@ -161,6 +132,8 @@ const handleRefresh = async () => {
     currentPage.value = 1
     // 重新加载数据
     await loadFavorites()
+    // 更新收藏统计
+    await favoriteStore.getFavoriteStats()
   } catch (error) {
     console.error('刷新收藏列表失败:', error)
     ElMessage.error('刷新失败，请重试')
@@ -173,37 +146,38 @@ const handleRefresh = async () => {
 const handleCollectionChange = async ({ id, isCollected }) => {
   try {
     if (!isCollected) { // 取消收藏时
-      loading.value = true
+      loading.value = true;
       
       // 1. 先在前端移除该项（乐观更新）
-      const itemIndex = favorites.value.findIndex(item => item.id === id)
-      const removedItem = favorites.value[itemIndex]
+      const itemIndex = favorites.value.findIndex(item => item.id === id);
       if (itemIndex > -1) {
-        favorites.value.splice(itemIndex, 1)
-        total.value = Math.max(0, total.value - 1)
+        favorites.value.splice(itemIndex, 1);
+        total.value = Math.max(0, total.value - 1);
       }
       
       // 2. 等待一小段时间确保取消收藏请求完成
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // 3. 检查收藏状态
-      const status = await favoriteStore.checkIsFavorite(id)
+      const status = await favoriteStore.checkIsFavorite(id);
       
-      // 4. 如果检查失败（仍然是收藏状态），恢复数据
-      if (status && removedItem) {
-        favorites.value.splice(itemIndex, 0, removedItem)
-        total.value += 1
-        ElMessage.error('取消收藏失败，请重试')
+      // 4. 如果检查失败，重新加载整个列表
+      if (status) {
+        await loadFavorites();
+        ElMessage.error('取消收藏失败，请重试');
+      } else {
+        // 5. 成功取消收藏，更新统计数据
+        await favoriteStore.getFavoriteStats();
       }
     }
   } catch (error) {
-    console.error('Collection status check failed:', error)
+    console.error('Collection status check failed:', error);
     // 发生错误时刷新数据以确保显示正确
-    await loadFavorites(true, true)
+    await loadFavorites();
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 修改批量删除处理
 const handleBatchDelete = async () => {

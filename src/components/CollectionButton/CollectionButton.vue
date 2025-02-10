@@ -131,6 +131,7 @@ import { useFavoriteStore } from '@/stores/favoriteStore';
 import { ElMessage } from 'element-plus';
 import { debounce } from 'lodash-es'
 import { storeToRefs } from 'pinia';
+import { checkIsFavoriteAPI } from '@/api/favoriteApi';
 
 const props = defineProps({
   itemId: {
@@ -326,18 +327,34 @@ const removeFavorite = async () => {
   loading.value = true;
   emit('collection-start');
   try {
-    const success = await favoriteStore.removeFavorite(props.itemId);
-    if (success) {
-      handleStatusChange(false);
-      ElMessage({
-        message: '已取消收藏',
-        type: 'success',
-        duration: 2000,
-        customClass: 'collection-message'
-      });
+    // 1. 调用取消收藏接口
+    const removeRes = await favoriteStore.removeFavorite(props.itemId);
+    if (removeRes) {
+      // 添加等待时间，确保取消收藏操作完成
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      if (props.autoRefresh) {
-        await favoriteStore.refreshFavoriteData();
+      // 2. 调用检查收藏状态接口确认
+      const checkRes = await checkIsFavoriteAPI(props.itemId);
+      if (checkRes.code === 0 && !checkRes.data) {
+        // 取消收藏成功且确认未收藏
+        handleStatusChange(false);
+        ElMessage({
+          message: '已取消收藏',
+          type: 'success',
+          duration: 2000,
+          customClass: 'collection-message'
+        });
+        
+        // 触发刷新
+        if (props.autoRefresh) {
+          await favoriteStore.refreshFavoriteData();
+        }
+        emit('collection-change', {
+          id: props.itemId,
+          isCollected: false
+        });
+      } else {
+        throw new Error('取消收藏状态验证失败');
       }
     }
   } catch (error) {
