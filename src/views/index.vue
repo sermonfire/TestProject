@@ -105,6 +105,11 @@ const navItems = [
     path: '/about',
     icon: HotWater,
     text: '关于'
+  },
+  {
+    path: '/trip-planner',
+    icon: 'Calendar',
+    text: '行程规划'
   }
 ]
 

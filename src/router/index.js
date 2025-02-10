@@ -72,6 +72,15 @@ const routes = [
           title: '目的地详情',
           requiresAuth: true
         }
+      },
+      {
+        path: 'trip-planner',
+        name: 'TripPlanner',
+        component: () => import('@/views/TripPlanner/TripPlanner.vue'),
+        meta: {
+          title: '行程规划',
+          requiresAuth: true
+        }
       }
     ],
   },
@@ -79,15 +88,6 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/views/login/login.vue'),
-  },
-  {
-    path: '/trip-planner',
-    name: 'TripPlanner',
-    component: () => import('@/views/TripPlanner/TripPlanner.vue'),
-    meta: {
-      title: '行程规划',
-      requiresAuth: true
-    }
   }
 ]
 
