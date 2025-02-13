@@ -19,6 +19,8 @@
         end-placeholder="结束日期"
         :disabled-date="disabledDate"
         value-format="YYYY-MM-DD"
+        :shortcuts="dateShortcuts"
+        @change="handleDateChange"
       />
     </el-form-item>
 
@@ -71,7 +73,13 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 import { searchDestinationsAPI } from '@/api/tripApi'
+
+// 扩展 dayjs 以支持时区处理
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const props = defineProps({
   trip: {
@@ -115,9 +123,70 @@ const rules = {
   ]
 }
 
+// 日期快捷选项
+const dateShortcuts = [
+  {
+    text: '最近一周',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() + 3600 * 1000 * 24 * 7)
+      end.setTime(end.getTime() + 3600 * 1000 * 24 * 14)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近一个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() + 3600 * 1000 * 24 * 30)
+      end.setTime(end.getTime() + 3600 * 1000 * 24 * 37)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近三个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() + 3600 * 1000 * 24 * 90)
+      end.setTime(end.getTime() + 3600 * 1000 * 24 * 97)
+      return [start, end]
+    },
+  },
+]
+
 // 禁用日期
 const disabledDate = (time) => {
-  return time.getTime() < Date.now() - 8.64e7 // 不能选择今天之前的日期
+  // 禁用今天之前的日期
+  return time.getTime() < Date.now() - 8.64e7
+}
+
+// 处理日期变化
+const handleDateChange = (val) => {
+  if (val) {
+    // 确保日期范围有效
+    if (dayjs(val[0]).isAfter(val[1])) {
+      ElMessage.warning('开始日期不能晚于结束日期')
+      form.dateRange = []
+      return
+    }
+    
+    // 检查日期范围是否超过一年
+    const diffDays = dayjs(val[1]).diff(dayjs(val[0]), 'day')
+    if (diffDays > 365) {
+      ElMessage.warning('行程时间不能超过一年')
+      form.dateRange = []
+      return
+    }
+  }
+}
+
+// 格式化日期时间
+const formatDateTime = (datetime) => {
+  if (!datetime) return ''
+  return dayjs(datetime).format('YYYY-MM-DD')
 }
 
 // 搜索目的地
@@ -164,13 +233,17 @@ const submitForm = async () => {
   }
 }
 
-// 监听trip属性变化
+// 监听 trip 属性变化
 watch(() => props.trip, (newTrip) => {
-  form.name = newTrip.name
+  form.name = newTrip.name || ''
+  // 处理日期范围
   form.dateRange = newTrip.startDate && newTrip.endDate 
-    ? [newTrip.startDate, newTrip.endDate] 
+    ? [
+        formatDateTime(newTrip.startDate),
+        formatDateTime(newTrip.endDate)
+      ]
     : []
-  form.description = newTrip.description
+  form.description = newTrip.description || ''
   form.destinations = newTrip.destinations || []
   form.totalBudget = newTrip.totalBudget || 0
 }, { deep: true })
