@@ -198,7 +198,7 @@ const searchDestinations = async (query) => {
       if (res.code === 0 && res.data) {
         destinationOptions.value = res.data.map(item => ({
           value: item.id,
-          label: item.name
+          label: item.destination?.name
         }))
       }
     } catch (error) {
