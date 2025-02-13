@@ -16,8 +16,8 @@
             </div>
             <div class="divider"></div>
             <div class="stat-item">
-              <div class="stat-value">{{ favoriteStats?.todayCount || 0 }}</div>
-              <div class="stat-label">今日</div>
+              <div class="stat-value">{{ total || 0 }}</div>
+              <div class="stat-label">{{ currentCategory?.name || '全部收藏'}}</div>
             </div>
           </div>
         </div>
@@ -100,7 +100,6 @@ const currentCategory = computed(() => {
 })
 
 const favoriteStats = computed(() => favoriteStore.favoriteStats)
-const currentCategoryCount = computed(() => favoriteStore.currentCategoryCount)
 
 // 加载收藏列表方法
 const loadFavorites = async () => {

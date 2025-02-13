@@ -24,20 +24,6 @@
           </el-button>
         </el-button-group>
       </div>
-      <div class="right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索收藏..."
-          clearable
-          class="search-input"
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
     </div>
 
     <!-- 网格视图内容区域 -->
