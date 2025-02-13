@@ -27,19 +27,34 @@
         >
           <template #default="{ item }">
             <div class="suggestion-item">
-              <el-image 
-                :src="item.imageUrl" 
-                class="suggestion-image"
-                fit="cover"
-                :preview-src-list="[item.imageUrl]">
-                <template #error>
-                  <div class="image-placeholder">
-                    <el-icon><Picture /></el-icon>
-                  </div>
-                </template>
-              </el-image>
               <div class="suggestion-content">
-                <div class="suggestion-name">{{ item.name }}</div>
+                <div class="suggestion-header">
+                  <span class="suggestion-name">{{ item.name }}</span>
+                  <div class="rating-info">
+                    <el-rate 
+                      v-model="item.rating" 
+                      disabled 
+                      size="small"
+                      text-color="#ff9900"
+                      show-score
+                      score-template="{value}"
+                    />
+                  </div>
+                </div>
+                <div class="meta-info">
+                  <span class="meta-item">
+                    <el-icon><Timer /></el-icon>
+                    {{ item.recommendedDuration }}
+                  </span>
+                  <span class="meta-item">
+                    <el-icon><Money /></el-icon>
+                    ¥{{ item.averageBudget }}/天
+                  </span>
+                  <span class="meta-item">
+                    <el-icon><Star /></el-icon>
+                    人气值: {{ item.popularity }}
+                  </span>
+                </div>
                 <div class="suggestion-tags">
                   <el-tag 
                     v-for="tag in item.tags.slice(0, 3)" 
@@ -50,7 +65,10 @@
                     {{ tag }}
                   </el-tag>
                 </div>
-                <div class="suggestion-description">{{ item.description }}</div>
+                <div class="best-time">
+                  <el-icon><Calendar /></el-icon>
+                  最佳游玩时间: {{ item.bestTravelTime }}
+                </div>
               </div>
             </div>
           </template>
@@ -90,7 +108,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { Search, Picture, Loading } from '@element-plus/icons-vue';
+import { Search, Picture, Loading, Timer, Money, Star, Calendar } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { searchDestinationsAPI } from '@/api/tripApi';
@@ -120,9 +138,12 @@ const querySearchAsync = debounce(async (query, cb) => {
         value: item.destination.name,
         id: item.destination.id,
         name: item.destination.name,
-        imageUrl: item.destination.imageUrl,
-        description: item.destination.description,
-        tags: item.destination.tags
+        rating: item.destination.rating,
+        recommendedDuration: item.destination.recommendedDuration,
+        averageBudget: item.destination.averageBudget,
+        popularity: item.destination.popularity,
+        tags: item.destination.tags,
+        bestTravelTime: item.bestTravelTime
       }));
       cb(suggestions);
     } else {
@@ -209,28 +230,38 @@ defineExpose({
 <style lang="scss" scoped>
 .search-bar {
   background-color: #f5f5f5;
-  padding: 12px 20px;
-//   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 16px 24px;
+  border-radius: 12px;
 
   .search-input-wrapper {
     background-color: #ffffff;
-    border-radius: 25px;
-    padding: 8px 12px;
+    border-radius: 16px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 
-    &:hover, &:focus-within {
-      background-color: #fff;
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    &:focus-within {
       border-color: var(--el-color-primary);
-      box-shadow: 0 0 10px rgba(var(--el-color-primary-rgb), 0.1);
+      box-shadow: 0 4px 16px rgba(var(--el-color-primary-rgb), 0.1);
+      transform: translateY(-1px);
     }
 
     .search-icon {
       color: var(--el-color-primary);
-      font-size: 24px;
+      font-size: 20px;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
     }
 
     .tags-container {
@@ -239,23 +270,25 @@ defineExpose({
       gap: 8px;
       align-items: center;
       flex: 1;
-      min-height: 32px;
+      min-height: 36px;
+      padding: 4px 0;
     }
 
     .search-tag {
       background-color: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary-light-8);
+      border: none;
       color: var(--el-color-primary);
-      padding: 0 8px;
-      height: 28px;
-      line-height: 26px;
-      border-radius: 4px;
+      padding: 0 12px;
+      height: 32px;
+      line-height: 32px;
+      border-radius: 16px;
+      font-size: 14px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       
       &:hover {
         background-color: var(--el-color-primary-light-8);
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(var(--el-color-primary-rgb), 0.1);
+        box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.15);
       }
       
       &:active {
@@ -264,55 +297,69 @@ defineExpose({
       
       :deep(.el-tag__close) {
         color: var(--el-color-primary);
+        background: transparent;
+        margin-left: 4px;
         
         &:hover {
           background-color: var(--el-color-primary);
           color: white;
+          transform: rotate(90deg);
+          transition: all 0.3s ease;
         }
       }
     }
 
     .search-input {
       flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 16px;
-      outline: none;
-      color: #333;
-      min-width: 100px;
-      height: 32px;
-      padding: 0 8px;
-      transition: all 0.3s ease;
-
-      &::placeholder {
-        color: #999;
-        font-weight: 300;
-        transition: opacity 0.3s ease;
-      }
-
-      &:focus::placeholder {
-        opacity: 0.5;
+      min-width: 120px;
+      
+      :deep(.el-input__wrapper) {
+        background-color: transparent;
+        box-shadow: none !important;
+        padding: 0;
+        
+        &.is-focus {
+          box-shadow: none !important;
+        }
+        
+        .el-input__inner {
+          height: 36px;
+          font-size: 15px;
+          color: var(--el-text-color-primary);
+          
+          &::placeholder {
+            color: var(--el-text-color-placeholder);
+            font-weight: 400;
+            transition: opacity 0.3s ease;
+          }
+          
+          &:focus::placeholder {
+            opacity: 0.5;
+          }
+        }
       }
     }
 
     .search-button {
-      min-width: 80px;
-      height: 40px;
+      min-width: 90px;
+      height: 36px;
       border: none;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #007AFF, #00C6FF);
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
       color: white;
-      font-size: 16px;
+      font-size: 15px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0 20px;
       
       &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
+        background: linear-gradient(135deg, var(--el-color-primary-light-3), var(--el-color-primary));
       }
       
       &:active:not(:disabled) {
@@ -322,6 +369,18 @@ defineExpose({
       &:disabled {
         opacity: 0.7;
         cursor: not-allowed;
+        background: var(--el-color-info-light-5);
+      }
+
+      .loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .el-icon {
+          font-size: 18px;
+          animation: spin 1s linear infinite;
+        }
       }
     }
   }
@@ -429,48 +488,64 @@ defineExpose({
   }
 
   .suggestion-item {
-    display: flex;
-    padding: 8px;
+    padding: 12px;
     cursor: pointer;
     
     &:hover {
-      background-color: #f5f7fa;
-    }
-
-    .suggestion-image {
-      width: 60px;
-      height: 60px;
-      border-radius: 4px;
-      margin-right: 12px;
+      background-color: var(--el-fill-color-light);
     }
 
     .suggestion-content {
-      flex: 1;
-
-      .suggestion-name {
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-
-      .suggestion-tags {
+      .suggestion-header {
         display: flex;
-        gap: 4px;
-        margin-bottom: 4px;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
 
-        .el-tag {
-          font-size: 12px;
+        .suggestion-name {
+          font-size: 16px;
+          font-weight: 500;
+          color: var(--el-text-color-primary);
         }
       }
 
-      .suggestion-description {
-        font-size: 12px;
-        color: #666;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;  // 添加标准属性
-        -webkit-box-orient: vertical;
+      .meta-info {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 8px;
+        color: var(--el-text-color-secondary);
+        font-size: 13px;
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .el-icon {
+            font-size: 14px;
+          }
+        }
+      }
+
+      .suggestion-tags {
+        margin-bottom: 8px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .el-tag {
+          background-color: var(--el-color-primary-light-9);
+          border-color: var(--el-color-primary-light-8);
+          color: var(--el-color-primary);
+        }
+      }
+
+      .best-time {
+        font-size: 13px;
+        color: var(--el-text-color-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
     }
   }
@@ -558,6 +633,25 @@ defineExpose({
   
   .fullscreen-loader .loading-text {
     font-size: 20px;
+  }
+}
+
+// 优化搜索建议下拉框样式
+:deep(.el-autocomplete-suggestion) {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: none;
+  margin-top: 8px;
+  
+  &.el-popper {
+    .el-popper__arrow::before {
+      border: none;
+      background: transparent;
+    }
+  }
+  
+  .el-scrollbar__view {
+    padding: 8px;
   }
 }
 </style> 
