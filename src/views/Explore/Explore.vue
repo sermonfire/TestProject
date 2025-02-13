@@ -239,11 +239,6 @@ const handleTagClick = (tag) => {
 // 修改处理搜索函数
 const handleSearch = ({ tags }) => {
 	
-	if (!tags || !tags.length) {
-		ElMessage.warning('本项目暂不支持自定义搜索，只支持预设标签搜索');
-		return;
-	}
-	
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
 	
 	router.push({

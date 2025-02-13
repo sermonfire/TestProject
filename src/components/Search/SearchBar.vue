@@ -134,17 +134,9 @@ const querySearchAsync = debounce(async (query, cb) => {
   }
 }, 300);
 
-// 处理选择建议项
+// 处理选择建议项 - 移除添加标签的逻辑
 const handleSelect = (item) => {
-  if (item.tags) {
-    // 添加目的地相关标签
-    item.tags.forEach(tag => {
-      if (!selectedTags.value.includes(tag)) {
-        selectedTags.value.push(tag);
-      }
-    });
-  }
-  searchQuery.value = '';
+  searchQuery.value = item.value; // 只设置搜索框的值
   emit('select', item);
 };
 
@@ -162,6 +154,8 @@ const handleSearchSubmit = () => {
   }
 
   isSearching.value = true;
+  
+  // 区分标签搜索和内容搜索
   const searchParams = {
     tags: selectedTags.value,
     query: searchQuery.value
@@ -169,12 +163,12 @@ const handleSearchSubmit = () => {
 
   emit('search', searchParams);
   
-  // 更新路由
+  // 更新路由时区分两种搜索类型的参数
   router.push({
     name: 'searchResults',
     query: {
-      tags: selectedTags.value.join(','),
-      q: searchQuery.value
+      ...(selectedTags.value.length ? { tags: selectedTags.value.join(',') } : {}),
+      ...(searchQuery.value ? { q: searchQuery.value } : {})
     }
   });
 

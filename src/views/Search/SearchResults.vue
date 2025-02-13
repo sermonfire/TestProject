@@ -16,19 +16,29 @@
       <!-- 搜索信息区域 -->
       <div class="search-info">
         <div class="search-header">
-        <h2>搜索结果</h2>
+          <h2>搜索结果</h2>
           <span class="search-count">共找到 {{ results.length }} 个目的地</span>
         </div>
-        <div v-if="searchTags.length" class="tags-container">
-          <span class="tags-label">搜索标签：</span>
-          <el-tag
-            v-for="tag in searchTags"
-            :key="tag"
-            class="search-tag"
-            effect="light"
-          >
-            {{ tag }}
-          </el-tag>
+        <div class="search-type-info">
+          <template v-if="searchTags.length">
+            <div class="tags-container">
+              <span class="tags-label">搜索标签：</span>
+              <el-tag
+                v-for="tag in searchTags"
+                :key="tag"
+                class="search-tag"
+                effect="light"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+          </template>
+          <template v-if="searchQuery">
+            <div class="query-container">
+              <span class="query-label">搜索内容：</span>
+              <span class="query-text">"{{ searchQuery }}"</span>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -53,9 +63,9 @@
         </div>
         <div v-else class="results-grid">
           <DestinationCard
-            v-for="destination in results"
-            :key="destination.id"
-            :destination="destination"
+            v-for="item in results"
+            :key="item.id"
+            :destination="item.destination || item"
             @card-click="handleDestinationClick"
           />
         </div>
@@ -68,10 +78,10 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getSearchResultsAPI } from '@/api/recommendApi';
+import { searchDestinationsAPI } from '@/api/tripApi';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose, ArrowLeft } from '@element-plus/icons-vue';
 import DestinationCard from '@/components/DestinationCard/DestinationCard.vue';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -79,31 +89,51 @@ const loading = ref(false);
 const error = ref('');
 const results = ref([]);
 const searchTags = ref([]);
+const searchQuery = ref('');
 
-// 获取搜索结果
+/**
+ * 获取搜索结果
+ * @description 根据不同的搜索类型(标签/内容)调用不同的API
+ */
 const fetchSearchResults = async () => {
-  if (!searchTags.value.length) {
-    console.log('No tags provided for search');
-    return;
-  }
-  
   loading.value = true;
   error.value = '';
   
-  // console.log('Fetching search results with tags:', searchTags.value);
-  
   try {
-    const response = await getSearchResultsAPI({
-      tags: searchTags.value,
-      pageNum: 1,
-      pageSize: 10
-    });
+    let response;
     
-    // console.log('Search API Response:', response);
+    // 根据搜索类型调用不同API
+    if (searchTags.value.length) {
+      response = await getSearchResultsAPI({
+        tags: searchTags.value,
+        pageNum: 1,
+        pageSize: 10
+      });
+    } else if (searchQuery.value) {
+      response = await searchDestinationsAPI(searchQuery.value);
+    } else {
+      throw new Error('请输入搜索内容或选择标签');
+    }
     
     if (response.code === 0) {
-      results.value = response.data.list || [];
-      // console.log('Search results updated:', results.value);
+      if (searchTags.value.length) {
+        // 标签搜索返回的数据中目的地信息在 destination 字段
+        results.value = response.data.list;
+      } else {
+        // 内容搜索直接返回目的地数组，需要转换格式
+        results.value = response.data.map(item => ({
+          id: item.id,
+          destination: item.destination
+        }));
+      }
+      
+      // 检查数据有效性
+      if (!results.value.length) {
+        error.value = '未找到相关目的地';
+      } else if (!results.value.some(item => item.destination || item)) {
+        error.value = '目的地数据格式错误';
+        console.error('Invalid destination data:', results.value);
+      }
     } else {
       throw new Error(response.message || '获取搜索结果失败');
     }
@@ -118,29 +148,9 @@ const fetchSearchResults = async () => {
 
 // 处理目的地点击
 const handleDestinationClick = (destination) => {
-  // 这里可以添加目的地点击处理逻辑
-  console.log('Destination clicked:', destination);
-};
-
-// 添加搜索处理函数
-const handleSearch = ({ tags }) => {
-  // console.log('Search triggered with tags:', tags);
-  
-  if (!tags || !tags.length) {
-    console.log('No tags provided, showing warning');
-    ElMessage.warning('请选择至少一个标签');
-    return;
-  }
-  
-  const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
-  // console.log('Formatted tags for route:', formattedTags);
-  
   router.push({
-    name: 'searchResults',
-    query: {
-      tags: formattedTags
-    },
-    replace: true // 使用 replace 避免创建新的历史记录
+    name: 'destinationDetail',
+    params: { id: destination.id }
   });
 };
 
@@ -148,10 +158,10 @@ const handleSearch = ({ tags }) => {
 watch(
   () => route.query,
   (newQuery) => {
-    // console.log('Route query changed:', newQuery);
     searchTags.value = newQuery.tags ? newQuery.tags.split(',') : [];
-    // console.log('Updated search tags:', searchTags.value);
-    if (searchTags.value.length) {
+    searchQuery.value = newQuery.q || '';
+    
+    if (searchTags.value.length || searchQuery.value) {
       fetchSearchResults();
     }
   },
@@ -221,31 +231,35 @@ watch(
       }
     }
     
-    .tags-container {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+    .search-type-info {
+      margin-top: 12px;
       
-      .tags-label {
-      color: #666;
-        font-size: 14px;
-      }
-      
-      .search-tag {
-        background-color: var(--el-color-primary-light-9);
-        border: none;
-        color: var(--el-color-primary);
-        padding: 0 16px;
-        height: 32px;
-        line-height: 32px;
-        font-size: 14px;
-        border-radius: 16px;
-        transition: all 0.3s ease;
+      .tags-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
         
-        &:hover {
-          background-color: var(--el-color-primary-light-8);
-          transform: translateY(-1px);
+        .tags-label {
+        color: #666;
+          font-size: 14px;
+        }
+        
+        .search-tag {
+          background-color: var(--el-color-primary-light-9);
+          border: none;
+          color: var(--el-color-primary);
+          padding: 0 16px;
+          height: 32px;
+          line-height: 32px;
+          font-size: 14px;
+          border-radius: 16px;
+          transition: all 0.3s ease;
+          
+          &:hover {
+            background-color: var(--el-color-primary-light-8);
+            transform: translateY(-1px);
+          }
         }
       }
     }
@@ -342,6 +356,27 @@ watch(
     
     .results-container {
       padding: 16px;
+    }
+  }
+}
+
+.search-type-info {
+  margin-top: 12px;
+  
+  .query-container {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    
+    .query-label {
+      color: #666;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    
+    .query-text {
+      color: var(--el-color-primary);
+      font-weight: 500;
     }
   }
 }
