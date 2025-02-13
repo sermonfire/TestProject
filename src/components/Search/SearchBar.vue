@@ -456,6 +456,7 @@ defineExpose({
         text-overflow: ellipsis;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;  // 添加标准属性
         -webkit-box-orient: vertical;
       }
     }
