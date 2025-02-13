@@ -15,30 +15,55 @@
         >
           {{ tag }}
         </el-tag>
-        <input
-          type="text"
+        <el-autocomplete
           v-model="searchQuery"
+          :fetch-suggestions="querySearchAsync"
+          :trigger-on-focus="false"
           :placeholder="selectedTags.length ? '' : '搜索目的地、景点、主题...'"
           class="search-input"
-          @input="handleSearch"
+          @select="handleSelect"
           @keydown.enter="handleSearchSubmit"
-        />
+          :loading="loading"
+        >
+          <template #default="{ item }">
+            <div class="suggestion-item">
+              <el-image 
+                :src="item.imageUrl" 
+                class="suggestion-image"
+                fit="cover"
+                :preview-src-list="[item.imageUrl]">
+                <template #error>
+                  <div class="image-placeholder">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
+              <div class="suggestion-content">
+                <div class="suggestion-name">{{ item.name }}</div>
+                <div class="suggestion-tags">
+                  <el-tag 
+                    v-for="tag in item.tags.slice(0, 3)" 
+                    :key="tag"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+                <div class="suggestion-description">{{ item.description }}</div>
+              </div>
+            </div>
+          </template>
+        </el-autocomplete>
       </div>
       <button 
         class="search-button" 
         @click="handleSearchSubmit"
-        :disabled="isSearching"
+        :disabled="isSearching || (!searchQuery && !selectedTags.length)"
       >
         <span class="button-text" v-if="!isSearching">搜索</span>
         <div class="loader" v-else>
-          <div class="cube">
-            <div class="side front"></div>
-            <div class="side back"></div>
-            <div class="side right"></div>
-            <div class="side left"></div>
-            <div class="side top"></div>
-            <div class="side bottom"></div>
-          </div>
+          <el-icon class="is-loading"><Loading /></el-icon>
         </div>
       </button>
     </div>
@@ -65,69 +90,106 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+import { Search, Picture, Loading } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { searchDestinationsAPI } from '@/api/tripApi';
+import debounce from 'lodash/debounce';
 
 const router = useRouter();
 const searchQuery = ref('');
 const selectedTags = ref([]);
 const isSearching = ref(false);
+const loading = ref(false);
 
 // 定义emit
-const emit = defineEmits(['search', 'update:tags']);
+const emit = defineEmits(['search', 'update:tags', 'select']);
 
-// 添加标签
-const addTag = (tag) => {
-  if (!selectedTags.value.includes(tag)) {
-    selectedTags.value.push(tag);
+// 异步搜索建议
+const querySearchAsync = debounce(async (query, cb) => {
+  if (query.length < 1) {
+    cb([]);
+    return;
   }
+  
+  loading.value = true;
+  try {
+    const res = await searchDestinationsAPI(query);
+    if (res.code === 0 && res.data) {
+      const suggestions = res.data.map(item => ({
+        value: item.destination.name,
+        ...item.destination,
+        detail: item
+      }));
+      cb(suggestions);
+    } else {
+      cb([]);
+    }
+  } catch (error) {
+    console.error('搜索失败:', error);
+    ElMessage.error('搜索失败,请重试');
+    cb([]);
+  } finally {
+    loading.value = false;
+  }
+}, 300);
+
+// 处理选择建议项
+const handleSelect = (item) => {
+  if (item.tags) {
+    // 添加目的地相关标签
+    item.tags.forEach(tag => {
+      if (!selectedTags.value.includes(tag)) {
+        selectedTags.value.push(tag);
+      }
+    });
+  }
+  searchQuery.value = '';
+  emit('select', item);
 };
 
 // 移除标签
 const removeTag = (tag) => {
   selectedTags.value = selectedTags.value.filter(t => t !== tag);
+  emit('update:tags', selectedTags.value);
 };
 
-// 修改处理搜索提交函数
-const handleSearchSubmit = async () => {
-  if (!selectedTags.value.length) {
-    ElMessage.warning('请选择至少一个标签');
-    ElMessage.warning('本项目暂不支持自定义搜索，只支持预设标签搜索');
+// 处理搜索提交
+const handleSearchSubmit = () => {
+  if (!selectedTags.value.length && !searchQuery.value) {
+    ElMessage.warning('请输入搜索内容或选择标签');
     return;
   }
 
-  try {
-    isSearching.value = true;
-    const query = {
-      tags: selectedTags.value.join(',')
-    };
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    await router.push({
-      name: 'searchResults',
-      query,
-      replace: false
-    });
-  } catch (error) {
-    console.error('Navigation error:', error);
-    ElMessage.error('搜索页面加载失败，请稍后重试');
-  } finally {
-    isSearching.value = false;
-  }
-};
+  isSearching.value = true;
+  const searchParams = {
+    tags: selectedTags.value,
+    query: searchQuery.value
+  };
 
-// 实时搜索处理函数
-const handleSearch = () => {
-  emit('search', {
-    tags: selectedTags.value
+  emit('search', searchParams);
+  
+  // 更新路由
+  router.push({
+    name: 'searchResults',
+    query: {
+      tags: selectedTags.value.join(','),
+      q: searchQuery.value
+    }
   });
+
+  setTimeout(() => {
+    isSearching.value = false;
+  }, 1000);
 };
 
 // 暴露方法给父组件
 defineExpose({
-  addTag
+  addTag: (tag) => {
+    if (!selectedTags.value.includes(tag)) {
+      selectedTags.value.push(tag);
+    }
+  }
 });
 </script>
 
@@ -351,6 +413,62 @@ defineExpose({
         .bottom { transform: rotateX(-90deg) translateZ(50px); }
       }
     }
+  }
+
+  .suggestion-item {
+    display: flex;
+    padding: 8px;
+    cursor: pointer;
+    
+    &:hover {
+      background-color: #f5f7fa;
+    }
+
+    .suggestion-image {
+      width: 60px;
+      height: 60px;
+      border-radius: 4px;
+      margin-right: 12px;
+    }
+
+    .suggestion-content {
+      flex: 1;
+
+      .suggestion-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+
+      .suggestion-tags {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 4px;
+
+        .el-tag {
+          font-size: 12px;
+        }
+      }
+
+      .suggestion-description {
+        font-size: 12px;
+        color: #666;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+    }
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f7fa;
+    color: #909399;
   }
 }
 
