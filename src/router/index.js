@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/userstore'
 import { ElMessage } from 'element-plus'
-import DestinationDetail from '@/views/Destination/DestinationDetail.vue'
 
 const routes = [
   {
