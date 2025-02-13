@@ -19,7 +19,7 @@
           v-model="searchQuery"
           :fetch-suggestions="querySearchAsync"
           :trigger-on-focus="false"
-          :placeholder="selectedTags.length ? '' : '搜索目的地、景点、主题...'"
+          :placeholder="selectedTags.length ? '' : '搜索景点、景点标签...'"
           class="search-input"
           @select="handleSelect"
           @keydown.enter="handleSearchSubmit"
@@ -118,8 +118,11 @@ const querySearchAsync = debounce(async (query, cb) => {
     if (res.code === 0 && res.data) {
       const suggestions = res.data.map(item => ({
         value: item.destination.name,
-        ...item.destination,
-        detail: item
+        id: item.destination.id,
+        name: item.destination.name,
+        imageUrl: item.destination.imageUrl,
+        description: item.destination.description,
+        tags: item.destination.tags
       }));
       cb(suggestions);
     } else {
@@ -134,10 +137,23 @@ const querySearchAsync = debounce(async (query, cb) => {
   }
 }, 300);
 
-// 处理选择建议项 - 移除添加标签的逻辑
+// 处理选择建议项
 const handleSelect = (item) => {
-  searchQuery.value = item.value; // 只设置搜索框的值
-  emit('select', item);
+  try {
+    // 跳转到搜索结果页
+    router.push({
+      name: 'searchResults',
+      query: {
+        q: item.name // 使用目的地名称作为搜索关键词
+      }
+    });
+    
+    searchQuery.value = '';
+    emit('select', item);
+  } catch (error) {
+    console.error('Navigation error:', error);
+    ElMessage.error('页面跳转失败');
+  }
 };
 
 // 移除标签
@@ -171,6 +187,9 @@ const handleSearchSubmit = () => {
       ...(searchQuery.value ? { q: searchQuery.value } : {})
     }
   });
+
+  // 清空搜索框
+  searchQuery.value = '';
 
   setTimeout(() => {
     isSearching.value = false;

@@ -65,12 +65,11 @@ const routes = [
       },
       {
         path: 'destination/:id',
-        name: 'DestinationDetail',
+        name: 'destinationDetail',
         component: () => import('@/views/Destination/DestinationDetail.vue'),
         props: true,
         meta: {
-          title: '目的地详情',
-          requiresAuth: true
+          requiresAuth: true,
         }
       },
       {
@@ -80,6 +79,15 @@ const routes = [
         meta: {
           title: '行程规划',
           requiresAuth: true
+        }
+      },
+      {
+        path: 'explore/destination/:id',
+        name: 'destinationDetail',
+        component: () => import('@/views/Destination/DestinationDetail.vue'),
+        props: true,
+        meta: {
+          requiresAuth: true,
         }
       }
     ],
