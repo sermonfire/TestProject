@@ -8,21 +8,38 @@ import {
   getTripDetailAPI,
   updateTripStatusAPI
 } from '@/api/tripApi'
+import dayjs from 'dayjs'
 
 export const useTripStore = defineStore('trip', () => {
   const trips = ref([])
   const loading = ref(false)
 
   // 获取行程列表
-  const getTrips = async () => {
+  const getTrips = async (params = { pageNum: 1, pageSize: 10 }) => {
     loading.value = true
     try {
-      const res = await getTripsAPI()
+      const res = await getTripsAPI(params)
       if (res.code === 0 && res.data) {
-        trips.value = res.data.list || []
-        return res.data.list
+        // 处理日期格式
+        const formattedList = res.data.list.map(trip => ({
+          ...trip,
+          startDate: dayjs(trip.startDate).format('YYYY-MM-DD'),
+          endDate: dayjs(trip.endDate).format('YYYY-MM-DD'),
+          createTime: trip.createTime,
+          updateTime: trip.updateTime
+        }))
+        trips.value = formattedList
+        return {
+          list: formattedList,
+          pagination: {
+            total: res.data.total,
+            pageNum: res.data.pageNum,
+            pageSize: res.data.pageSize,
+            pages: res.data.pages
+          }
+        }
       }
-      return []
+      return { list: [], pagination: { total: 0, pageNum: 1, pageSize: 10, pages: 1 } }
     } finally {
       loading.value = false
     }

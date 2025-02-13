@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 
 // 获取行程列表
-export const getTripsAPI = () => {
+export const getTripsAPI = (params = { pageNum: 1, pageSize: 10 }) => {
   return request({
     url: '/dev-api/trip/list',
-    method: 'GET'
+    method: 'GET',
+    params
   })
 }
 
