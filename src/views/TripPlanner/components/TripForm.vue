@@ -7,7 +7,12 @@
     class="trip-form">
     
     <el-form-item label="行程名称" prop="name">
-      <el-input v-model="form.name" placeholder="请输入行程名称" />
+      <el-input 
+        v-model="form.name" 
+        placeholder="请输入行程名称"
+        maxlength="50"
+        show-word-limit
+      />
     </el-form-item>
 
     <el-form-item label="行程日期" prop="dateRange">
@@ -21,7 +26,12 @@
         value-format="YYYY-MM-DD"
         :shortcuts="dateShortcuts"
         @change="handleDateChange"
+        style="width: 100%"
       />
+      <div class="form-tip" v-if="form.dateRange?.length === 2">
+        <el-icon><InfoFilled /></el-icon>
+        <span>行程共 {{ calculateDays(form.dateRange) }} 天</span>
+      </div>
     </el-form-item>
 
     <el-form-item label="行程描述" prop="description">
@@ -30,6 +40,8 @@
         type="textarea"
         :rows="4"
         placeholder="请输入行程描述"
+        maxlength="500"
+        show-word-limit
       />
     </el-form-item>
 
@@ -40,7 +52,12 @@
         :precision="2" 
         :step="100"
         placeholder="请输入预算金额"
+        style="width: 200px"
       />
+      <div class="form-tip" v-if="form.totalBudget && form.dateRange?.length === 2">
+        <el-icon><InfoFilled /></el-icon>
+        <span>平均每天预算 ¥{{ calculateDailyBudget(form.totalBudget, form.dateRange) }}</span>
+      </div>
     </el-form-item>
 
     <el-form-item label="目的地" prop="destinations">
@@ -52,26 +69,42 @@
         reserve-keyword
         placeholder="请输入关键词搜索目的地"
         :remote-method="searchDestinations"
-        :loading="loading">
+        :loading="loading"
+        style="width: 100%"
+      >
         <el-option
           v-for="item in destinationOptions"
           :key="item.value"
           :label="item.label"
-          :value="item.value">
+          :value="item.value"
+        >
+          <div class="destination-option">
+            <span>{{ item.label }}</span>
+            <small v-if="item.type">{{ item.type }}</small>
+          </div>
         </el-option>
       </el-select>
+      <div class="form-tip" v-if="form.destinations?.length">
+        <el-icon><InfoFilled /></el-icon>
+        <span>已选择 {{ form.destinations.length }} 个目的地</span>
+      </div>
     </el-form-item>
 
     <el-form-item>
-      <el-button type="primary" @click="submitForm">确定</el-button>
-      <el-button @click="$emit('cancel')">取消</el-button>
+      <div class="form-actions">
+        <el-button @click="$emit('cancel')">取消</el-button>
+        <el-button type="primary" @click="submitForm" :loading="submitting">
+          {{ submitting ? '提交中...' : '确定' }}
+        </el-button>
+      </div>
     </el-form-item>
   </el-form>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { InfoFilled } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -211,25 +244,45 @@ const searchDestinations = async (query) => {
   }
 }
 
-// 提交表单
+// 添加计算天数的方法
+const calculateDays = (dateRange) => {
+  if (!dateRange || dateRange.length !== 2) return 0
+  return dayjs(dateRange[1]).diff(dateRange[0], 'day') + 1
+}
+
+// 计算每日预算
+const calculateDailyBudget = (total, dateRange) => {
+  if (!total || !dateRange || dateRange.length !== 2) return 0
+  const days = calculateDays(dateRange)
+  return (total / days).toFixed(2)
+}
+
+// 添加提交状态
+const submitting = ref(false)
+
+// 修改提交方法
 const submitForm = async () => {
   if (!formRef.value) return
   
   try {
     await formRef.value.validate()
+    submitting.value = true
     
     const tripData = {
       id: props.trip.id,
-      name: form.name,
+      name: form.name.trim(),
       startDate: form.dateRange[0],
       endDate: form.dateRange[1],
-      description: form.description,
-      totalBudget: Number(form.totalBudget)
+      description: form.description.trim(),
+      totalBudget: Number(form.totalBudget),
+      destinations: form.destinations
     }
     
     emit('submit', tripData)
   } catch (error) {
     console.error('表单验证失败:', error)
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -271,89 +324,52 @@ onMounted(async () => {
   background: #fff;
   border-radius: 12px;
 
-  :deep(.el-form-item) {
-    margin-bottom: 24px;
+  .form-tip {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
 
-    .el-form-item__label {
-      font-weight: 500;
-      color: #303133;
-      padding-right: 16px;
-    }
-
-    .el-input__wrapper,
-    .el-textarea__inner,
-    .el-input-number__decrease,
-    .el-input-number__increase {
-      border-radius: 8px;
-    }
-
-    .el-input__wrapper {
-      padding: 0 16px;
-      box-shadow: 0 0 0 1px #dcdfe6 inset;
-      
-      &:hover {
-        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-      }
-      
-      &.is-focus {
-        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-      }
-    }
-
-    .el-input__inner {
-      height: 40px;
-      font-size: 14px;
-      
-      &::placeholder {
-        color: #909399;
-      }
-    }
-
-    .el-textarea__inner {
-      padding: 12px 16px;
-      font-size: 14px;
-      min-height: 120px;
-      
-      &::placeholder {
-        color: #909399;
-      }
+    .el-icon {
+      color: var(--el-color-info);
     }
   }
 
-  :deep(.el-date-editor) {
-    width: 100%;
-    
-    .el-range-separator {
-      color: #909399;
-    }
-  }
+  .destination-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-  :deep(.el-select) {
-    width: 100%;
-    
-    .el-input {
-      width: 100%;
+    small {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
     }
-  }
-
-  :deep(.el-input-number) {
-    width: 100%;
-    max-width: 240px;
   }
 
   .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #ebeef5;
+  }
 
-    .el-button {
-      padding: 12px 24px;
-      font-size: 14px;
-      border-radius: 8px;
-      min-width: 100px;
+  :deep(.el-form-item) {
+    margin-bottom: 24px;
+
+    .el-form-item__label {
+      font-weight: 500;
+    }
+
+    .el-input__wrapper,
+    .el-textarea__inner {
+      &:hover {
+        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+      }
+    }
+
+    .el-input__count {
+      background: transparent;
     }
   }
 }
