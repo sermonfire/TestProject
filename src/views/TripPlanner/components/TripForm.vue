@@ -267,14 +267,114 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .trip-form {
-  padding: 20px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+
+  :deep(.el-form-item) {
+    margin-bottom: 24px;
+
+    .el-form-item__label {
+      font-weight: 500;
+      color: #303133;
+      padding-right: 16px;
+    }
+
+    .el-input__wrapper,
+    .el-textarea__inner,
+    .el-input-number__decrease,
+    .el-input-number__increase {
+      border-radius: 8px;
+    }
+
+    .el-input__wrapper {
+      padding: 0 16px;
+      box-shadow: 0 0 0 1px #dcdfe6 inset;
+      
+      &:hover {
+        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+      }
+      
+      &.is-focus {
+        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+      }
+    }
+
+    .el-input__inner {
+      height: 40px;
+      font-size: 14px;
+      
+      &::placeholder {
+        color: #909399;
+      }
+    }
+
+    .el-textarea__inner {
+      padding: 12px 16px;
+      font-size: 14px;
+      min-height: 120px;
+      
+      &::placeholder {
+        color: #909399;
+      }
+    }
+  }
 
   :deep(.el-date-editor) {
     width: 100%;
+    
+    .el-range-separator {
+      color: #909399;
+    }
   }
 
   :deep(.el-select) {
     width: 100%;
+    
+    .el-input {
+      width: 100%;
+    }
+  }
+
+  :deep(.el-input-number) {
+    width: 100%;
+    max-width: 240px;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #ebeef5;
+
+    .el-button {
+      padding: 12px 24px;
+      font-size: 14px;
+      border-radius: 8px;
+      min-width: 100px;
+    }
+  }
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+  .trip-form {
+    padding: 16px;
+
+    :deep(.el-form-item) {
+      margin-bottom: 20px;
+    }
+
+    .form-actions {
+      flex-direction: column;
+      gap: 8px;
+
+      .el-button {
+        width: 100%;
+      }
+    }
   }
 }
 </style> 
