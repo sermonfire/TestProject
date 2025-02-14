@@ -58,6 +58,24 @@
         <el-tabs class="custom-tabs">
           <el-tab-pane label="概览">
             <div class="overview-section content-card">
+              <div v-if="locationInfo" class="info-block location-info">
+                <h3>地理位置</h3>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="所在地区">
+                    {{ locationInfo.province }} {{ locationInfo.city }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="行政区划">
+                    {{ locationInfo.cityInfo.shortName }}（{{ locationInfo.cityCode }}）
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+
+              <WeatherCard 
+                v-if="locationInfo?.city" 
+                :city="locationInfo.cityInfo.shortName"
+                class="weather-card"
+              />
+              
               <div class="info-block">
                 <h3>目的地介绍</h3>
                 <p>{{ destinationData?.content || '暂无介绍' }}</p>
@@ -140,39 +158,59 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Picture, ArrowLeft } from '@element-plus/icons-vue'
 import { getDestinationDetailAPI } from '@/api/recommendApi'
+import { getLocationFromDestination } from '@/utils/cityMapping'
+import WeatherCard from '@/components/Weather/WeatherCard.vue'
 import { ElMessage } from 'element-plus'
-import CollectionButton from '@/components/CollectionButton/CollectionButton.vue'
 
 const route = useRoute()
 const router = useRouter()
-const destinationData = ref(null)
 const loading = ref(true)
+const destinationData = ref(null)
+const locationInfo = ref(null)
 
-const loadDestinationDetail = async () => {
+/**
+ * @description 获取目的地详情
+ */
+const fetchDestinationDetail = async () => {
+  if (!route.params.id) {
+    ElMessage.error('目的地ID不能为空')
+    router.push('/explore')
+    return
+  }
+
+  loading.value = true
   try {
-    const id = route.params.id
-    // console.log('Loading destination detail for id:', id)
-    if (!id) {
-      throw new Error('目的地ID不能为空')
-    }
-    const response = await getDestinationDetailAPI(id)
-    // console.log('Destination detail response:', response)
-    if (response.code === 0) {
-      destinationData.value = response.data
+    const { code, data } = await getDestinationDetailAPI(route.params.id)
+    if (code === 0 && data) {
+      destinationData.value = data
+      // 获取位置信息
+      locationInfo.value = getLocationFromDestination(data.destination)
+      
+      if (!locationInfo.value) {
+        ElMessage.warning('无法获取目的地位置信息')
+      }
     } else {
-      throw new Error(response.message || '获取目的地详情失败')
+      throw new Error('获取目的地详情失败')
     }
   } catch (error) {
-    console.error('Failed to fetch destination detail:', error)
+    console.error('获取目的地详情失败:', error)
     ElMessage.error(error.message || '获取目的地详情失败')
+    router.push('/explore')
   } finally {
     loading.value = false
   }
 }
+
+// 监听路由参数变化，重新获取数据
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    fetchDestinationDetail()
+  }
+})
 
 /**
  * 处理返回按钮点击事件
@@ -186,8 +224,8 @@ const handleBack = () => {
   }
 }
 
-onMounted(async () => {
-  await loadDestinationDetail()
+onMounted(() => {
+  fetchDestinationDetail()
 })
 </script>
 
