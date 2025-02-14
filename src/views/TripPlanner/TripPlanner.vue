@@ -48,6 +48,9 @@
                 <el-button type="primary" @click="editTrip(trip)" :icon="Edit">
                   编辑
                 </el-button>
+                <el-button type="success" @click="viewSchedule(trip)" :icon="Calendar">
+                  日程安排
+                </el-button>
                 <el-button type="danger" @click="deleteTrip(trip)" :icon="Delete">
                   删除
                 </el-button>
@@ -89,17 +92,36 @@
         @cancel="dialogVisible = false"
       />
     </el-dialog>
+
+    <!-- 修改日程安排对话框 -->
+    <el-dialog
+      v-model="scheduleDialogVisible"
+      :title="currentTrip?.name + ' - 日程安排'"
+      width="90%"
+      :fullscreen="true"
+      destroy-on-close
+    >
+      <trip-schedule
+        v-if="scheduleDialogVisible"
+        :trip-id="currentTrip?.id"
+        :trip-name="currentTrip?.name"
+        :start-date="currentTrip?.startDate"
+        :end-date="currentTrip?.endDate"
+        @back="scheduleDialogVisible = false"
+      />
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowDown, Calendar } from '@element-plus/icons-vue'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
 import dayjs from 'dayjs'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
+import TripSchedule from './components/TripSchedule.vue'
 
 const tripStore = useTripStore()
 const trips = ref([])
@@ -243,6 +265,15 @@ const handleSizeChange = (val) => {
 const handleCurrentChange = (val) => {
   currentPage.value = val
   loadTrips()
+}
+
+// 添加日程安排对话框的响应式数据
+const scheduleDialogVisible = ref(false)
+
+// 查看日程安排
+const viewSchedule = (trip) => {
+  currentTrip.value = trip
+  scheduleDialogVisible.value = true
 }
 
 onMounted(() => {
