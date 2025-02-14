@@ -41,6 +41,29 @@
           </div>
 
           <div class="detail-info-section">
+            <div v-if="locationInfo" class="location-weather">
+              <div class="location-info">
+                <h3>
+                  <el-icon><Location /></el-icon>
+                  地理位置
+                </h3>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="所在地区">
+                    {{ locationInfo.province }} {{ locationInfo.city }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="行政区划">
+                    {{ locationInfo.cityInfo.shortName }}（{{ locationInfo.cityCode }}）
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+              
+              <WeatherCard 
+                v-if="locationInfo?.city"
+                :city="locationInfo.cityInfo.shortName"
+                class="weather-card"
+              />
+            </div>
+
             <div class="detail-meta">
               <div class="meta-item">
                 <el-icon class="icon">
@@ -173,10 +196,13 @@ import {
   Plus, 
   Star,
   Calendar,
-  Wallet
+  Wallet,
+  Location
 } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
+import { getLocationFromDestination } from '@/utils/cityMapping';
+import WeatherCard from '@/components/Weather/WeatherCard.vue';
 
 const props = defineProps({
   modelValue: {
@@ -196,6 +222,8 @@ const props = defineProps({
 const router = useRouter();
 const emit = defineEmits(['update:modelValue', 'close', 'similar-click', 'tag-click']);
 const favoriteStore = useFavoriteStore();
+
+const locationInfo = ref(null);
 
 const handleClose = () => {
   emit('update:modelValue', false);
@@ -411,6 +439,13 @@ watch(() => props.modelValue, async (newVal) => {
 const handleCollectionChange = ({ id, isCollected }) => {
   favoriteStore.updateFavoriteStatus(id, isCollected);
 };
+
+// 监听目的地变化
+watch(() => props.destination, (newDest) => {
+  if (newDest) {
+    locationInfo.value = getLocationFromDestination(newDest);
+  }
+}, { immediate: true });
 </script>
 
 <style lang="scss" scoped>
@@ -619,6 +654,49 @@ const handleCollectionChange = ({ id, isCollected }) => {
 .detail-info-section {
   padding: 24px;
   background: linear-gradient(to bottom, #fff, #f8f9fa);
+
+  .location-weather {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 24px;
+    
+    .location-info {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      
+      h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #333;
+        margin-bottom: 16px;
+        font-size: 16px;
+        
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+      
+      :deep(.el-descriptions) {
+        .el-descriptions__label {
+          width: 80px;
+          color: #666;
+        }
+        
+        .el-descriptions__content {
+          color: #333;
+        }
+      }
+    }
+    
+    .weather-card {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+  }
 
   .detail-meta {
     display: flex;
