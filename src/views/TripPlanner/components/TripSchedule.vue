@@ -35,9 +35,6 @@
                   <el-button type="primary" @click="handleAddSchedule(currentDay)">
                     <el-icon><Plus /></el-icon>添加日程
                   </el-button>
-                  <el-button type="success" @click="optimizeRoute(currentDay)">
-                    <el-icon><Refresh /></el-icon>优化路线
-                  </el-button>
                 </el-button-group>
               </div>
             </div>
