@@ -31,6 +31,25 @@
                 <span class="date-info">{{ formatDate(getDateByIndex(currentDay)) }}</span>
               </div>
               <div class="header-actions">
+                <div class="route-tip">
+                  <el-tooltip
+                    effect="dark"
+                    placement="top-start"
+                    :show-after="500"
+                  >
+                    <template #content>
+                      <div class="tip-content">
+                        <p>1. 勾选景点类型的日程</p>
+                        <p>2. 系统将自动规划最优路线</p>
+                        <p>3. 支持驾车、公交、步行和骑行等多种出行方式</p>
+                      </div>
+                    </template>
+                    <div class="tip-trigger">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>路线规划说明</span>
+                    </div>
+                  </el-tooltip>
+                </div>
                 <el-button-group>
                   <el-button type="primary" @click="handleAddSchedule(currentDay)">
                     <el-icon><Plus /></el-icon>添加日程
@@ -356,7 +375,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Location, Plus, Download, Document, 
   Money, Edit, Delete, Refresh,
-  Star
+  Star, InfoFilled
 } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { 
@@ -1131,6 +1150,48 @@ const emit = defineEmits(['back', 'select-schedule'])
               margin-top: 4px;
               font-size: 14px;
               color: var(--el-text-color-secondary);
+            }
+          }
+
+          .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            
+            .route-tip {
+              .tip-trigger {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 4px;
+                background: var(--el-color-primary-light-9);
+                color: var(--el-color-primary);
+                font-size: 13px;
+                cursor: help;
+                transition: all 0.3s ease;
+                
+                &:hover {
+                  background: var(--el-color-primary-light-8);
+                }
+                
+                .el-icon {
+                  font-size: 14px;
+                }
+              }
+            }
+            
+            .tip-content {
+              p {
+                margin: 0;
+                padding: 4px 0;
+                font-size: 13px;
+                color: #fff;
+                
+                &:not(:last-child) {
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+              }
             }
           }
         }
