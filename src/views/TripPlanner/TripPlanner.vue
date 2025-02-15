@@ -205,22 +205,35 @@
     </el-dialog>
 
     <!-- 修改日程安排对话框 -->
-    <el-dialog
-      v-model="scheduleDialogVisible"
-      :title="currentTrip?.name + ' - 日程安排'"
-      width="90%"
-      :fullscreen="true"
-      destroy-on-close
-    >
-      <trip-schedule
-        v-if="scheduleDialogVisible"
-        :trip-id="currentTrip?.id"
-        :trip-name="currentTrip?.name"
-        :start-date="currentTrip?.startDate"
-        :end-date="currentTrip?.endDate"
-        @back="scheduleDialogVisible = false"
-      />
-    </el-dialog>
+    <Transition name="dialog-fade">
+      <div v-if="scheduleDialogVisible" class="schedule-dialog-container">
+        <div class="schedule-dialog-mask" @click="scheduleDialogVisible = false"></div>
+        <div class="schedule-dialog-wrapper">
+          <div class="schedule-dialog">
+            <div class="schedule-dialog-header">
+              <h3>{{ currentTrip?.name }} - 日程安排</h3>
+              <el-button 
+                class="close-btn" 
+                circle 
+                @click="scheduleDialogVisible = false"
+              >
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
+            
+            <div class="schedule-dialog-body">
+              <trip-schedule
+                :trip-id="currentTrip?.id"
+                :trip-name="currentTrip?.name"
+                :start-date="currentTrip?.startDate"
+                :end-date="currentTrip?.endDate"
+                @back="scheduleDialogVisible = false"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- 位置信息悬浮展示 -->
     <div 
@@ -253,7 +266,7 @@
 <script setup>
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location, Close } from '@element-plus/icons-vue'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
 import dayjs from 'dayjs'
@@ -929,5 +942,114 @@ onMounted(() => {
 .fade-slide-leave-from {
   opacity: 1;
   transform: translateX(0);
+}
+
+.schedule-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .schedule-dialog-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+  
+  .schedule-dialog-wrapper {
+    position: relative;
+    width: 50vw;
+    height: 80vh;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    
+    .schedule-dialog {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .schedule-dialog-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--el-border-color-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--el-bg-color);
+
+        h3 {
+          margin: 0;
+          font-size: 18px;
+          color: var(--el-text-color-primary);
+        }
+
+        .close-btn {
+          font-size: 18px;
+          color: var(--el-text-color-secondary);
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: var(--el-text-color-primary);
+            transform: rotate(90deg);
+          }
+        }
+      }
+
+      .schedule-dialog-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+    }
+  }
+}
+
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: all 0.3s ease-out;
+  
+  .schedule-dialog-wrapper {
+    transition: all 0.3s ease-out;
+  }
+  
+  .schedule-dialog-mask {
+    transition: all 0.3s ease-out;
+  }
+}
+
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
+  
+  .schedule-dialog-wrapper {
+    transform: scale(0.95) translateY(20px);
+  }
+  
+  .schedule-dialog-mask {
+    opacity: 0;
+  }
+}
+
+.dialog-fade-enter-to,
+.dialog-fade-leave-from {
+  opacity: 1;
+  
+  .schedule-dialog-wrapper {
+    transform: scale(1) translateY(0);
+  }
+  
+  .schedule-dialog-mask {
+    opacity: 1;
+  }
 }
 </style> 

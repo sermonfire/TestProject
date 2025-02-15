@@ -1,26 +1,5 @@
 <template>
   <div class="trip-schedule">
-    <!-- 顶部导航栏 -->
-    <div class="schedule-header">
-      <div class="header-left">
-        <el-page-header @back="$emit('back')" :title="tripName">
-          <template #content>
-            <span class="schedule-title">日程安排</span>
-          </template>
-        </el-page-header>
-      </div>
-      <div class="header-actions">
-        <el-button-group>
-          <el-button type="primary" @click="handleBatchAdd">
-            <el-icon><Plus /></el-icon>批量添加
-          </el-button>
-          <el-button type="success" @click="handleExport">
-            <el-icon><Download /></el-icon>导出日程
-          </el-button>
-        </el-button-group>
-      </div>
-    </div>
-
     <!-- 主要内容区域 -->
     <div class="schedule-content">
       <!-- 左侧天数导航 -->
