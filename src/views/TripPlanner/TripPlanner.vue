@@ -6,7 +6,9 @@
         <h2>行程规划</h2>
         <div v-if="currentOngoingTrip" class="ongoing-trip">
           <el-tag type="success">
-            <el-icon><Timer /></el-icon>
+            <el-icon>
+              <Timer />
+            </el-icon>
             <span>当前进行: {{ currentOngoingTrip.name }}</span>
           </el-tag>
           <span class="trip-progress">
@@ -17,7 +19,9 @@
      
       <div class="actions">
         <el-button type="primary" @click="createNewTrip">
-          <el-icon><Plus /></el-icon>新建行程
+          <el-icon>
+            <Plus />
+          </el-icon>新建行程
         </el-button>
       </div>
     </div>
@@ -25,8 +29,7 @@
     <div class="planner-content">
       <!-- 行程列表 -->
       <el-row v-loading="loading" :gutter="20">
-        <el-col v-if="trips?.length" :xs="24" :sm="12" :md="8" :lg="6" 
-                v-for="trip in trips" :key="trip.id">
+        <el-col v-if="trips?.length" :xs="24" :sm="12" :md="8" :lg="6" v-for="trip in trips" :key="trip.id">
           <el-card class="trip-card" :body-style="{ padding: '0px' }">
             <div class="trip-status" :class="getStatusClass(trip.status)">
               <el-dropdown @command="(command) => handleStatusChange(trip, command)">
@@ -46,7 +49,9 @@
             <div class="trip-info">
               <h3>{{ trip.name }}</h3>
               <p class="trip-date">
-                <el-icon><Calendar /></el-icon>
+                <el-icon>
+                  <Calendar />
+                </el-icon>
                 {{ formatDateRange(trip.startDate, trip.endDate) }}
                 <span class="trip-duration">{{ calculateTotalDays(trip) }}天</span>
               </p>
@@ -57,11 +62,8 @@
                   <span>行程进度</span>
                   <span>{{ calculateProgress(trip) }}%</span>
                 </div>
-                <el-progress 
-                  :percentage="calculateProgress(trip)"
-                  :status="getProgressStatus(trip)"
-                  :stroke-width="8"
-                />
+                <el-progress :percentage="calculateProgress(trip)" :status="getProgressStatus(trip)"
+                  :stroke-width="8" />
               </div>
 
               <p class="trip-desc">{{ trip.description || '暂无描述' }}</p>
@@ -69,7 +71,9 @@
               <!-- 修改日程概览 -->
               <div class="schedule-overview" v-if="trip.schedules?.length">
                 <div class="overview-header">
-                  <el-icon><List /></el-icon>
+                  <el-icon>
+                    <List />
+                  </el-icon>
                   <span>今日安排</span>
                   <el-tag size="small" type="info" class="schedule-count">
                     共 {{ getTodaySchedules(trip, false).length }} 项
@@ -78,20 +82,12 @@
                 
                 <!-- 添加时间轴视图 -->
                 <el-timeline v-if="getTodaySchedules(trip, false).length">
-                  <el-timeline-item
-                    v-for="schedule in getTodaySchedules(trip, false)"
-                    :key="schedule.id"
-                    :type="getScheduleTypeTag(schedule.scheduleType)"
-                    :timestamp="formatTime(schedule.startTime)"
-                    size="small"
-                    :hollow="true"
-                  >
+                  <el-timeline-item v-for="schedule in getTodaySchedules(trip, false)" :key="schedule.id"
+                    :type="getScheduleTypeTag(schedule.scheduleType)" :timestamp="formatTime(schedule.startTime)"
+                    size="small" :hollow="true">
                     <div class="timeline-content">
                       <div class="schedule-header">
-                        <el-tag 
-                          size="small" 
-                          :type="getScheduleTypeTag(schedule.scheduleType)"
-                        >
+                        <el-tag size="small" :type="getScheduleTypeTag(schedule.scheduleType)">
                           {{ getScheduleTypeText(schedule.scheduleType) }}
                         </el-tag>
                         <span class="duration">
@@ -103,7 +99,9 @@
                         <h4>{{ schedule.title }}</h4>
                         <template v-if="schedule.location">
                           <p class="location">
-                            <el-icon><Location /></el-icon>
+                            <el-icon>
+                              <Location />
+                            </el-icon>
                             {{ schedule.location }}
                           </p>
                         </template>
@@ -112,7 +110,9 @@
                         </template>
                         <template v-if="schedule.estimatedCost">
                           <p class="cost">
-                            <el-icon><Money /></el-icon>
+                            <el-icon>
+                              <Money />
+                            </el-icon>
                             预计费用: ¥{{ schedule.estimatedCost }}
                           </p>
                         </template>
@@ -125,11 +125,7 @@
                   <el-empty :image-size="60" description="今日暂无安排">
                     <template #description>
                       <p>今日暂无安排</p>
-                      <el-button 
-                        type="primary" 
-                        link 
-                        @click="viewSchedule(trip)"
-                      >
+                      <el-button type="primary" link @click="viewSchedule(trip)">
                         立即添加
                       </el-button>
                     </template>
@@ -139,12 +135,16 @@
 
               <div class="trip-meta">
                 <div class="meta-item" v-if="trip.totalBudget">
-                  <el-icon><Money /></el-icon>
+                  <el-icon>
+                    <Money />
+                  </el-icon>
                   <span>预算: ¥{{ trip.totalBudget }}</span>
                   <small>¥{{ calculateDailyBudget(trip) }}/天</small>
                 </div>
                 <div class="meta-item" v-if="trip.schedules?.length">
-                  <el-icon><Timer /></el-icon>
+                  <el-icon>
+                    <Timer />
+                  </el-icon>
                   <span>{{ trip.schedules.length }}个日程安排</span>
                 </div>
               </div>
@@ -178,30 +178,15 @@
 
       <!-- 添加分页组件 -->
       <div class="pagination-container" v-if="total > 0">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 30, 50]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 30, 50]"
+          :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
       </div>
     </div>
 
     <!-- 新建/编辑行程对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="isEdit ? '编辑行程' : '新建行程'"
-      width="50%"
-      destroy-on-close>
-      <trip-form
-        v-if="dialogVisible"
-        :trip="currentTrip"
-        @submit="handleTripSubmit"
-        @cancel="dialogVisible = false"
-      />
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑行程' : '新建行程'" width="50%" destroy-on-close>
+      <trip-form v-if="dialogVisible" :trip="currentTrip" @submit="handleTripSubmit" @cancel="dialogVisible = false" />
     </el-dialog>
 
     <!-- 修改日程安排对话框 -->
@@ -212,23 +197,124 @@
           <div class="schedule-dialog">
             <div class="schedule-dialog-header">
               <h3>{{ currentTrip?.name }} - 日程安排</h3>
-              <el-button 
-                class="close-btn" 
-                circle 
-                @click="scheduleDialogVisible = false"
-              >
-                <el-icon><Close /></el-icon>
+              <el-button class="close-btn" circle @click="scheduleDialogVisible = false">
+                <el-icon>
+                  <Close />
+                </el-icon>
               </el-button>
             </div>
-            
+
             <div class="schedule-dialog-body">
-              <trip-schedule
-                :trip-id="currentTrip?.id"
-                :trip-name="currentTrip?.name"
-                :start-date="currentTrip?.startDate"
-                :end-date="currentTrip?.endDate"
-                @back="scheduleDialogVisible = false"
-              />
+              <div class="schedule-content">
+                <!-- 左侧日程列表 -->
+                <div class="schedule-list">
+                  <trip-schedule :trip-id="currentTrip?.id" :trip-name="currentTrip?.name"
+                    :start-date="currentTrip?.startDate" :end-date="currentTrip?.endDate"
+                    @back="scheduleDialogVisible = false" @select-schedule="handleScheduleSelect" />
+                </div>
+
+                <!-- 右侧路线规划 -->
+                <div class="route-planning" v-if="selectedSchedules.length > 1">
+                  <div class="route-header">
+                    <h4>路线规划</h4>
+                    <el-radio-group v-model="routeType" size="small">
+                      <el-radio-button :value="0">驾车</el-radio-button>
+                      <el-radio-button :value="1">公交</el-radio-button>
+                      <el-radio-button :value="2">步行</el-radio-button>
+                      <el-radio-button :value="3">骑行</el-radio-button>
+                    </el-radio-group>
+                  </div>
+
+                  <div class="route-content" v-loading="routeLoading">
+                    <template v-if="routeData">
+                      <div class="route-locations">
+                        <div class="location-item start">
+                          <div class="location-label">起点</div>
+                          <div class="location-name">{{ routeData.startLocation.name }}</div>
+                          <div class="location-address">{{ routeData.startLocation.address }}</div>
+                        </div>
+                        <div class="location-divider">
+                          <el-icon>
+                            <ArrowRight />
+                          </el-icon>
+                        </div>
+                        <div class="location-item end">
+                          <div class="location-label">终点</div>
+                          <div class="location-name">{{ routeData.endLocation.name }}</div>
+                          <div class="location-address">{{ routeData.endLocation.address }}</div>
+                        </div>
+                      </div>
+
+                      <div class="route-summary">
+                        <div class="summary-item">
+                          <el-icon>
+                            <Timer />
+                          </el-icon>
+                          <span>预计时间: {{ formatDuration(routeData.duration) }}</span>
+                        </div>
+                        <div class="summary-item">
+                          <el-icon>
+                            <Location />
+                          </el-icon>
+                          <span>总距离: {{ formatDistance(routeData.distance) }}</span>
+                        </div>
+                      </div>
+
+                      <!-- 驾车、步行、骑行路线 -->
+                      <template v-if="routeType !== 1">
+                        <el-timeline>
+                          <el-timeline-item v-for="(step, index) in routeData.steps" :key="index"
+                            :type="getRouteStepType(step)" size="normal">
+                            <div class="route-step">
+                              <div class="step-instruction">{{ step.instruction }}</div>
+                              <div class="step-detail">
+                                <span>{{ step.road }}</span>
+                                <span class="step-distance">{{ formatDistance(step.distance) }}</span>
+                              </div>
+                            </div>
+                          </el-timeline-item>
+                        </el-timeline>
+                      </template>
+
+                      <!-- 公交路线 -->
+                      <template v-else>
+                        <div class="transit-routes">
+                          <div v-for="(transit, index) in routeData.transits" :key="index" class="transit-route">
+                            <div class="transit-summary">
+                              <span class="transit-cost">费用: ¥{{ transit.cost }}</span>
+                              <span class="transit-duration">
+                                {{ formatDuration(transit.duration) }}
+                              </span>
+                              <span class="walking-distance">
+                                步行: {{ formatDistance(transit.walking_distance) }}
+                              </span>
+                            </div>
+
+                            <el-timeline>
+                              <el-timeline-item v-for="(segment, sIndex) in transit.segments" :key="sIndex"
+                                :type="getTransitType(segment)" size="normal">
+                                <template v-if="segment.bus">
+                                  <div v-for="line in segment.bus.buslines" :key="line.name" class="bus-line">
+                                    <div class="line-name">{{ line.name }}</div>
+                                    <div class="line-stops">
+                                      {{ line.departure_stop }} → {{ line.arrival_stop }}
+                                      <span class="via-stops">
+                                        (途经{{ line.via_num }}站)
+                                      </span>
+                                    </div>
+                                  </div>
+                                </template>
+                              </el-timeline-item>
+                            </el-timeline>
+                          </div>
+                        </div>
+                      </template>
+                    </template>
+
+                    <el-empty v-else-if="!routeLoading" description="请选择两个以上日程查看路线规划" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -236,26 +322,15 @@
     </Transition>
 
     <!-- 位置信息悬浮展示 -->
-    <div 
-      class="location-display-wrapper"
-      @mouseenter="handleLocationEnter"
-      @mouseleave="handleLocationLeave"
-    >
-      <el-button 
-        class="location-trigger"
-        circle
-        :class="{ active: showLocation }"
-      >
-        <el-icon><Location /></el-icon>
+    <div class="location-display-wrapper" @mouseenter="handleLocationEnter" @mouseleave="handleLocationLeave">
+      <el-button class="location-trigger" circle :class="{ active: showLocation }">
+        <el-icon>
+          <Location />
+        </el-icon>
       </el-button>
       
       <Transition name="fade-slide">
-        <div 
-          v-show="showLocation" 
-          class="location-popup"
-          @mouseenter="handlePopupEnter"
-          @mouseleave="handlePopupLeave"
-        >
+        <div v-show="showLocation" class="location-popup" @mouseenter="handlePopupEnter" @mouseleave="handlePopupLeave">
           <CurrentLocation />
         </div>
       </Transition>
@@ -264,15 +339,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location, Close } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location, Close, ArrowRight } from '@element-plus/icons-vue'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
 import dayjs from 'dayjs'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import TripSchedule from './components/TripSchedule.vue'
 import CurrentLocation from '@/components/LocationDisplay/CurrentLocation.vue'
+import { getRouteAPI, geocodeAPI, batchGeocodeAPI } from '@/api/locationApi'
 
 const tripStore = useTripStore()
 const trips = ref([])
@@ -285,6 +361,12 @@ const currentTrip = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+// 在 script setup 中添加
+const selectedSchedules = ref([])
+const routeType = ref(0)
+const routeLoading = ref(false)
+const routeData = ref(null)
 
 // 获取行程状态文本
 const getStatusText = (status) => {
@@ -605,6 +687,215 @@ onBeforeUnmount(() => {
 onMounted(() => {
   loadTrips()
 })
+
+/**
+ * @description 处理日程选择
+ * @param {Array} schedules 选中的日程
+ */
+const handleScheduleSelect = async (schedules) => {
+  selectedSchedules.value = schedules
+  if (schedules.length > 1) {
+    await loadRouteData()
+  } else {
+    routeData.value = null
+  }
+}
+
+/**
+ * @description 获取相邻的两个景点游览目的地
+ * @param {Array} schedules 日程列表
+ * @returns {Array} 相邻的两个景点
+ */
+const getAdjacentDestinations = (schedules) => {
+  // 过滤出景点类型的日程
+  const destinations = schedules.filter(schedule => {
+    return (schedule.type === 'destination' || schedule.scheduleType === 1) && schedule.location
+  })
+
+  if (destinations.length < 2) return null
+
+  // 获取相邻的两个景点
+  const pairs = []
+  for (let i = 0; i < destinations.length - 1; i++) {
+    pairs.push([destinations[i], destinations[i + 1]])
+  }
+
+  return pairs
+}
+
+/**
+ * @description 加载路线规划数据
+ */
+const loadRouteData = async () => {
+  if (selectedSchedules.value.length < 2) return
+
+  routeLoading.value = true
+  try {
+    // 获取相邻的两个景点
+    const destinationPairs = getAdjacentDestinations(selectedSchedules.value)
+    if (!destinationPairs) {
+      ElMessage.warning('请至少选择两个景点游览日程')
+      return
+    }
+    
+    // 获取当前选中的相邻景点对
+    const currentPair = destinationPairs[0]
+    
+    // 获取两个景点的地址
+    const addresses = [
+      currentPair[0].title,  // 第一个景点的地址
+      currentPair[1].title   // 第二个景点的地址
+    ]
+    
+    // 批量获取经纬度
+    const coordinates = await batchGeocodeAPI(addresses)
+    
+    // 验证经纬度是否有效
+    if (!coordinates[0]?.data?.longitude || !coordinates[0]?.data?.latitude || 
+        !coordinates[1]?.data?.longitude || !coordinates[1]?.data?.latitude) {
+      throw new Error('无法获取景点位置信息，请确保景点地址正确')
+    }
+
+    // 调用路线规划接口
+    const [start, end] = coordinates
+    // 计算两点之间的直线距离（单位：千米）
+    const distance = calculateDistance(
+      start.data.latitude, start.data.longitude,
+      end.data.latitude, end.data.longitude
+    )
+    
+    // 根据不同交通方式检查距离限制
+    if (routeType.value === 1 && distance > 50) { // 公交限制50km
+      throw new Error('公交路线规划距离不能超过50公里，请选择其他出行方式')
+    } else if (routeType.value === 2 && distance > 5) { // 步行限制5km
+      throw new Error('步行路线规划距离不能超过5公里，请选择其他出行方式')
+    }
+
+    const routeResult = await getRouteAPI({
+      startLon: start.data.longitude,
+      startLat: start.data.latitude,
+      endLon: end.data.longitude,
+      endLat: end.data.latitude,
+      type: routeType.value
+    })
+
+    if (routeResult.code === 0) {
+      routeData.value = routeResult.data
+      // 添加起点和终点信息到路线数据中
+      routeData.value.startLocation = {
+        name: currentPair[0].title || currentPair[0].name,  // 使用 title 或 name 作为景点名称
+        address: currentPair[0].location
+      }
+      routeData.value.endLocation = {
+        name: currentPair[1].title || currentPair[1].name,
+        address: currentPair[1].location
+      }
+    } else {
+      throw new Error(routeResult.message || '获取路线规划失败')
+    }
+  } catch (error) {
+    console.error('路线规划错误:', error)
+    throw error
+  } finally {
+    routeLoading.value = false
+  }
+}
+
+/**
+ * @description 计算两点之间的直线距离
+ * @param {number} lat1 第一个点的纬度
+ * @param {number} lon1 第一个点的经度
+ * @param {number} lat2 第二个点的纬度
+ * @param {number} lon2 第二个点的经度
+ * @returns {number} 距离（千米）
+ */
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371 // 地球半径（千米）
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c
+}
+
+// 更新路线规划展示部分
+const renderRouteLocations = computed(() => {
+  if (!routeData.value) return null
+  return {
+    start: routeData.value.startLocation,
+    end: routeData.value.endLocation
+  }
+})
+
+/**
+ * @description 格式化持续时间
+ * @param {number} seconds 秒数
+ */
+const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (hours > 0) {
+    return `${hours}小时${minutes}分钟`
+  }
+  return `${minutes}分钟`
+}
+
+/**
+ * @description 格式化距离
+ * @param {number} meters 米数
+ */
+const formatDistance = (meters) => {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)}公里`
+  }
+  return `${meters}米`
+}
+
+/**
+ * @description 获取路线步骤类型
+ */
+const getRouteStepType = (step) => {
+  // 根据实际情况返回不同的类型
+  return 'primary'
+}
+
+/**
+ * @description 获取公交路线类型
+ */
+const getTransitType = (segment) => {
+  if (segment.bus) return 'success'
+  return 'info'
+}
+
+// 监听路线类型变化
+watch(routeType, async () => {
+  if (selectedSchedules.value.length > 1) {
+    try {
+      // 根据不同交通方式显示提示
+      if (routeType.value === 1) {
+        ElMessage.warning('公交路线规划限制距离50公里以内')
+      } else if (routeType.value === 2) {
+        ElMessage.warning('步行路线规划限制距离5公里以内')
+      } else if (routeType.value === 3) {
+        ElMessage.warning('骑行路线规划可能不支持部分区域，如遇到错误请尝试其他出行方式')
+      }
+      await loadRouteData()
+    } catch (error) {
+      // 如果路线规划失败，自动切换回驾车方式
+      if (routeType.value !== 0) {
+        ElMessage.error(`${error.message}，已自动切换为驾车方式`)
+        routeType.value = 0
+        await loadRouteData()
+      } else {
+        ElMessage.error(error.message || '路线规划失败')
+      }
+    }
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -655,7 +946,7 @@ onMounted(() => {
     
     &:hover {
       transform: translateY(-5px);
-      box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
     }
 
     .trip-status {
@@ -726,10 +1017,9 @@ onMounted(() => {
         color: #606266;
         font-size: 14px;
         margin: 10px 0;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
         overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
 
       .trip-meta {
@@ -954,7 +1244,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   .schedule-dialog-mask {
     position: absolute;
     top: 0;
@@ -964,7 +1254,7 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
   }
-  
+
   .schedule-dialog-wrapper {
     position: relative;
     width: 50vw;
@@ -973,7 +1263,7 @@ onMounted(() => {
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     overflow: hidden;
-    
+
     .schedule-dialog {
       height: 100%;
       display: flex;
@@ -1017,11 +1307,11 @@ onMounted(() => {
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
   transition: all 0.3s ease-out;
-  
+
   .schedule-dialog-wrapper {
     transition: all 0.3s ease-out;
   }
-  
+
   .schedule-dialog-mask {
     transition: all 0.3s ease-out;
   }
@@ -1030,11 +1320,11 @@ onMounted(() => {
 .dialog-fade-enter-from,
 .dialog-fade-leave-to {
   opacity: 0;
-  
+
   .schedule-dialog-wrapper {
     transform: scale(0.95) translateY(20px);
   }
-  
+
   .schedule-dialog-mask {
     opacity: 0;
   }
@@ -1043,13 +1333,191 @@ onMounted(() => {
 .dialog-fade-enter-to,
 .dialog-fade-leave-from {
   opacity: 1;
-  
+
   .schedule-dialog-wrapper {
     transform: scale(1) translateY(0);
   }
-  
+
   .schedule-dialog-mask {
     opacity: 1;
+  }
+}
+
+.schedule-dialog-body {
+  .schedule-content {
+    display: flex;
+    height: 100%;
+
+    .schedule-list {
+      flex: 1;
+      min-width: 0;
+      padding-right: 20px;
+      border-right: 1px solid var(--el-border-color-light);
+    }
+
+    .route-planning {
+      width: 360px;
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+
+      .route-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h4 {
+          margin: 0;
+          font-size: 16px;
+          color: var(--el-text-color-primary);
+        }
+      }
+
+      .route-content {
+        flex: 1;
+        overflow-y: auto;
+
+        .route-locations {
+          margin-bottom: 16px;
+          padding: 12px;
+          background: var(--el-bg-color);
+          border-radius: 4px;
+          border: 1px solid var(--el-border-color-light);
+
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .location-item {
+            flex: 1;
+            min-width: 0;
+
+            .location-label {
+              font-size: 12px;
+              color: var(--el-text-color-secondary);
+              margin-bottom: 4px;
+            }
+
+            .location-name {
+              font-weight: 500;
+              color: var(--el-text-color-primary);
+              margin-bottom: 4px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+
+            .location-address {
+              font-size: 12px;
+              color: var(--el-text-color-regular);
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+
+            &.start {
+              .location-label {
+                color: var(--el-color-success);
+              }
+            }
+
+            &.end {
+              .location-label {
+                color: var(--el-color-danger);
+              }
+            }
+          }
+
+          .location-divider {
+            color: var(--el-text-color-secondary);
+            display: flex;
+            align-items: center;
+
+            .el-icon {
+              font-size: 20px;
+            }
+          }
+        }
+
+        .route-summary {
+          margin-bottom: 16px;
+          padding: 12px;
+          background: var(--el-fill-color-light);
+          border-radius: 4px;
+
+          .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--el-text-color-regular);
+
+            &:not(:last-child) {
+              margin-bottom: 8px;
+            }
+
+            .el-icon {
+              font-size: 16px;
+              color: var(--el-color-primary);
+            }
+          }
+        }
+
+        .route-step {
+          .step-instruction {
+            color: var(--el-text-color-primary);
+            margin-bottom: 4px;
+          }
+
+          .step-detail {
+            display: flex;
+            justify-content: space-between;
+            color: var(--el-text-color-secondary);
+            font-size: 13px;
+          }
+        }
+
+        .transit-routes {
+          .transit-route {
+            &:not(:last-child) {
+              margin-bottom: 24px;
+              padding-bottom: 24px;
+              border-bottom: 1px dashed var(--el-border-color);
+            }
+
+            .transit-summary {
+              margin-bottom: 16px;
+              display: flex;
+              gap: 16px;
+              color: var(--el-text-color-regular);
+              font-size: 13px;
+
+              .transit-cost {
+                color: var(--el-color-danger);
+              }
+            }
+
+            .bus-line {
+              .line-name {
+                font-weight: 500;
+                color: var(--el-text-color-primary);
+                margin-bottom: 4px;
+              }
+
+              .line-stops {
+                font-size: 13px;
+                color: var(--el-text-color-regular);
+
+                .via-stops {
+                  color: var(--el-text-color-secondary);
+                  margin-left: 8px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
 </style> 

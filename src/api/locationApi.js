@@ -113,4 +113,43 @@ export const getRouteAPI = ({ startLon, startLat, endLon, endLat, type }) => {
         },
         needToken: true
     })
+}
+
+/**
+ * @description 地址解析(地理编码)
+ * @param {string} address 详细地址
+ * @returns {Promise} 位置信息
+ */
+export const geocodeAPI = (address) => {
+    if (!address || typeof address !== 'string') {
+        ElMessage.error('无效的地址信息')
+        return Promise.reject(new Error('无效的地址信息'))
+    }
+
+    return request({
+        url: 'dev-api/location/geocode',
+        method: 'GET',
+        params: { address },
+        needToken: true
+    })
+}
+
+/**
+ * @description 批量获取地址的经纬度坐标
+ * @param {Array<string>} addresses 地址数组
+ * @returns {Promise<Array>} 坐标信息数组
+ */
+export const batchGeocodeAPI = async (addresses) => {
+    if (!Array.isArray(addresses) || addresses.length === 0) {
+        ElMessage.error('无效的地址列表')
+        return Promise.reject(new Error('无效的地址列表'))
+    }
+
+    try {
+        const promises = addresses.map(address => geocodeAPI(address))
+        return await Promise.all(promises)
+    } catch (error) {
+        ElMessage.error('批量解析地址失败')
+        return Promise.reject(error)
+    }
 } 

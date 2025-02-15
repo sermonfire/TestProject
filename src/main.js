@@ -18,8 +18,6 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { Button as TButton, Input as TInput } from 'tdesign-vue-next';
 import 'tdesign-vue-next/es/style/index.css';
 
-import { vDraggable } from './directives/draggable'
-
 const app = createApp(App)
 
 app.use(createPinia().use(createPersistedState()))
@@ -34,9 +32,6 @@ app.component('t-input', TInput)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, markRaw(component))
 }
-
-// 注册拖拽指令
-app.directive('draggable', vDraggable)
 
 // 添加性能监控
 if (process.env.NODE_ENV === 'production') {

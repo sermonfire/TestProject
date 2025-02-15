@@ -49,16 +49,22 @@
                   v-for="item in mergedSchedules"
                   :key="item.id"
                   :type="getItemTypeTag(item)"
+                  size="normal"
                   :timestamp="formatTime(item.startTime)"
-                  size="large"
                 >
                   <el-card 
                     class="schedule-card"
                     :class="getItemClass(item)"
-                    v-draggable="getItemDragOptions(item)"
                   >
                     <template #header>
                       <div class="card-header">
+                        <div class="schedule-select">
+                          <el-checkbox 
+                            v-model="selectedItems[item.id]"
+                            @change="handleScheduleSelect"
+                            :disabled="!isScheduleSelectable(item)"
+                          />
+                        </div>
                         <div class="schedule-type">
                           <el-tag :type="getItemTypeTag(item)" size="small">
                             {{ getItemTypeText(item) }}
@@ -371,7 +377,6 @@ import {
   getRecommendRouteAPI,
   searchDestinationsAPI
 } from '@/api/destinationApi'
-import { vDraggable } from '@/directives/draggable'
 
 const props = defineProps({
   tripId: {
@@ -695,7 +700,6 @@ const getScheduleTypeClass = (type) => {
 
 // 目的地相关数据和方法
 const dayDestinations = ref({})
-const dragging = ref(false)
 
 // 加载目的地数据
 const loadDayDestinations = async (dayIndex) => {
@@ -706,19 +710,6 @@ const loadDayDestinations = async (dayIndex) => {
     }
   } catch (error) {
     console.error('加载目的地数据失败:', error)
-  }
-}
-
-// 处理拖拽排序
-const handleDrag = async ({ dragged, target }) => {
-  if (!dragged || !target) return
-  
-  try {
-    await updateVisitOrderAPI(props.tripId, dragged.id, target.visitOrder)
-    await loadDayDestinations(currentDay.value)
-    ElMessage.success('更新游览顺序成功')
-  } catch (error) {
-    ElMessage.error('更新游览顺序失败')
   }
 }
 
@@ -895,46 +886,6 @@ const handleRemoveDestination = async (destination) => {
   }
 }
 
-// 添加日程拖拽相关方法
-const handleDragSchedule = async ({ dragged, target }) => {
-  if (!dragged || !target) return
-  
-  try {
-    // 获取当前日期
-    const currentDate = getDateByIndex(currentDay.value)
-    
-    // 准备更新数据
-    const updateData = {
-      dayIndex: currentDay.value,
-      // 使用目标位置的时间
-      startTime: `${currentDate}T${formatTime(target.startTime)}:00`,
-      endTime: `${currentDate}T${formatTime(target.endTime)}:00`
-    }
-
-    // 调用更新接口
-    const { code, message } = await updateScheduleAPI(props.tripId, dragged.id, updateData)
-    if (code === 0) {
-      ElMessage.success('更新日程顺序成功')
-      await loadSchedules()
-    } else {
-      throw new Error(message)
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '更新日程顺序失败')
-  }
-}
-
-// 修改日程卡片的拖拽指令参数
-const getScheduleDragOptions = (schedule) => ({
-  onDrag: handleDragSchedule,
-  data: {
-    id: schedule.id,
-    startTime: schedule.startTime,
-    endTime: schedule.endTime,
-    dayIndex: currentDay.value
-  }
-})
-
 // 景点搜索相关
 const searchLoading = ref(false)
 const destinationOptions = ref([])
@@ -1043,15 +994,48 @@ const getItemClass = (item) => {
   }
 }
 
-const getItemDragOptions = (item) => {
-  if (item.type === 'destination') {
-    return {
-      onDrag: handleDragDestination,
-      data: { id: item.id, visitOrder: item.visitOrder, type: 'destination' }
-    }
-  }
-  return getScheduleDragOptions(item)
+// 添加选择相关的响应式数据
+const selectedItems = ref({})  // 使用对象存储选中状态，key为日程id
+const selectedSchedules = computed(() => {
+  return mergedSchedules.value.filter(item => selectedItems.value[item.id])
+})
+
+/**
+ * @description 判断日程是否可选
+ * @param {Object} schedule 日程对象
+ */
+const isScheduleSelectable = (schedule) => {
+  // 判断是否为景点类型
+  return schedule.type === 'destination' || schedule.scheduleType === 1
 }
+
+/**
+ * @description 处理日程选择变化
+ */
+const handleScheduleSelect = () => {
+  // 获取选中的日程列表
+  const selected = selectedSchedules.value
+  
+  // 按时间排序
+  selected.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  
+  // 触发选择事件
+  emit('select-schedule', selected)
+}
+
+// 清除选择
+const clearSelection = () => {
+  selectedItems.value = {}
+  handleScheduleSelect()
+}
+
+// 在日期变化时清除选择
+watch(currentDay, () => {
+  clearSelection()
+})
+
+// 添加到 defineEmits
+const emit = defineEmits(['back', 'select-schedule'])
 </script>
 
 <style lang="scss" scoped>
@@ -1152,29 +1136,7 @@ const getItemDragOptions = (item) => {
         .schedule-timeline {
           .schedule-card {
             margin-bottom: 16px;
-            transition: all 0.3s;
-            cursor: move;
-
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: var(--el-box-shadow-light);
-            }
-
-            &.destination-card {
-              border-left: 4px solid var(--el-color-success);
-            }
-
-            &.type-meal {
-              border-left: 4px solid var(--el-color-warning);
-            }
-
-            &.type-rest {
-              border-left: 4px solid var(--el-color-info);
-            }
-
-            &.type-transport {
-              border-left: 4px solid var(--el-color-primary);
-            }
+            transition: all 0.3s ease;
           }
         }
       }
@@ -1229,5 +1191,46 @@ const getItemDragOptions = (item) => {
 .unit {
   margin-left: 8px;
   color: var(--el-text-color-regular);
+}
+
+.schedule-card {
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  
+  .card-header {
+    padding: 12px 16px;
+    background-color: var(--el-bg-color-page);
+    border-bottom: 1px solid var(--el-border-color-light);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .schedule-select {
+      display: flex;
+      align-items: center;
+      
+      :deep(.el-checkbox) {
+        margin-right: 0;
+      }
+    }
+    
+    .schedule-type {
+      flex-shrink: 0;
+    }
+    
+    .schedule-time {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.schedule-card.is-selected {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+  
+  .card-header {
+    background-color: var(--el-color-primary-light-9);
+  }
 }
 </style> 
