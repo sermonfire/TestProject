@@ -214,7 +214,12 @@
                 </div>
 
                 <!-- 右侧路线规划 -->
-                <div class="route-planning" v-if="selectedSchedules.length > 1">
+                <div class="route-planning" :class="{ 'is-expanded': isRouteExpanded }">
+                  <div class="route-toggle" @click="toggleRoute">
+                    <el-icon :class="{ 'is-expanded': isRouteExpanded }">
+                      <ArrowLeft />
+                    </el-icon>
+                  </div>
                   <div class="route-header">
                     <h4>路线规划</h4>
                     <el-radio-group v-model="routeType" size="small">
@@ -341,7 +346,7 @@
 <script setup>
 import { ref, onMounted, computed, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location, Close, ArrowRight } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location, Close, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
 import dayjs from 'dayjs'
@@ -367,6 +372,9 @@ const selectedSchedules = ref([])
 const routeType = ref(0)
 const routeLoading = ref(false)
 const routeData = ref(null)
+
+// 控制路线规划抽屉的展开状态
+const isRouteExpanded = ref(false)
 
 // 获取行程状态文本
 const getStatusText = (status) => {
@@ -503,8 +511,23 @@ const handleCurrentChange = (val) => {
 // 添加日程安排对话框的响应式数据
 const scheduleDialogVisible = ref(false)
 
-// 查看日程安排
+// 清理路线规划数据
+const clearRouteData = () => {
+  selectedSchedules.value = []
+  routeData.value = null
+  routeType.value = 0
+}
+
+// 监听对话框关闭
+watch(scheduleDialogVisible, (newVal) => {
+  if (!newVal) {
+    clearRouteData()
+  }
+})
+
+// 修改查看日程方法
 const viewSchedule = (trip) => {
+  clearRouteData() // 清理之前的路线数据
   currentTrip.value = trip
   scheduleDialogVisible.value = true
 }
@@ -894,6 +917,18 @@ watch(routeType, async () => {
         ElMessage.error(error.message || '路线规划失败')
       }
     }
+  }
+})
+
+// 添加新的计算方法
+const toggleRoute = () => {
+  isRouteExpanded.value = !isRouteExpanded.value
+}
+
+// 监听选中日程变化，自动展开抽屉
+watch(() => selectedSchedules.value.length, (newLength) => {
+  if (newLength > 1) {
+    isRouteExpanded.value = true
   }
 })
 </script>
@@ -1356,10 +1391,46 @@ watch(routeType, async () => {
     }
 
     .route-planning {
+      position: absolute;
+      right: -360px;
+      top: 0;
+      bottom: 0;
       width: 360px;
       margin-left: 20px;
       display: flex;
       flex-direction: column;
+      background: var(--el-bg-color);
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      z-index: 10;
+      
+      &.is-expanded {
+        transform: translateX(-360px);
+      }
+      
+      .route-toggle {
+        position: absolute;
+        left: -20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 60px;
+        background: var(--el-color-primary);
+        border-radius: 4px 0 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: white;
+        
+        .el-icon {
+          transition: transform 0.3s ease;
+          
+          &.is-expanded {
+            transform: rotate(180deg);
+          }
+        }
+      }
 
       .route-header {
         display: flex;

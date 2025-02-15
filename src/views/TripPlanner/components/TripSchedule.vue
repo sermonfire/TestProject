@@ -1020,6 +1020,11 @@ const handleScheduleSelect = () => {
   emit('select-schedule', selected)
 }
 
+// 监听 tripId 变化
+watch(() => props.tripId, () => {
+  clearSelection()
+})
+
 // 清除选择
 const clearSelection = () => {
   selectedItems.value = {}
