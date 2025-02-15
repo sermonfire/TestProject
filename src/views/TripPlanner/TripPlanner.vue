@@ -236,71 +236,81 @@
                         <h4>路线规划</h4>
                         <span class="subtitle">{{ selectedSchedules.length }} 个景点已选择</span>
                       </div>
-                      <el-radio-group v-model="routeType" size="small">
-                        <el-radio-button :value="0">
-                          <el-icon><Van /></el-icon>驾车
-                        </el-radio-button>
-                        <el-radio-button :value="1">
-                          <el-icon><Connection /></el-icon>公交
-                        </el-radio-button>
-                        <el-radio-button :value="2">
-                          <el-icon><Position /></el-icon>步行
-                        </el-radio-button>
-                        <el-radio-button :value="3">
-                          <el-icon><Bicycle /></el-icon>骑行
-                        </el-radio-button>
-                      </el-radio-group>
+                      <div class="transport-options">
+                        <el-radio-group v-model="routeType" size="small">
+                          <el-radio-button :value="0">
+                            <el-icon><Van /></el-icon>驾车
+                          </el-radio-button>
+                          <el-radio-button :value="1">
+                            <el-icon><Connection /></el-icon>公交
+                          </el-radio-button>
+                          <el-radio-button :value="2">
+                            <el-icon><Position /></el-icon>步行
+                          </el-radio-button>
+                          <el-radio-button :value="3">
+                            <el-icon><Bicycle /></el-icon>骑行
+                          </el-radio-button>
+                        </el-radio-group>
+                      </div>
                     </div>
 
                     <div class="route-body" v-loading="routeLoading">
                       <template v-if="routeData">
-                        <div class="route-locations">
-                          <div class="location-item start">
-                            <div class="location-label">起点</div>
-                            <div class="location-name">{{ routeData.startLocation.name }}</div>
-                            <div class="location-address">{{ routeData.startLocation.address }}</div>
+                        <!-- 路线概览卡片 -->
+                        <div class="route-overview">
+                          <div class="route-locations">
+                            <div class="location-wrapper">
+                              <div class="location-item start">
+                                <div class="location-label">起点</div>
+                                <div class="location-name">{{ routeData.startLocation.name }}</div>
+                                <div class="location-address">{{ routeData.startLocation.address }}</div>
+                              </div>
+                              <div class="location-divider">
+                                <el-icon><ArrowRight /></el-icon>
+                              </div>
+                              <div class="location-item end">
+                                <div class="location-label">终点</div>
+                                <div class="location-name">{{ routeData.endLocation.name }}</div>
+                                <div class="location-address">{{ routeData.endLocation.address }}</div>
+                              </div>
+                            </div>
                           </div>
-                          <div class="location-divider">
-                            <el-icon>
-                              <ArrowRight />
-                            </el-icon>
-                          </div>
-                          <div class="location-item end">
-                            <div class="location-label">终点</div>
-                            <div class="location-name">{{ routeData.endLocation.name }}</div>
-                            <div class="location-address">{{ routeData.endLocation.address }}</div>
-                          </div>
-                        </div>
 
-                        <div class="route-summary">
-                          <div class="summary-item">
-                            <el-icon>
-                              <Timer />
-                            </el-icon>
-                            <span>预计时间: {{ formatDuration(routeData.duration) }}</span>
-                          </div>
-                          <div class="summary-item">
-                            <el-icon>
-                              <Location />
-                            </el-icon>
-                            <span>总距离: {{ formatDistance(routeData.distance) }}</span>
+                          <!-- 路线统计信息 -->
+                          <div class="route-summary">
+                            <div class="summary-grid">
+                              <div class="summary-item">
+                                <el-icon><Timer /></el-icon>
+                                <span>预计时间: {{ formatDuration(routeData.duration) }}</span>
+                              </div>
+                              <div class="summary-item">
+                                <el-icon><Location /></el-icon>
+                                <span>总距离: {{ formatDistance(routeData.distance) }}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
                         <!-- 驾车、步行、骑行路线 -->
                         <template v-if="routeType !== 1">
-                          <el-timeline>
-                            <el-timeline-item v-for="(step, index) in routeData.steps" :key="index"
-                              :type="getRouteStepType(step)" size="normal">
-                              <div class="route-step">
-                                <div class="step-instruction">{{ step.instruction }}</div>
-                                <div class="step-detail">
-                                  <span>{{ step.road }}</span>
-                                  <span class="step-distance">{{ formatDistance(step.distance) }}</span>
+                          <div class="route-steps">
+                            <el-timeline>
+                              <el-timeline-item 
+                                v-for="(step, index) in routeData.steps" 
+                                :key="index"
+                                :type="getRouteStepType(step)" 
+                                size="normal"
+                              >
+                                <div class="route-step">
+                                  <div class="step-instruction">{{ step.instruction }}</div>
+                                  <div class="step-detail">
+                                    <span>{{ step.road }}</span>
+                                    <span class="step-distance">{{ formatDistance(step.distance) }}</span>
+                                  </div>
                                 </div>
-                              </div>
-                            </el-timeline-item>
-                          </el-timeline>
+                              </el-timeline-item>
+                            </el-timeline>
+                          </div>
                         </template>
 
                         <!-- 公交路线 -->
@@ -309,25 +319,23 @@
                             <div v-for="(transit, index) in routeData.transits" :key="index" class="transit-route">
                               <div class="transit-summary">
                                 <span class="transit-cost">费用: ¥{{ transit.cost }}</span>
-                                <span class="transit-duration">
-                                  {{ formatDuration(transit.duration) }}
-                                </span>
-                                <span class="walking-distance">
-                                  步行: {{ formatDistance(transit.walking_distance) }}
-                                </span>
+                                <span class="transit-duration">{{ formatDuration(transit.duration) }}</span>
+                                <span class="walking-distance">步行: {{ formatDistance(transit.walking_distance) }}</span>
                               </div>
 
                               <el-timeline>
-                                <el-timeline-item v-for="(segment, sIndex) in transit.segments" :key="sIndex"
-                                  :type="getTransitType(segment)" size="normal">
+                                <el-timeline-item 
+                                  v-for="(segment, sIndex) in transit.segments" 
+                                  :key="sIndex"
+                                  :type="getTransitType(segment)" 
+                                  size="normal"
+                                >
                                   <template v-if="segment.bus">
                                     <div v-for="line in segment.bus.buslines" :key="line.name" class="bus-line">
                                       <div class="line-name">{{ line.name }}</div>
                                       <div class="line-stops">
                                         {{ line.departure_stop }} → {{ line.arrival_stop }}
-                                        <span class="via-stops">
-                                          (途经{{ line.via_num }}站)
-                                        </span>
+                                        <span class="via-stops">(途经{{ line.via_num }}站)</span>
                                       </div>
                                     </div>
                                   </template>
@@ -1513,12 +1521,12 @@ const searchKeyword = ref('')
         height: 100%;
         display: flex;
         flex-direction: column;
-        padding: 16px;
+        padding: 0;
         
         .route-header {
-          padding: 16px;
+          padding: 20px;
           background: var(--el-bg-color-page);
-          border-radius: 8px;
+          border-bottom: 1px solid var(--el-border-color-light);
           margin-bottom: 16px;
           
           .header-title {
@@ -1537,19 +1545,27 @@ const searchKeyword = ref('')
             }
           }
           
-          .el-radio-group {
-            display: flex;
-            width: 100%;
+          .transport-options {
+            background: var(--el-fill-color-light);
+            padding: 8px;
+            border-radius: 6px;
             
-            .el-radio-button {
-              flex: 1;
+            .el-radio-group {
+              display: flex;
+              width: 100%;
               
-              :deep(.el-radio-button__inner) {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 4px;
+              .el-radio-button {
+                flex: 1;
+                
+                :deep(.el-radio-button__inner) {
+                  width: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 4px;
+                  padding: 8px 12px;
+                  font-size: 13px;
+                }
               }
             }
           }
@@ -1558,7 +1574,7 @@ const searchKeyword = ref('')
         .route-body {
           flex: 1;
           overflow-y: auto;
-          padding-right: 8px;
+          padding: 0 20px 20px;
           
           &::-webkit-scrollbar {
             width: 4px;
@@ -1568,6 +1584,153 @@ const searchKeyword = ref('')
             background: var(--el-border-color-darker);
             border-radius: 2px;
           }
+          
+          .route-overview {
+            background: var(--el-bg-color-page);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            
+            .route-locations {
+              padding: 16px;
+              border-bottom: 1px solid var(--el-border-color-light);
+              
+              .location-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                
+                .location-item {
+                  flex: 1;
+                  min-width: 0;
+                  
+                  .location-label {
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                    
+                    &.start {
+                      color: var(--el-color-success);
+                    }
+                    
+                    &.end {
+                      color: var(--el-color-danger);
+                    }
+                  }
+                  
+                  .location-name {
+                    font-weight: 500;
+                    margin-bottom: 4px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+                  
+                  .location-address {
+                    font-size: 12px;
+                    color: var(--el-text-color-secondary);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+                }
+                
+                .location-divider {
+                  color: var(--el-text-color-secondary);
+                  display: flex;
+                  align-items: center;
+                  
+                  .el-icon {
+                    font-size: 20px;
+                  }
+                }
+              }
+            }
+            
+            .route-summary {
+              padding: 16px;
+              background: var(--el-fill-color-light);
+              
+              .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                
+                .summary-item {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  color: var(--el-text-color-regular);
+                  font-size: 13px;
+                  
+                  .el-icon {
+                    color: var(--el-color-primary);
+                    font-size: 16px;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.route-steps {
+  background: var(--el-bg-color-page);
+  border-radius: 8px;
+  padding: 16px;
+  
+  .route-step {
+    .step-instruction {
+      color: var(--el-text-color-primary);
+      margin-bottom: 4px;
+    }
+    
+    .step-detail {
+      display: flex;
+      justify-content: space-between;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+  }
+}
+
+.transit-routes {
+  .transit-route {
+    background: var(--el-bg-color-page);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    
+    .transit-summary {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+      
+      .transit-cost {
+        color: var(--el-color-danger);
+      }
+    }
+    
+    .bus-line {
+      margin-bottom: 8px;
+      
+      .line-name {
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+        margin-bottom: 4px;
+      }
+      
+      .line-stops {
+        font-size: 13px;
+        color: var(--el-text-color-regular);
+        
+        .via-stops {
+          color: var(--el-text-color-secondary);
+          margin-left: 8px;
         }
       }
     }
