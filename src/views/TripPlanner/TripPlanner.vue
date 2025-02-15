@@ -14,6 +14,7 @@
           </span>
         </div>
       </div>
+     
       <div class="actions">
         <el-button type="primary" @click="createNewTrip">
           <el-icon><Plus /></el-icon>新建行程
@@ -220,11 +221,37 @@
         @back="scheduleDialogVisible = false"
       />
     </el-dialog>
+
+    <!-- 位置信息悬浮展示 -->
+    <div 
+      class="location-display-wrapper"
+      @mouseenter="handleLocationEnter"
+      @mouseleave="handleLocationLeave"
+    >
+      <el-button 
+        class="location-trigger"
+        circle
+        :class="{ active: showLocation }"
+      >
+        <el-icon><Location /></el-icon>
+      </el-button>
+      
+      <Transition name="fade-slide">
+        <div 
+          v-show="showLocation" 
+          class="location-popup"
+          @mouseenter="handlePopupEnter"
+          @mouseleave="handlePopupLeave"
+        >
+          <CurrentLocation />
+        </div>
+      </Transition>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, ArrowDown, Calendar, Timer, Money, List, Location } from '@element-plus/icons-vue'
 import TripForm from './components/TripForm.vue'
@@ -232,6 +259,7 @@ import { useTripStore } from '@/stores/tripStore'
 import dayjs from 'dayjs'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import TripSchedule from './components/TripSchedule.vue'
+import CurrentLocation from '@/components/LocationDisplay/CurrentLocation.vue'
 
 const tripStore = useTripStore()
 const trips = ref([])
@@ -491,6 +519,75 @@ const getScheduleTypeText = (type) => {
   }
   return typeMap[type] || '其他'
 }
+
+const showLocation = ref(false)
+let hideTimer = null
+let isOverButton = ref(false)
+let isOverPopup = ref(false)
+
+/**
+ * @description 处理按钮的鼠标进入
+ */
+const handleLocationEnter = () => {
+  isOverButton.value = true
+  showLocation.value = true
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+    hideTimer = null
+  }
+}
+
+/**
+ * @description 处理按钮的鼠标离开
+ */
+const handleLocationLeave = () => {
+  isOverButton.value = false
+  // 如果鼠标不在弹出框上,则开始隐藏计时
+  if (!isOverPopup.value) {
+    startHideTimer()
+  }
+}
+
+/**
+ * @description 处理弹出框的鼠标进入
+ */
+const handlePopupEnter = () => {
+  isOverPopup.value = true
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+    hideTimer = null
+  }
+}
+
+/**
+ * @description 处理弹出框的鼠标离开
+ */
+const handlePopupLeave = () => {
+  isOverPopup.value = false
+  // 如果鼠标不在按钮上,则开始隐藏计时
+  if (!isOverButton.value) {
+    startHideTimer()
+  }
+}
+
+/**
+ * @description 开始隐藏计时器
+ */
+const startHideTimer = () => {
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+  }
+  hideTimer = setTimeout(() => {
+    showLocation.value = false
+  }, 300)
+}
+
+// 清理定时器
+onBeforeUnmount(() => {
+  if (hideTimer) {
+    clearTimeout(hideTimer)
+  }
+})
 
 onMounted(() => {
   loadTrips()
@@ -779,5 +876,58 @@ onMounted(() => {
     display: flex;
     justify-content: center;
   }
+
+  .location-display-wrapper {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    
+    .location-trigger {
+      width: 48px;
+      height: 48px;
+      background: var(--el-color-primary);
+      color: white;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      
+      &:hover,
+      &.active {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+      
+      .el-icon {
+        font-size: 20px;
+      }
+    }
+    
+    .location-popup {
+      position: absolute;
+      right: calc(100% + 16px);
+      bottom: 0;
+      width: 360px;
+    }
+  }
+}
+
+// 过渡动画
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateX(0);
 }
 </style> 

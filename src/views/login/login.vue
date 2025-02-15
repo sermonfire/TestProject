@@ -1,96 +1,98 @@
 <template>
-	<div class="index" @keyup.enter="handleEnterKey">
-		<div class="layout">
-			<div class="lbg">
-				<img src="@/static/背景（左）.png" alt="">
-			</div>
-			<div class="rbg">
-				<img src="@/static/背景（底）.jpg" alt="">
-			</div>
-			<div class="login">
-				<div class="title_container">
-					<h1 class="title_1">欢迎登录TravelRec</h1>
-					<h5 class="title_2">Welcome!</h5>
+	<div class="login-page">
+		<div class="index" @keyup.enter="handleEnterKey">
+			<div class="layout">
+				<div class="lbg">
+					<img src="@/static/背景（左）.png" alt="">
 				</div>
-
-				<div class="login-error" v-if="loginError">
-					<div class="login-error-msg">
-						{{ loginErrorMsg }}
+				<div class="rbg">
+					<img src="@/static/背景（底）.jpg" alt="">
+				</div>
+				<div class="login">
+					<div class="title_container">
+						<h1 class="title_1">欢迎登录TravelRec</h1>
+						<h5 class="title_2">Welcome!</h5>
 					</div>
-				</div>
-				<div class="login-error" v-else>
-					<div style="visibility: hidden;">占位符</div>
-				</div>
 
-				<div class="input-container">
-					<el-input ref="phoneInput" v-model="phone" placeholder="请输入手机号" maxlength="11" :prefix-icon="Phone"
-						@input="loginChange">
-						<template #append>
-							<el-tooltip v-if="phone.length > 0" content="请输入中国大陆手机号" placement="top">
-								<el-icon>
-									<InfoFilled />
-								</el-icon>
-							</el-tooltip>
-						</template>
-					</el-input>
-				</div>
+					<div class="login-error" v-if="loginError">
+						<div class="login-error-msg">
+							{{ loginErrorMsg }}
+						</div>
+					</div>
+					<div class="login-error" v-else>
+						<div style="visibility: hidden;">占位符</div>
+					</div>
 
-				<div class="input-container">
-					<el-input v-model="password" type="password" placeholder="请输入密码" maxlength="16" :prefix-icon="Lock"
-						@input="loginChange">
-						<template #append>
-							<el-tooltip v-if="password.length > 0" content="密码必须为8-16位，且包含数字和字母" placement="top">
-								<el-icon>
-									<InfoFilled />
-								</el-icon>
-							</el-tooltip>
-						</template>
-					</el-input>
-				</div>
+					<div class="input-container">
+						<el-input ref="phoneInput" v-model="phone" placeholder="请输入手机号" maxlength="11" :prefix-icon="Phone"
+							@input="loginChange">
+							<template #append>
+								<el-tooltip v-if="phone.length > 0" content="请输入中国大陆手机号" placement="top">
+									<el-icon>
+										<InfoFilled />
+									</el-icon>
+								</el-tooltip>
+							</template>
+						</el-input>
+					</div>
 
-				<div class="checkbox_1">
-					<el-checkbox-group v-model="checkbox_1" @change="handleCheckboxChange">
-						<el-checkbox v-for="item in range_1" :key="item.value" 
-							:value="item.value" :disabled="item.disabled">
-							{{ item.text }}
-						</el-checkbox>
-					</el-checkbox-group>
-				</div>
+					<div class="input-container">
+						<el-input v-model="password" type="password" placeholder="请输入密码" maxlength="16" :prefix-icon="Lock"
+							@input="loginChange">
+							<template #append>
+								<el-tooltip v-if="password.length > 0" content="密码必须为8-16位，且包含数字和字母" placement="top">
+									<el-icon>
+										<InfoFilled />
+									</el-icon>
+								</el-tooltip>
+							</template>
+						</el-input>
+					</div>
 
-				<div class="checkbox_2">
-					<el-checkbox-group v-model="checkbox_2" @change="handleAgreementChange">
-						<el-checkbox v-for="item in range_2" :key="item.value" :value="item.value">
-							{{ item.text }}
-						</el-checkbox>
-					</el-checkbox-group>
-				</div>
+					<div class="checkbox_1">
+						<el-checkbox-group v-model="checkbox_1" @change="handleCheckboxChange">
+							<el-checkbox v-for="item in range_1" :key="item.value" 
+								:value="item.value" :disabled="item.disabled">
+								{{ item.text }}
+							</el-checkbox>
+						</el-checkbox-group>
+					</div>
 
-				<el-button type="primary" class="login-button" :loading="isLoading" @click="clientLogin">
-					{{ isLoading ? '登录中...' : '点击登录' }}
-				</el-button>
+					<div class="checkbox_2">
+						<el-checkbox-group v-model="checkbox_2" @change="handleAgreementChange">
+							<el-checkbox v-for="item in range_2" :key="item.value" :value="item.value">
+								{{ item.text }}
+							</el-checkbox>
+						</el-checkbox-group>
+					</div>
+
+					<el-button type="primary" class="login-button" :loading="isLoading" @click="clientLogin">
+						{{ isLoading ? '登录中...' : '点击登录' }}
+					</el-button>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<el-dialog v-model="showDialog" title="通知" width="400px" align-center @keyup.enter="dialogConfirm">
-		<span>请勾选协议!</span>
-		<template #footer>
-			<div class="dialog-footer">
-				<el-button @click="dialogClose">关闭</el-button>
-				<el-button type="primary" @click="dialogConfirm">同意</el-button>
+		<el-dialog v-model="showDialog" title="通知" width="400px" align-center @keyup.enter="dialogConfirm">
+			<span>请勾选协议!</span>
+			<template #footer>
+				<div class="dialog-footer">
+					<el-button @click="dialogClose">关闭</el-button>
+					<el-button type="primary" @click="dialogConfirm">同意</el-button>
+				</div>
+			</template>
+		</el-dialog>
+
+		<div class="top-security-tip" v-if="checkbox_1.includes(1)">
+			<div class="tip-content">
+				<span class="tip-icon">⚠️</span>
+				<span class="tip-message">密码将加密存储在本地，建议勿在公共设备使用此功能</span>
 			</div>
-		</template>
-	</el-dialog>
-
-	<div class="top-security-tip" v-if="checkbox_1.includes(1)">
-		<div class="tip-content">
-			<span class="tip-icon">⚠️</span>
-			<span class="tip-message">密码将加密存储在本地，建议勿在公共设备使用此功能</span>
 		</div>
-	</div>
 
-	<div class="register" v-if="isRegister">
-		<Register @close="closeRegister"></Register>
+		<div class="register" v-if="isRegister">
+			<Register @close="closeRegister"></Register>
+		</div>
 	</div>
 </template>
 
@@ -492,6 +494,12 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.login-page {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
 .index {
 	width: 100vw;
 	height: 100vh;
