@@ -16,7 +16,18 @@
                             :src="LOGO_AVATAR" alt="Assistant" />
                         <img v-else class="avatar" :src="userAvatar" alt="User" />
                         <div class="message-bubble">
-                            <p class="message-text">{{ message.content }}</p>
+                            <p class="message-text">
+                                <template v-if="message.type === 'assistant' && message.isTyping">
+                                    <TypeWriter 
+                                        :text="message.content"
+                                        :speed="30"
+                                        @typing-complete="onTypingComplete(message)"
+                                    />
+                                </template>
+                                <template v-else>
+                                    {{ message.content }}
+                                </template>
+                            </p>
                         </div>
                     </div>
                     <div v-if="message.type === 'assistant'" class="message-actions">
@@ -84,6 +95,7 @@ import { useUserStore } from '@/stores/userstore';
 import { ElMessage } from 'element-plus';
 import { sendChatMessage } from '@/api/deepseek';
 import logoAvatar from '@/assets/logo/favicon.ico';
+import TypeWriter from '../TypeWriter/TypeWriter.vue';
 
 const props = defineProps({
     initialMessages: {
@@ -108,8 +120,6 @@ const textareaHeight = ref(40);
 const hasMoreMessages = ref(false);
 const isAutoScrollEnabled = ref(true);
 const showClearDialog = ref(false);
-const retryCount = ref(0);
-const MAX_RETRIES = 3;
 
 const hasActiveChat = computed(() => {
     return messages.value.length > 1 || (messages.value.length === 1 && !messages.value[0].isSystemMessage);
@@ -140,6 +150,11 @@ const onScroll = (e) => {
         isAutoScrollEnabled.value = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
         scrollThrottleTimer = null;
     }, 100);
+};
+
+const onTypingComplete = (message) => {
+    message.isTyping = false;
+    message.isNew = false;
 };
 
 const sendMessage = async () => {
@@ -180,7 +195,8 @@ const sendMessage = async () => {
         const assistantMessage = {
             type: 'assistant',
             content: aiContent,
-            isNew: true
+            isNew: true,
+            isTyping: true
         };
 
         messages.value.unshift(assistantMessage);
@@ -577,11 +593,24 @@ onBeforeUnmount(() => {
     padding: 12px 16px;
     font-size: 15px;
     line-height: 1.6;
+    position: relative;
 
     .message-text {
         white-space: pre-wrap;
         word-break: break-word;
         margin: 0;
+        min-height: 24px;
+        
+        :deep(.typewriter) {
+            display: inline;
+            
+            &::after {
+                position: relative;
+                display: inline-block;
+                vertical-align: middle;
+                height: 1.2em;
+            }
+        }
     }
 }
 
@@ -842,6 +871,21 @@ onBeforeUnmount(() => {
 
     .chat-input-container {
         padding: 10px;
+    }
+}
+
+.message.assistant {
+    &.fade-in {
+        .message-bubble {
+            background: linear-gradient(to right, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+            border: 1px solid rgba(0,122,255,0.1);
+            box-shadow: 0 2px 12px rgba(0,122,255,0.05);
+        }
+    }
+    
+    .message-text {
+        transition: all 0.3s ease;
+        position: relative;
     }
 }
 </style>
