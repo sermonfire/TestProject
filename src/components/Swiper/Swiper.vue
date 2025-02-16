@@ -1,11 +1,12 @@
 <template>
 	<div class="swiper-container">
 		<swiper
+			v-if="slides.length >= 3"
 			:modules="modules"
 			:effect="'coverflow'"
 			:grabCursor="true"
 			:centeredSlides="true"
-			:slidesPerView="3"
+			:slidesPerView="Math.min(3, slides.length)"
 			:preloadImages="true"
 			:lazy="{
 				loadPrevNext: true,
@@ -24,14 +25,14 @@
 				dynamicBullets: true,
 			}"
 			:navigation="true"
-			:loop="true"
+			:loop="slides.length >= 3"
 			:loopedSlides="3"
 			:watchSlidesProgress="true"
-			:autoplay="{
+			:autoplay="slides.length >= 3 ? {
 				delay: 3000,
 				disableOnInteraction: false,
 				pauseOnMouseEnter: true
-			}"
+			} : false"
 			:speed="800"
 			:spaceBetween="10"
 			class="mySwiper"
@@ -56,6 +57,12 @@
 				</div>
 			</swiper-slide>
 		</swiper>
+		
+		<!-- 当图片不足时显示占位内容 -->
+		<div v-else class="swiper-placeholder">
+			<div class="loading-spinner"></div>
+			<p>加载中...</p>
+		</div>
 	</div>
 </template>
 
@@ -63,7 +70,8 @@
 	import {
 		ref,
 		onMounted,
-		reactive
+		reactive,
+		watch
 	} from 'vue';
 	// 导入 Swiper Vue.js 组件
 	import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -74,39 +82,15 @@
 	import 'swiper/css/navigation';
 	// 导入需要的 Swiper 模块
 	import { EffectCoverflow, Pagination, Navigation, Autoplay } from 'swiper/modules';
+	import { getCarouselImagesAPI } from '@/api/carouselApi';
 
 	const modules = [EffectCoverflow, Pagination, Navigation, Autoplay];
-	const slides = ref([
-		{
-			text: 'Slide 1',
-			image: '/path/to/image1.jpg'  // 替换为实际的图片路径
-		},
-		{
-			text: 'Slide 2',
-			image: '/path/to/image2.jpg'
-		},
-		{
-			text: 'Slide 3',
-			image: '/path/to/image3.jpg'
-		},
-		{
-			text: 'Slide 4',
-			image: '/path/to/image4.jpg'
-		},
-		{
-			text: 'Slide 5',
-			image: '/path/to/image5.jpg'
-		},
-		{
-			text: 'Slide 6',
-			image: '/path/to/image6.jpg'
-		}
-	]);
-	let swiperInstance = null;
+	const slides = ref([]);
+	const swiperInstance = ref(null);
 
 	// 图片加载状态管理
-	const imageLoaded = reactive(Array(slides.value.length).fill(false));
-	const imageErrors = reactive(Array(slides.value.length).fill(false));
+	const imageLoaded = reactive([]);
+	const imageErrors = reactive([]);
 	
 	const onImageLoad = (index) => {
 		imageLoaded[index] = true;
@@ -121,24 +105,56 @@
 	const onSwiperInit = (swiper) => {
 		if (!swiper) return;
 		
-		swiperInstance = swiper;
+		swiperInstance.value = swiper;
 		swiper.$el?.classList?.add('swiper-initialized');
 		
-		// 预加载当前可见幻灯片的图片
-		const visibleSlides = [
-			swiper.activeIndex,
-			(swiper.activeIndex + 1) % slides.value.length,
-			(swiper.activeIndex + 2) % slides.value.length
-		];
-		
-		visibleSlides.forEach(index => {
-			preloadImage(slides.value[index].image)
-				.then(() => onImageLoad(index))
-				.catch(() => onImageError(index));
-		});
+		if (slides.value.length > 0) {
+			// 预加载当前可见幻灯片的图片
+			const visibleSlides = [
+				swiper.activeIndex,
+				(swiper.activeIndex + 1) % slides.value.length,
+				(swiper.activeIndex + 2) % slides.value.length
+			].filter(index => index >= 0 && index < slides.value.length);
+			
+			visibleSlides.forEach(index => {
+				if (slides.value[index]?.image) {
+					preloadImage(slides.value[index].image)
+						.then(() => onImageLoad(index))
+						.catch(() => onImageError(index));
+				}
+			});
+		}
 	};
 
-	// 修改预加载图片的逻辑
+	// 监听 slides 变化
+	watch(slides, (newSlides) => {
+		if (newSlides.length > 0) {
+			// 重置加载状态数组
+			imageLoaded.length = newSlides.length;
+			imageErrors.length = newSlides.length;
+			imageLoaded.fill(false);
+			imageErrors.fill(false);
+		}
+	}, { deep: true });
+
+	// 获取轮播图数据的函数
+	const getCarouselImages = async () => {
+		try {
+			const { code, data } = await getCarouselImagesAPI();
+			if (code === 0 && data?.list?.length > 0) {
+				return data.list.map((url, index) => ({
+					text: ``,
+					image: url
+				}));
+			}
+			return [];
+		} catch (error) {
+			console.error('获取轮播图失败:', error);
+			return [];
+		}
+	};
+
+	// 预加载图片的逻辑
 	const preloadNextImages = async (currentIndex) => {
 		const nextIndex = (currentIndex + 1) % slides.value.length;
 		const nextNextIndex = (currentIndex + 2) % slides.value.length;
@@ -168,11 +184,12 @@
 		});
 	};
 
-	onMounted(() => {
-		if (swiperInstance) {
-			swiperInstance.on('slideChange', () => {
-				preloadNextImages(swiperInstance.activeIndex);
-			});
+	onMounted(async () => {
+		try {
+			const carouselImages = await getCarouselImages();
+			slides.value = carouselImages;
+		} catch (error) {
+			console.error('初始化轮播图失败:', error);
 		}
 	});
 </script>
@@ -329,5 +346,32 @@
 	@keyframes spin {
 		0% { transform: rotate(0deg); }
 		100% { transform: rotate(360deg); }
+	}
+
+	.swiper-placeholder {
+		width: 100%;
+		height: 250px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		background: linear-gradient(45deg, #45a6e7, #49df87);
+		border-radius: 8px;
+		color: #fff;
+		
+		.loading-spinner {
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(255, 255, 255, 0.3);
+			border-top: 3px solid #fff;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			margin-bottom: 16px;
+		}
+		
+		p {
+			font-size: 16px;
+			margin: 0;
+		}
 	}
 </style>
