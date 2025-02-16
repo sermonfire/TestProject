@@ -557,34 +557,75 @@ onMounted(() => {
 
 .top-security-tip {
 	position: fixed;
-	top: 24%;
-	left: 76%;
-	transform: translateX(-50%);
+	top: 230px;
+	right: 310px;
+	transform: none;
 	z-index: 9999;
-	background-color: rgba(255, 153, 0, 0.1);
-	border: 1px solid #ff9900;
-	border-radius: 4px;
-	padding: 8px 16px;
-	backdrop-filter: blur(4px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	background: rgba(255, 153, 0, 0.08);
+	border: 1px solid rgba(255, 153, 0, 0.15);
+	border-radius: 12px;
+	padding: 6px 12px;
+	backdrop-filter: blur(8px);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+	max-width: 320px;
+	opacity: 0;
 	pointer-events: none;
 	user-select: none;
+	
+	// 修改显示动画
+	animation: tipShow 2.5s ease-in-out forwards;
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, rgba(255, 153, 0, 0.1), rgba(255, 153, 0, 0.05));
+		border-radius: inherit;
+		z-index: -1;
+	}
+
+	.tip-content {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+
+		.tip-icon {
+			font-size: 18px;
+			color: #ff9900;
+			margin-top: 2px;
+		}
+
+		.tip-message {
+			color: #d68100;
+			font-size: 14px;
+			line-height: 1.6;
+			font-weight: 500;
+			letter-spacing: 0.3px;
+		}
+	}
 }
 
-.tip-content {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.tip-icon {
-	font-size: 14px;
-}
-
-.tip-message {
-	color: #ff9900;
-	font-size: 12px;
-	line-height: 1.4;
+// 重新定义动画，包含显示和消失的过程
+@keyframes tipShow {
+	0% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	10% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	80% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
 }
 
 .checkbox_1,
