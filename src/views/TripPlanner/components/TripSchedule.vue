@@ -925,7 +925,7 @@ const searchLoading = ref(false)
 const destinationOptions = ref([])
 const searchTimeout = ref(null)
 
-// 优化搜索景点方法
+// 搜索景点方法
 const searchDestinations = async (query) => {
   // 移除最小长度限制，允许任意长度搜索
   if (!query) {
@@ -989,7 +989,7 @@ const handleTypeChange = (type) => {
   }
 }
 
-// 添加合并日程和景点的计算属性
+// 合并日程和景点的计算属性
 const mergedSchedules = computed(() => {
   const schedules = (schedulesByDay.value[currentDay.value] || []).map(item => ({
     ...item,
@@ -1028,7 +1028,7 @@ const getItemClass = (item) => {
   }
 }
 
-// 添加选择相关的响应式数据
+// 选择相关的响应式数据
 const selectedItems = ref({})  // 使用对象存储选中状态，key为日程id
 const selectedSchedules = computed(() => {
   return mergedSchedules.value.filter(item => selectedItems.value[item.id])
@@ -1234,18 +1234,12 @@ const emit = defineEmits(['back', 'select-schedule'])
       .day-navigator {
         width: 100%;
         height: auto;
-        border-right: none;
         border-bottom: 1px solid var(--el-border-color-light);
 
         .day-list {
           display: flex;
           padding: 8px;
           overflow-x: auto;
-
-          .day-item {
-            padding: 8px 16px;
-            flex-shrink: 0;
-          }
         }
       }
     }
@@ -1278,6 +1272,15 @@ const emit = defineEmits(['back', 'select-schedule'])
   margin-bottom: 16px;
   transition: all 0.3s ease;
   
+  &.is-selected {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+    
+    .card-header {
+      background-color: var(--el-color-primary-light-9);
+    }
+  }
+  
   .card-header {
     padding: 12px 16px;
     background-color: var(--el-bg-color-page);
@@ -1285,33 +1288,6 @@ const emit = defineEmits(['back', 'select-schedule'])
     display: flex;
     align-items: center;
     gap: 12px;
-    
-    .schedule-select {
-      display: flex;
-      align-items: center;
-      
-      :deep(.el-checkbox) {
-        margin-right: 0;
-      }
-    }
-    
-    .schedule-type {
-      flex-shrink: 0;
-    }
-    
-    .schedule-time {
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-  }
-}
-
-.schedule-card.is-selected {
-  border-color: var(--el-color-primary);
-  box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
-  
-  .card-header {
-    background-color: var(--el-color-primary-light-9);
   }
 }
 </style> 

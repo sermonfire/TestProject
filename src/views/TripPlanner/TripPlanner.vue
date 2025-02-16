@@ -1798,20 +1798,14 @@ const searchKeyword = ref('')
 }
 
 .route-steps {
-  background: var(--el-bg-color-page);
-  border-radius: 8px;
   padding: 16px;
   
   .route-step {
-    .step-instruction {
-      color: var(--el-text-color-primary);
-      margin-bottom: 4px;
-    }
+    color: var(--el-text-color-primary);
     
     .step-detail {
       display: flex;
       justify-content: space-between;
-      color: var(--el-text-color-secondary);
       font-size: 13px;
     }
   }
@@ -1819,41 +1813,18 @@ const searchKeyword = ref('')
 
 .transit-routes {
   .transit-route {
-    background: var(--el-bg-color-page);
-    border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
     
-    .transit-summary {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 12px;
+    .transit-summary,
+    .line-stops {
       color: var(--el-text-color-secondary);
       font-size: 13px;
-      
-      .transit-cost {
-        color: var(--el-color-danger);
-      }
     }
     
-    .bus-line {
-      margin-bottom: 8px;
-      
-      .line-name {
-        font-weight: 500;
-        color: var(--el-text-color-primary);
-        margin-bottom: 4px;
-      }
-      
-      .line-stops {
-        font-size: 13px;
-        color: var(--el-text-color-regular);
-        
-        .via-stops {
-          color: var(--el-text-color-secondary);
-          margin-left: 8px;
-        }
-      }
+    .line-name {
+      font-weight: 500;
+      margin-bottom: 4px;
     }
   }
 }

@@ -324,34 +324,13 @@ onMounted(async () => {
   background: #fff;
   border-radius: 12px;
 
-  .form-tip {
-    margin-top: 8px;
+  .form-tip,
+  .destination-option {
     display: flex;
     align-items: center;
     gap: 4px;
-    color: var(--el-text-color-secondary);
     font-size: 12px;
-
-    .el-icon {
-      color: var(--el-color-info);
-    }
-  }
-
-  .destination-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    small {
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
-    }
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    color: var(--el-text-color-secondary);
   }
 
   :deep(.el-form-item) {
@@ -372,16 +351,17 @@ onMounted(async () => {
       background: transparent;
     }
   }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
 }
 
-// 响应式布局
 @media screen and (max-width: 768px) {
   .trip-form {
     padding: 16px;
-
-    :deep(.el-form-item) {
-      margin-bottom: 20px;
-    }
 
     .form-actions {
       flex-direction: column;
