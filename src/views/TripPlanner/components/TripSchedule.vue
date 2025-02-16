@@ -39,6 +39,24 @@
                   >
                     <template #content>
                       <div class="tip-content">
+                        <p>1. 目前只支持两点路线规划</p>
+                        <p>2. 其他功能暂不支持</p>
+                      </div>
+                    </template>
+                    <div class="tip-trigger">
+                      <el-icon><InfoFilled /></el-icon>
+                      <span>路线规划测试说明</span>
+                    </div>
+                  </el-tooltip>
+                </div>
+                <div class="route-tip">
+                  <el-tooltip
+                    effect="dark"
+                    placement="top-start"
+                    :show-after="500"
+                  >
+                    <template #content>
+                      <div class="tip-content">
                         <p>1. 勾选景点类型的日程</p>
                         <p>2. 系统将自动规划最优路线</p>
                         <p>3. 支持驾车、公交、步行和骑行等多种出行方式</p>
