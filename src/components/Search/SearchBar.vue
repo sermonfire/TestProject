@@ -316,25 +316,37 @@ defineExpose({
       :deep(.el-input__wrapper) {
         background-color: transparent;
         box-shadow: none !important;
-        padding: 0;
+        padding: 0 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         
         &.is-focus {
           box-shadow: none !important;
+          
+          .el-input__inner {
+            &::placeholder {
+              transform: translateY(-2px);
+              opacity: 0.7;
+            }
+          }
         }
         
         .el-input__inner {
-          height: 36px;
+          height: 40px;
           font-size: 15px;
           color: var(--el-text-color-primary);
+          font-weight: 500;
+          letter-spacing: 0.3px;
+          transition: all 0.3s ease;
           
           &::placeholder {
-            color: var(--el-text-color-placeholder);
+            color: var(--el-text-color-secondary);
             font-weight: 400;
-            transition: opacity 0.3s ease;
+            transform: translateY(0);
+            transition: all 0.3s ease;
           }
           
-          &:focus::placeholder {
-            opacity: 0.5;
+          &:hover::placeholder {
+            color: var(--el-text-color-primary);
           }
         }
       }
@@ -380,6 +392,116 @@ defineExpose({
         .el-icon {
           font-size: 18px;
           animation: spin 1s linear infinite;
+        }
+      }
+    }
+
+    // 优化自动完成建议框样式
+    :deep(.el-autocomplete-suggestion) {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.98);
+      
+      &.el-popper {
+        margin-top: 8px;
+        
+        .el-popper__arrow {
+          display: none;
+        }
+      }
+      
+      .el-scrollbar {
+        .el-scrollbar__view {
+          padding: 8px;
+        }
+        
+        .el-scrollbar__bar {
+          opacity: 0.6;
+          
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+      
+      .suggestion-item {
+        padding: 12px 16px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        margin: 4px 0;
+        
+        &:hover {
+          background-color: rgba(var(--el-color-primary-rgb), 0.1);
+          transform: translateX(4px);
+        }
+        
+        .suggestion-content {
+          .suggestion-header {
+            margin-bottom: 10px;
+            
+            .suggestion-name {
+              font-size: 16px;
+              font-weight: 600;
+              color: var(--el-text-color-primary);
+              transition: color 0.2s ease;
+            }
+            
+            .rating-info {
+              :deep(.el-rate__item) {
+                margin-right: 4px;
+              }
+            }
+          }
+          
+          .meta-info {
+            .meta-item {
+              background: rgba(var(--el-color-primary-rgb), 0.05);
+              padding: 4px 8px;
+              border-radius: 6px;
+              font-size: 13px;
+              
+              .el-icon {
+                color: var(--el-color-primary);
+              }
+            }
+          }
+          
+          .suggestion-tags {
+            margin: 12px 0;
+            
+            .el-tag {
+              margin: 0 4px 4px 0;
+              border-radius: 6px;
+              padding: 0 8px;
+              height: 24px;
+              line-height: 24px;
+              background: rgba(var(--el-color-primary-rgb), 0.08);
+              border-color: transparent;
+              color: var(--el-color-primary);
+              
+              &:hover {
+                background: rgba(var(--el-color-primary-rgb), 0.15);
+              }
+            }
+          }
+          
+          .best-time {
+            font-size: 13px;
+            color: var(--el-text-color-secondary);
+            padding: 4px 8px;
+            background: rgba(var(--el-color-success-rgb), 0.05);
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            
+            .el-icon {
+              color: var(--el-color-success);
+              margin-right: 4px;
+            }
+          }
         }
       }
     }
@@ -487,69 +609,6 @@ defineExpose({
     }
   }
 
-  .suggestion-item {
-    padding: 12px;
-    cursor: pointer;
-    
-    &:hover {
-      background-color: var(--el-fill-color-light);
-    }
-
-    .suggestion-content {
-      .suggestion-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-
-        .suggestion-name {
-          font-size: 16px;
-          font-weight: 500;
-          color: var(--el-text-color-primary);
-        }
-      }
-
-      .meta-info {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 8px;
-        color: var(--el-text-color-secondary);
-        font-size: 13px;
-
-        .meta-item {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-
-          .el-icon {
-            font-size: 14px;
-          }
-        }
-      }
-
-      .suggestion-tags {
-        margin-bottom: 8px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        .el-tag {
-          background-color: var(--el-color-primary-light-9);
-          border-color: var(--el-color-primary-light-8);
-          color: var(--el-color-primary);
-        }
-      }
-
-      .best-time {
-        font-size: 13px;
-        color: var(--el-text-color-secondary);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-    }
-  }
-
   .image-placeholder {
     width: 100%;
     height: 100%;
@@ -633,25 +692,6 @@ defineExpose({
   
   .fullscreen-loader .loading-text {
     font-size: 20px;
-  }
-}
-
-// 优化搜索建议下拉框样式
-:deep(.el-autocomplete-suggestion) {
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: none;
-  margin-top: 8px;
-  
-  &.el-popper {
-    .el-popper__arrow::before {
-      border: none;
-      background: transparent;
-    }
-  }
-  
-  .el-scrollbar__view {
-    padding: 8px;
   }
 }
 </style> 

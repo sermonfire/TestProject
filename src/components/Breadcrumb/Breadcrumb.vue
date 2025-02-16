@@ -75,11 +75,17 @@ watch(() => route.matched, (newMatched) => {
 <style lang="scss" scoped>
 .breadcrumb {
   padding: 16px 24px;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 12px;
-  user-select: none;
+  background: rgba(255, 255, 255, 0.95);  // 略微透明的背景
+  border-radius: 8px;  // 增加圆角
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);  // 更柔和的阴影
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);  // 毛玻璃效果
+  border: 1px solid rgba(0, 0, 0, 0.05);  // 细边框
+  transition: all 0.3s ease;  // 添加过渡效果
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);  // 悬停时加深阴影
+  }
 
   :deep(.el-breadcrumb__item) {
     .el-breadcrumb__inner {
@@ -87,18 +93,43 @@ watch(() => route.matched, (newMatched) => {
       align-items: center;
       user-select: none;
       cursor: pointer;
+      font-weight: 500;  // 稍微加粗字体
+      color: #606266;  // 默认颜色
+      transition: color 0.2s ease;  // 颜色过渡效果
 
       &:hover {
         color: #409EFF;
+        transform: translateY(-1px);  // 悬停时轻微上浮
+      }
+
+      &.is-link {
+        color: #909399;  // 链接颜色
+
+        &:hover {
+          color: #409EFF;
+        }
+      }
+    }
+
+    &:last-child {
+      .el-breadcrumb__inner {
+        color: #303133;  // 最后一项颜色加深
+        font-weight: 600;
       }
     }
   }
 }
 
 .breadcrumb-icon {
-  margin-right: 4px;
+  margin-right: 6px;  // 增加图标间距
   font-size: 16px;
   pointer-events: none;
   user-select: none;
+  color: #909399;  // 图标颜色
+  transition: color 0.2s ease;  // 图标颜色过渡效果
+
+  :deep(.el-breadcrumb__item:hover) & {
+    color: #409EFF;  // 悬停时图标变色
+  }
 }
 </style>

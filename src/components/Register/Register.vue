@@ -275,7 +275,8 @@ onMounted(() => {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(0, 0, 0, 0.5);
+	background-color: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(8px);
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -290,18 +291,19 @@ onMounted(() => {
 
 .register {
 	position: relative;
-	background-color: #fff;
-	width: 450px;
-	height: 550px;
-	border-radius: 10px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	padding: 20px;
+	background: rgba(255, 255, 255, 0.98);
+	width: 460px;
+	height: 580px;
+	border-radius: 24px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+	padding: 32px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	opacity: 0;
 	transform: translateY(20px);
 	animation: slideUp 0.5s ease-out 0.3s forwards;
+	border: 1px solid rgba(0, 0, 0, 0.05);
 
 	&_form {
 		width: 100%;
@@ -318,24 +320,26 @@ onMounted(() => {
 
 .close-btn {
 	position: absolute;
-	top: 0;
-	right: -45px;
-	width: 40px;
-	height: 40px;
+	top: 16px;
+	right: -56px;
+	width: 44px;
+	height: 44px;
 	border-radius: 50%;
-	background-color: rgba(255, 255, 255, 0.3);
-	border: none;
+	background-color: rgba(255, 255, 255, 0.15);
+	backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
 	color: #fff;
 	font-size: 24px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	cursor: pointer;
-	transition: background-color 0.3s ease;
+	transition: all 0.3s ease;
 	z-index: 1000;
 
 	&:hover {
-		background-color: rgba(255, 255, 255, 0.5);
+		background-color: rgba(255, 255, 255, 0.25);
+		transform: rotate(90deg);
 	}
 
 	&:focus {
@@ -346,36 +350,49 @@ onMounted(() => {
 .title {
 	&_container {
 		text-align: center;
-		margin: 20px 0 20px;
+		margin: 12px 0 24px;
 	}
 
 	&_1 {
 		margin: 0;
-		font-size: 24px;
-		font-weight: bold;
+		font-size: 28px;
+		font-weight: 600;
+		background: linear-gradient(135deg, var(--el-color-primary), #36cfc9);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		letter-spacing: 0.5px;
 	}
 
 	&_2 {
-		margin: 5px 0 0;
-		font-size: 18px;
+		margin: 8px 0 0;
+		font-size: 16px;
+		color: var(--el-text-color-secondary);
+		letter-spacing: 1px;
 	}
 }
 
 .register-error {
 	text-align: center;
-	height: 20px;
-	line-height: 20px;
+	height: 24px;
+	line-height: 24px;
+	margin-bottom: 8px;
 
 	&-msg {
-		font-size: 15px;
-		color: red;
+		font-size: 14px;
+		color: var(--el-color-danger);
+		padding: 4px 12px;
+		border-radius: 4px;
+		background-color: var(--el-color-danger-light-9);
+		display: inline-block;
+		transition: all 0.3s ease;
 	}
 }
 
 .verfy {
 	position: relative;
 	display: flex;
-	width: 250px;
+	width: 320px;
 	margin-top: 20px;
 	align-items: center;
 }
@@ -384,16 +401,18 @@ onMounted(() => {
 	display: flex;
 	align-items: center;
 	width: 100%;
-	gap: 8px;
+	gap: 12px;
 
 	:deep(.el-tooltip__trigger) {
 		.el-icon {
-			font-size: 22px;
-			color: #909399;
+			font-size: 20px;
+			color: var(--el-text-color-secondary);
 			cursor: pointer;
+			transition: all 0.3s ease;
 			
 			&:hover {
-				color: #409EFF;
+				color: var(--el-color-primary);
+				transform: scale(1.1);
 			}
 		}
 	}
@@ -401,24 +420,62 @@ onMounted(() => {
 
 .input-field {
 	:deep(.el-input__wrapper) {
-		padding-left: 5px;
-		height: 45px;
-		line-height: 45px;
+		padding-left: 8px;
+		height: 48px;
+		line-height: 48px;
+		border-radius: 12px;
+		transition: all 0.3s ease;
+		background: var(--el-fill-color-light);
+		border: 1px solid transparent;
+		
+		&:hover {
+			background: var(--el-fill-color);
+		}
+		
 		&:focus-within {
-			box-shadow: 0 0 0 1px var(--el-input-focus-border-color) inset;
+			background: #fff;
+			border-color: var(--el-color-primary);
+			box-shadow: 0 0 0 2px rgba(var(--el-color-primary-rgb), 0.2);
 		}
 	}
 	
 	:deep(.el-input__inner) {
-		font-size: 18px;
+		font-size: 16px;
+		color: var(--el-text-color-primary);
+		
+		&::placeholder {
+			font-size: 15px;
+			transition: all 0.3s ease;
+		}
 	}
 	
 	:deep(.el-input__prefix) {
-		margin-right: 4px;
+		margin-right: 8px;
 		
 		.el-icon {
 			font-size: 20px;
-			vertical-align: middle;
+			color: var(--el-text-color-secondary);
+			transition: all 0.3s ease;
+		}
+	}
+
+	&:focus-within {
+		:deep(.el-input__prefix) .el-icon {
+			color: var(--el-color-primary);
+			transform: scale(1.1);
+		}
+	}
+}
+
+.icon-right {
+	margin-left: 8px;
+	transition: all 0.3s ease;
+	
+	.el-icon {
+		transition: all 0.3s ease;
+		
+		&:hover {
+			transform: scale(1.1);
 		}
 	}
 }
@@ -426,26 +483,47 @@ onMounted(() => {
 .register-button {
 	position: absolute;
 	bottom: 40px;
-	width: 280px;
-	height: 45px;
-	border-radius: 5px;
-	font-size: 18px;  // 增大字体大小
-	font-weight: 500; // 适当加粗
+	width: 320px;
+	height: 48px;
+	border-radius: 12px;
+	font-size: 18px;
+	font-weight: 500;
+	letter-spacing: 1px;
+	background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
+	border: none;
+	transition: all 0.3s ease;
 
-	&:active {
-		transform: scale(0.95);
+	&:hover:not(:disabled) {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.3);
+	}
+
+	&:active:not(:disabled) {
+		transform: translateY(0);
+	}
+
+	&:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+		background: var(--el-color-info-light-5);
 	}
 }
 
 @keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from { 
+		opacity: 0;
+		backdrop-filter: blur(0);
+	}
+	to { 
+		opacity: 1;
+		backdrop-filter: blur(8px);
+	}
 }
 
 @keyframes slideUp {
 	from {
 		opacity: 0;
-		transform: translateY(20px);
+		transform: translateY(40px);
 	}
 	to {
 		opacity: 1;
