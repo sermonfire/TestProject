@@ -366,7 +366,7 @@ const removeFavorite = async () => {
   }
 };
 
-//  对话框关闭处理
+// 对话框关闭处理
 const handleDialogClose = () => {
   form.value = { category: '', notes: '' }
 }

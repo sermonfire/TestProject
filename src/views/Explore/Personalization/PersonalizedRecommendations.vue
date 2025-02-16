@@ -10,7 +10,6 @@
           :item-id="item.id"
           :initial-state="item.isCollected"
           class="collection-btn"
-          @collection-change="handleCollectionChange(item.id, $event)"
         />
         
         <el-image :src="item.imageUrl" fit="cover" class="destination-image">
@@ -79,14 +78,10 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['destinationClick', 'collectionChange']);
+const emit = defineEmits(['destinationClick']);
 
 const handleDestinationClick = (destination) => {
   emit('destinationClick', destination);
-};
-
-const handleCollectionChange = (itemId, isCollected) => {
-  emit('collectionChange', { itemId, isCollected });
 };
 
 // 格式化推荐时长

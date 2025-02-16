@@ -99,25 +99,25 @@ const initialTags = computed(() => {
 const fetchAllRecommendations = async (retryCount = 0) => {
 	const MAX_RETRIES = 3;
 	const RETRY_DELAY = 1000;
-	
+
 	if (loading.value) return;
-	
+
 	loading.value = true;
 	error.value = null;
-	
+
 	try {
 		await nextTick();
-		
+
 		// 添加 forceRefresh 参数，当有 refresh 查询参数时强制刷新
 		const forceRefresh = route.query.refresh === 'true';
 		const response = await getPersonalizedRecommendationsAPI(1, pageSize.value, forceRefresh);
-		
+
 		if (response?.code === 0 && response?.data?.list) {
 			recommendations.value = response.data.list;
 			total.value = response.data.total || 0;
 			hasMore.value = recommendations.value.length < (response.data.total || 0);
 			currentPage.value = response.data.pageNum || 1;
-			
+
 			// 重新设置观察器
 			nextTick(() => {
 				createObserver();
@@ -130,7 +130,7 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 		}
 	} catch (err) {
 		console.error('Fetch error:', err);
-		
+
 		// 处理401错误
 		if (err.status === 401) {
 			ElMessage.error('登录已过期，即将前往登录页');
@@ -140,7 +140,7 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 			}, 1000);
 			return;
 		}
-		
+
 		// 处理重试逻辑
 		if (retryCount < MAX_RETRIES) {
 			console.log(`Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
@@ -148,11 +148,11 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 			await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
 			return fetchAllRecommendations(retryCount + 1);
 		}
-		
+
 		// 设置错误信息
 		error.value = err.message || '获取推荐失败，请稍后重试';
 		ElMessage.error(error.value);
-		
+
 		// 清理数据
 		recommendations.value = [];
 		total.value = 0;
@@ -173,12 +173,12 @@ watch(
 				top: 0,
 				behavior: 'smooth'
 			});
-			
+
 			await fetchAllRecommendations();
 			// 清除 refresh 参数，但不触发新的路由跳转
-			replace({ 
+			replace({
 				...route,
-				query: {} 
+				query: {}
 			});
 			// 确保在清除参数后重新设置观察器
 			nextTick(() => {
@@ -238,9 +238,9 @@ const handleTagClick = (tag) => {
 
 // 处理搜索函数
 const handleSearch = ({ tags }) => {
-	
+
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
-	
+
 	router.push({
 		name: 'searchResults',
 		query: {
@@ -252,22 +252,22 @@ const handleSearch = ({ tags }) => {
 // 加载更多函数
 const loadMore = async () => {
 	if (!hasMore.value || isLoading.value) return;
-	
+
 	isLoading.value = true;
 	try {
 		const nextPage = currentPage.value + 1;
 		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value, false);
-		
+
 		if (response.code === 0 && response.data && response.data.list.length > 0) {
 			await new Promise(resolve => setTimeout(resolve, 800));
-			
+
 			await nextTick(() => {
 				recommendations.value = [...recommendations.value, ...response.data.list];
 				hasMore.value = recommendations.value.length < total.value;
 				currentPage.value = response.data.pageNum;
 				total.value = response.data.total;
 			});
-			
+
 			// 确保在加载更多后重新设置观察器
 			nextTick(() => {
 				if (loadTrigger.value && hasMore.value) {
@@ -280,12 +280,12 @@ const loadMore = async () => {
 		}
 	} catch (err) {
 		// console.error('Load more error:', err);
-		if(err.response.status === 401){
+		if (err.response.status === 401) {
 			// ElMessage.error('登录已过期，即将前往登录页');
 			ElMessage.error('登录似乎过期了!');
 			hasMore.value = false;
 		}
-		
+
 	} finally {
 		setTimeout(() => {
 			isLoading.value = false;
@@ -301,10 +301,10 @@ onMounted(async () => {
 			top: 0,
 			behavior: 'smooth'
 		});
-		
+
 		await nextTick();
 		await fetchAllRecommendations();
-		
+
 		if (!error.value) {
 			nextTick(() => {
 				createObserver();
@@ -397,13 +397,13 @@ onUnmounted(() => {
 .recommendations-container {
 	transition: all 0.3s ease;
 	width: 100%;
-	
+
 	// 添加子元素的过渡效果
 	:deep(.recommendation-item) {
 		opacity: 0;
 		transform: translateY(20px);
 		animation: fadeInUp 0.5s ease forwards;
-		
+
 		@for $i from 1 through 10 {
 			&:nth-child(#{$i}) {
 				animation-delay: #{$i * 0.1}s;
@@ -426,13 +426,13 @@ onUnmounted(() => {
 	padding: 10px 0;
 	text-align: center;
 	transition: all 0.3s ease;
-	
+
 	&.loading {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		
+
 		.icon-spin {
 			animation: spin 1s linear infinite;
 			transition: all 0.3s ease;
@@ -446,17 +446,19 @@ onUnmounted(() => {
 		opacity: 0;
 		transform: translateY(20px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
 	}
 }
 
-	// 优化加载图标动画
+// 优化加载图标动画
 @keyframes spin {
 	from {
 		transform: rotate(0deg);
 	}
+
 	to {
 		transform: rotate(360deg);
 	}
