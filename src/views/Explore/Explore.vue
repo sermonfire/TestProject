@@ -48,8 +48,7 @@
 
 		<!-- 目的地详情弹窗 -->
 		<DestinationDetailDialog v-model="showDetailDialog" :destination="selectedDestination"
-			:similar-destinations="similarDestinations" @close="closeDetailDialog"
-			@similar-click="handleDestinationClick" @tag-click="handleTagClick" />
+			@close="closeDetailDialog" @similar-click="handleDestinationClick" @tag-click="handleTagClick" />
 	</div>
 </template>
 
@@ -71,11 +70,9 @@ const isLoading = ref(false);
 const loading = ref(false);
 const error = ref(null);
 const selectedDestination = ref(null);
-const similarDestinations = ref([]);
 const { push, replace } = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const router = useRouter()
 
 // 推荐数据
 const recommendations = ref([]);
@@ -83,7 +80,7 @@ const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
 
-// 新增 loadTrigger ref
+// 加载触发器
 const loadTrigger = ref(null);
 let observer = null;
 
@@ -132,14 +129,7 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 		console.error('Fetch error:', err);
 
 		// 处理401错误
-		if (err.status === 401) {
-			ElMessage.error('登录已过期，即将前往登录页');
-			userStore.clear();
-			setTimeout(() => {
-				push('/login');
-			}, 1000);
-			return;
-		}
+		if (handleError(err)) return;
 
 		// 处理重试逻辑
 		if (retryCount < MAX_RETRIES) {
@@ -226,7 +216,6 @@ const handleDestinationClick = (destination) => {
 const closeDetailDialog = () => {
 	showDetailDialog.value = false;
 	selectedDestination.value = null;
-	similarDestinations.value = [];
 };
 
 // 处理标签点击
@@ -241,7 +230,7 @@ const handleSearch = ({ tags }) => {
 
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
 
-	router.push({
+	push({
 		name: 'searchResults',
 		query: {
 			tags: formattedTags
@@ -249,7 +238,20 @@ const handleSearch = ({ tags }) => {
 	});
 };
 
-// 加载更多函数
+// 优化错误处理逻辑
+const handleError = (err) => {
+	if (err.status === 401) {
+		ElMessage.error('登录已过期，即将前往登录页');
+		userStore.clear();
+		setTimeout(() => {
+			push('/login');
+		}, 1000);
+		return true;
+	}
+	return false;
+};
+
+// 优化加载更多函数
 const loadMore = async () => {
 	if (!hasMore.value || isLoading.value) return;
 
@@ -258,7 +260,7 @@ const loadMore = async () => {
 		const nextPage = currentPage.value + 1;
 		const response = await getPersonalizedRecommendationsAPI(nextPage, pageSize.value, false);
 
-		if (response.code === 0 && response.data && response.data.list.length > 0) {
+		if (response.code === 0 && response.data?.list?.length > 0) {
 			await new Promise(resolve => setTimeout(resolve, 800));
 
 			await nextTick(() => {
@@ -268,24 +270,18 @@ const loadMore = async () => {
 				total.value = response.data.total;
 			});
 
-			// 确保在加载更多后重新设置观察器
-			nextTick(() => {
-				if (loadTrigger.value && hasMore.value) {
-					createObserver();
-					observer?.observe(loadTrigger.value);
-				}
-			});
+			if (loadTrigger.value && hasMore.value) {
+				createObserver();
+				observer?.observe(loadTrigger.value);
+			}
 		} else {
 			hasMore.value = false;
 		}
 	} catch (err) {
-		// console.error('Load more error:', err);
-		if (err.response.status === 401) {
-			// ElMessage.error('登录已过期，即将前往登录页');
+		if (err.response?.status === 401) {
 			ElMessage.error('登录似乎过期了!');
 			hasMore.value = false;
 		}
-
 	} finally {
 		setTimeout(() => {
 			isLoading.value = false;
@@ -382,17 +378,6 @@ onUnmounted(() => {
 	}
 }
 
-// 动画
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-
-	to {
-		transform: rotate(360deg);
-	}
-}
-
 // 推荐容器样式
 .recommendations-container {
 	transition: all 0.3s ease;
@@ -435,7 +420,6 @@ onUnmounted(() => {
 
 		.icon-spin {
 			animation: spin 1s linear infinite;
-			transition: all 0.3s ease;
 		}
 	}
 }
@@ -450,17 +434,6 @@ onUnmounted(() => {
 	to {
 		opacity: 1;
 		transform: translateY(0);
-	}
-}
-
-// 优化加载图标动画
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-
-	to {
-		transform: rotate(360deg);
 	}
 }
 
@@ -479,5 +452,11 @@ onUnmounted(() => {
 
 .fade-leave-active {
 	position: absolute;
+}
+
+// 动画
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
 }
 </style>
