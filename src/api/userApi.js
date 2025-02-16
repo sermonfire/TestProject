@@ -58,6 +58,9 @@ export const updateUserInfoAPI = (params) => {
 
 // 上传头像
 export const uploadAvatarAPI = (formData) => {
+	// 添加directory参数，指定上传到avatar目录
+	formData.append('directory', 'avatar')
+	
 	return request({
 		url: 'dev-api/upload',
 		method: 'POST',
