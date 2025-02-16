@@ -59,27 +59,24 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { StarFilled, Compass, HotWater, HomeFilled, ArrowLeft, ArrowRight ,Checked } from '@element-plus/icons-vue'
+import { 
+  HomeFilled, 
+  Compass, 
+  StarFilled, 
+  HotWater, 
+  ArrowLeft, 
+  ArrowRight,
+  Checked 
+} from '@element-plus/icons-vue'
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb.vue'
 import { useUserStore } from '@/stores/userstore'
 
+// 基础状态
 const isCollapsed = ref(false)
 const isExpanding = ref(false)
 const userStore = useUserStore()
 
-const toggleSidebar = () => {
-  if (!isCollapsed.value) {
-    isCollapsed.value = true
-    isExpanding.value = false
-  } else {
-    isExpanding.value = true
-    isCollapsed.value = false
-    setTimeout(() => {
-      isExpanding.value = false
-    }, 300)
-  }
-}
-
+// 导航菜单配置
 const navItems = [
   {
     path: '/',
@@ -113,7 +110,21 @@ const navItems = [
   }
 ]
 
-// 确保组件加载时更新登录状态
+// 侧边栏折叠控制
+const toggleSidebar = () => {
+  if (!isCollapsed.value) {
+    isCollapsed.value = true
+    isExpanding.value = false
+  } else {
+    isExpanding.value = true
+    isCollapsed.value = false
+    setTimeout(() => {
+      isExpanding.value = false
+    }, 300)
+  }
+}
+
+// 组件加载时更新登录状态
 onMounted(() => {
   userStore.setLoginState(!!userStore.token)
 })

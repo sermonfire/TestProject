@@ -127,8 +127,9 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userstore';
 
 const router = useRouter();
+const userStore = useUserStore();
 
-// 旅行风格选项
+// 选项配置
 const travelStyles = [
 	{ label: '文化探索', value: 'cultural', icon: 'Collection' },
 	{ label: '美食之旅', value: 'food', icon: 'Food' },
@@ -138,7 +139,6 @@ const travelStyles = [
 	{ label: '历史古迹', value: 'historical', icon: 'Calendar' }
 ];
 
-// 目的地类型选项
 const destinationTypes = [
 	{ label: '海滨度假', value: 'beach', icon: 'Sunny' },
 	{ label: '城市观光', value: 'city', icon: 'OfficeBuilding' },
@@ -148,28 +148,18 @@ const destinationTypes = [
 	{ label: '温泉胜地', value: 'hot-spring', icon: 'WaterCup' }
 ];
 
-// 时长选项
 const durations = [
 	{ label: '2-3天', value: 'short', icon: 'Calendar' },
 	{ label: '4-7天', value: 'medium', icon: 'Calendar' },
 	{ label: '7天以上', value: 'long', icon: 'Calendar' }
 ];
 
-// 季节选项
 const seasons = [
 	{ label: '春季', value: 'spring' },
 	{ label: '夏季', value: 'summer' },
 	{ label: '秋季', value: 'autumn' },
 	{ label: '冬季', value: 'winter' }
 ];
-
-const userPreferences = ref({
-	travelStyles: [],
-	destinationTypes: [],
-	seasonalPreferences: [],
-	budget: 500,
-	duration: '3-5天'
-});
 
 // 响应式状态
 const selectedStyles = ref([]);
@@ -178,10 +168,9 @@ const budget = ref(500);
 const selectedDuration = ref('');
 const selectedSeasons = ref([]);
 const loading = ref(false);
-const isLoading = ref(false);
 const isSaving = ref(false);
 
-// 计算属性：表单是否有效
+// 计算属性
 const isValid = computed(() => {
 	return selectedStyles.value.length > 0 &&
 		selectedTypes.value.length > 0 &&
@@ -190,25 +179,13 @@ const isValid = computed(() => {
 		selectedDuration.value !== '';
 });
 
-// 添加一个计算属性来获取未完成项目的提示信息
 const validationMessage = computed(() => {
 	const messages = [];
-	if (selectedStyles.value.length === 0) {
-		messages.push('旅行风格');
-	}
-	if (selectedTypes.value.length === 0) {
-		messages.push('目的地类型');
-	}
-	if (selectedSeasons.value.length === 0) {
-		messages.push('季节偏好');
-	}
-	if (!selectedDuration.value) {
-		messages.push('时长偏好');
-	}
-	if (messages.length === 0) {
-		return '';
-	}
-	return `请完善：${messages.join('、')}`;
+	if (selectedStyles.value.length === 0) messages.push('旅行风格');
+	if (selectedTypes.value.length === 0) messages.push('目的地类型');
+	if (selectedSeasons.value.length === 0) messages.push('季节偏好');
+	if (!selectedDuration.value) messages.push('时长偏好');
+	return messages.length ? `请完善：${messages.join('、')}` : '';
 });
 
 // 方法
@@ -247,34 +224,26 @@ const selectDuration = (value) => {
 	selectedDuration.value = value;
 };
 
-const userStore = useUserStore()
-
 // 获取用户偏好
 const fetchUserPreferences = async () => {
-
 	try {
 		const res = await getUserPreferencesAPI();
 		if (res.code === 0 && res.data) {
-			userPreferences.value = res.data;
-			selectedStyles.value = res.data.travelStyles || [];
-			selectedTypes.value = res.data.destinationTypes || [];
-			budget.value = res.data.budget || 500;
-			selectedDuration.value = res.data.duration || '3-5天';
-			selectedSeasons.value = res.data.seasonalPreferences || [];
+			const { travelStyles, destinationTypes, budget: userBudget, duration, seasonalPreferences } = res.data;
+			selectedStyles.value = travelStyles || [];
+			selectedTypes.value = destinationTypes || [];
+			budget.value = userBudget || 500;
+			selectedDuration.value = duration || '';
+			selectedSeasons.value = seasonalPreferences || [];
 		}
 	} catch (err) {
 		if (err.response?.status === 401) {
 			ElMessage.error('登录已过期，即将前往登录页');
-			userStore.clear()
-			setTimeout(() => {
-				router.push('/login');
-			}, 1000)
-		} else if (err.message == '请求过于频繁') {
-			ElMessage.error('请求过于频繁，请稍后再试');
-		} else if (err.status === 500) {
-			ElMessage.error('服务器似乎出了点问题')
+			userStore.clear();
+			setTimeout(() => router.push('/login'), 1000);
 		} else {
-			ElMessage.error('获取偏好设置失败');
+			ElMessage.error(err.message === '请求过于频繁' ? '请求过于频繁，请稍后再试' : 
+				err.status === 500 ? '服务器似乎出了点问题' : '获取偏好设置失败');
 		}
 	}
 };
@@ -290,7 +259,7 @@ const savePreferences = async () => {
 	isSaving.value = true;
 
 	try {
-		userPreferences.value = {
+		const userPreferences = {
 			travelStyles: selectedStyles.value,
 			destinationTypes: selectedTypes.value,
 			seasonalPreferences: selectedSeasons.value,
@@ -298,11 +267,9 @@ const savePreferences = async () => {
 			duration: selectedDuration.value
 		};
 
-		const res = await saveUserPreferencesAPI(userPreferences.value);
+		const res = await saveUserPreferencesAPI(userPreferences);
 		if (res.code === 0) {
-			// 清除推荐数据缓存
 			clearRecommendationsCache();
-			
 			ElMessage.success('保存成功，即将为您跳转到推荐页面...');
 			document.querySelector('.save-section').classList.add('saving');
 			setTimeout(() => {
