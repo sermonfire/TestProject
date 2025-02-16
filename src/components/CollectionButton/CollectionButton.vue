@@ -154,7 +154,6 @@ const props = defineProps({
 
 const emit = defineEmits(['collection-change', 'collection-start', 'collection-end', 'collection-error']);
 const favoriteStore = useFavoriteStore();
-const { favoriteStatus } = storeToRefs(favoriteStore);
 
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -167,23 +166,18 @@ const form = ref({
 // 获取分类列表
 const categories = computed(() => favoriteStore.sortedCategories);
 
-// 检查是否有自定义分类
-const hasCustomCategories = computed(() => {
-  return categories.value.some(category => !category.isDefault);
-});
-
-// 添加计算属性检查是否只有默认分类
+// 检查是否只有默认分类
 const hasOnlyDefaultCategory = computed(() => {
   return categories.value.length === 1 && categories.value[0].isDefault;
 });
 
-// 修改收藏状态的计算属性
+// 收藏状态的计算属性
 const isCollected = computed(() => {
   if (!props.itemId) return false;
   return Boolean(favoriteStore.getFavoriteStatus(props.itemId));
 });
 
-// 修改初始化逻辑
+// 初始化逻辑
 onMounted(async () => {
   if (!props.itemId) return;
   
@@ -200,7 +194,7 @@ onMounted(async () => {
   }
 });
 
-// 优化状态检查方法
+// 状态检查方法
 const checkFavoriteStatus = async () => {
   if (!props.itemId) return;
   
@@ -249,7 +243,7 @@ const handleCollectionClick = async () => {
   }
 }
 
-// 修改取消收藏处理
+// 取消收藏处理
 const handleRemoveFavorite = async () => {
   // 直接调用 removeFavorite，不再通过 debouncedRemoveFavorite
   await removeFavorite()
@@ -292,7 +286,7 @@ const handleStatusChange = (newStatus) => {
   });
 };
 
-// 修改收藏方法
+// 收藏方法
 const addFavorite = async (categoryId = '', notes = '') => {
   loading.value = true;
   emit('collection-start');
@@ -322,7 +316,7 @@ const addFavorite = async (categoryId = '', notes = '') => {
   }
 };
 
-// 修改取消收藏方法
+// 取消收藏方法
 const removeFavorite = async () => {
   loading.value = true;
   emit('collection-start');
@@ -372,7 +366,7 @@ const removeFavorite = async () => {
   }
 };
 
-// 添加对话框关闭处理
+//  对话框关闭处理
 const handleDialogClose = () => {
   form.value = { category: '', notes: '' }
 }

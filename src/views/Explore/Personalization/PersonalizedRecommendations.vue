@@ -71,7 +71,6 @@
 <script setup>
 import { Star, Calendar, Wallet, Picture } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
-import { ElMessage } from 'element-plus';
 
 defineProps({
   recommendations: {
@@ -285,6 +284,7 @@ const formatDuration = (duration) => {
         text-overflow: ellipsis;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
       }
 

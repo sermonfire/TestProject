@@ -57,7 +57,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
-import { getPersonalizedRecommendationsAPI, getPreviewRecommendationsAPI } from '@/api/api';
+import { getPersonalizedRecommendationsAPI } from '@/api/api';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
@@ -95,7 +95,7 @@ const initialTags = computed(() => {
 	return tagString ? tagString.split(',').filter(Boolean) : [];
 });
 
-// 修改获取推荐数据的函数
+// 获取推荐数据的函数
 const fetchAllRecommendations = async (retryCount = 0) => {
 	const MAX_RETRIES = 3;
 	const RETRY_DELAY = 1000;
@@ -163,7 +163,7 @@ const fetchAllRecommendations = async (retryCount = 0) => {
 	}
 };
 
-// 修改路由参数监听
+// 路由参数监听
 watch(
 	() => route.query.refresh,
 	async (newVal) => {
@@ -192,7 +192,7 @@ watch(
 	{ immediate: true }
 );
 
-// 修改创建观察器的函数
+// 创建观察器的函数
 const createObserver = () => {
 	// 先清理旧的观察器
 	if (observer) {
@@ -236,7 +236,7 @@ const handleTagClick = (tag) => {
 	}
 };
 
-// 修改处理搜索函数
+// 处理搜索函数
 const handleSearch = ({ tags }) => {
 	
 	const formattedTags = Array.isArray(tags) ? tags.join(',') : tags;
@@ -249,7 +249,7 @@ const handleSearch = ({ tags }) => {
 	});
 };
 
-// 修改加载更多函数
+// 加载更多函数
 const loadMore = async () => {
 	if (!hasMore.value || isLoading.value) return;
 	
@@ -293,7 +293,7 @@ const loadMore = async () => {
 	}
 };
 
-// 修改组件挂载逻辑
+// 组件挂载逻辑
 onMounted(async () => {
 	try {
 		// 组件挂载时也滚动到顶部
@@ -317,11 +317,6 @@ onMounted(async () => {
 		console.error('Mount error:', err);
 	}
 });
-
-// 添加错误重试按钮的处理函数
-const handleRetry = async () => {
-	await fetchAllRecommendations();
-};
 
 // 组件卸载时清理观察器
 onUnmounted(() => {
@@ -398,7 +393,7 @@ onUnmounted(() => {
 	}
 }
 
-// 修改推荐容器样式
+// 推荐容器样式
 .recommendations-container {
 	transition: all 0.3s ease;
 	width: 100%;
@@ -417,7 +412,7 @@ onUnmounted(() => {
 	}
 }
 
-// 修改加载触发器样式
+// 加载触发器样式
 .load-trigger {
 	padding: 20px 0;
 	text-align: center;
@@ -457,7 +452,7 @@ onUnmounted(() => {
 	}
 }
 
-// 优化加载图标动画
+	// 优化加载图标动画
 @keyframes spin {
 	from {
 		transform: rotate(0deg);
