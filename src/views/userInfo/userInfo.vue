@@ -14,6 +14,41 @@
 				<span class="username">{{ userInfo.username }}</span>
 				<span class="user-id">UID: {{ userInfo.id }}</span>
 			</div>
+			<div class="user-stats">
+				<div class="stat-item">
+					<span class="stat-value">12</span>
+					<span class="stat-label">历史评论</span>
+				</div>
+				<div class="stat-item">
+					<span class="stat-value">5</span>
+					<span class="stat-label">分享</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- 快捷操作卡片 -->
+		<div class="quick-actions-card info-card">
+			<div class="card-header">
+				<span class="card-title">快捷操作</span>
+			</div>
+			<div class="quick-actions-grid">
+				<div class="action-item" @click="router.push('/comments')">
+					<el-icon><ChatLineRound /></el-icon>
+					<span>我的评论</span>
+				</div>
+				<div class="action-item" @click="router.push('/shares')">
+					<el-icon><Share /></el-icon>
+					<span>我的分享</span>
+				</div>
+				<div class="action-item" @click="router.push('/favorites')">
+					<el-icon><Star /></el-icon>
+					<span>我的收藏</span>
+				</div>
+				<div class="action-item" @click="router.push('/settings')">
+					<el-icon><Setting /></el-icon>
+					<span>偏好设置</span>
+				</div>
+			</div>
 		</div>
 
 		<!-- 个人信息卡片 -->
@@ -114,6 +149,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { getUserInfoAPI, updateUserInfoAPI, uploadAvatarAPI, updatePasswordAPI } from '@/api/api'
 import loginAvatar from '@/assets/default_avatar/avatar-login.png'
+import { ChatLineRound, Share, Star, Setting } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -382,6 +418,36 @@ onMounted(() => {
 	align-items: center;
 	margin-bottom: 20px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+	.user-stats {
+		display: flex;
+		gap: 24px;
+		margin-left: auto;
+
+		.stat-item {
+			text-align: center;
+			cursor: pointer;
+			padding: 8px 16px;
+			border-radius: 8px;
+			transition: background-color 0.3s;
+
+			&:hover {
+				background-color: #f5f7fa;
+			}
+
+			.stat-value {
+				display: block;
+				font-size: 20px;
+				font-weight: bold;
+				color: #409eff;
+			}
+
+			.stat-label {
+				font-size: 12px;
+				color: #666;
+			}
+		}
+	}
 }
 
 .avatar-section {
@@ -396,6 +462,13 @@ onMounted(() => {
 		border-radius: 50%;
 		margin-bottom: 8px;
 		cursor: pointer;
+		transition: transform 0.3s;
+		border: 2px solid #fff;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+		&:hover {
+			transform: scale(1.05);
+		}
 	}
 
 	.change-avatar-text {
@@ -426,6 +499,12 @@ onMounted(() => {
 	padding: 20px;
 	margin-bottom: 20px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	transition: transform 0.3s, box-shadow 0.3s;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
 
 	.card-header {
 		display: flex;
@@ -523,5 +602,40 @@ onMounted(() => {
 
 :deep(.el-form-item__label) {
 	color: #666;
+}
+
+.quick-actions-card {
+	.quick-actions-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
+		padding: 16px 0;
+
+		.action-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 8px;
+			padding: 16px;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.3s;
+
+			&:hover {
+				background-color: #f5f7fa;
+				transform: translateY(-2px);
+			}
+
+			.el-icon {
+				font-size: 24px;
+				color: #409eff;
+			}
+
+			span {
+				font-size: 14px;
+				color: #333;
+			}
+		}
+	}
 }
 </style>
