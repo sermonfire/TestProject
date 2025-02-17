@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { Star, Calendar, Wallet, Picture } from '@element-plus/icons-vue';
+import { Calendar, Wallet, Picture } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 
 defineProps({
