@@ -94,3 +94,19 @@ export const batchGetDestinationDetailsAPI = (destinationIds) => {
 		needToken: true
 	})
 }
+
+/**
+ * 智能路线规划
+ * @param {number|string} tripId - 行程ID
+ * @param {number} dayIndex - 第几天
+ * @param {Object} data - 请求参数
+ * @returns {Promise} 返回规划结果
+ */
+export const smartRouteAPI = (tripId, dayIndex, data) => {
+  return request({
+    url: `/dev-api/trip/${tripId}/day/${dayIndex}/smart-route`,
+    method: 'POST',
+    data,
+    needToken: true
+  })
+}

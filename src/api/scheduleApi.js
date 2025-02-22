@@ -1,15 +1,14 @@
 import request from '@/utils/request'
 
 /**
- * 获取行程的日程安排列表
- * @param {number|string} tripId - 行程ID
+ * 获取日程列表
+ * @param {number} tripId - 行程ID
  * @returns {Promise} 返回日程列表
  */
 export const getScheduleListAPI = (tripId) => {
   return request({
     url: `/dev-api/trip/${tripId}/schedule/list`,
-    method: 'GET',
-    needToken: true
+    method: 'GET'
   })
 }
 

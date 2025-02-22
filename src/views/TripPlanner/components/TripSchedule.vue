@@ -29,9 +29,18 @@
               <div class="header-info">
                 <h3>第 {{ currentDay }} 天</h3>
                 <span class="date-info">{{ formatDate(getDateByIndex(currentDay)) }}</span>
+                <div class="selection-info" v-if="selectedCount > 0">
+                  <el-tag size="small" type="info">
+                    已选择 {{ selectedCount }} 个景点
+                    <template v-if="selectedCount < 2">
+                      （至少选择2个景点进行规划）
+                    </template>
+                  </el-tag>
+                </div>
               </div>
               <div class="header-actions">
-                <div class="route-tip">
+                <!-- 普通路线规划提示 -->
+                <div class="route-tip" v-if="selectedCount === 2">
                   <el-tooltip
                     effect="dark"
                     placement="top-start"
@@ -39,17 +48,19 @@
                   >
                     <template #content>
                       <div class="tip-content">
-                        <p>1. 目前只支持两点路线规划</p>
-                        <p>2. 其他功能暂不支持</p>
+                        <p>已选择2个景点,可以进行普通路线规划</p>
+                        <p>支持驾车、公交、步行和骑行等出行方式</p>
                       </div>
                     </template>
                     <div class="tip-trigger">
                       <el-icon><InfoFilled /></el-icon>
-                      <span>路线规划测试说明</span>
+                      <span>普通路线规划可用</span>
                     </div>
                   </el-tooltip>
                 </div>
-                <div class="route-tip">
+
+                <!-- 智能路线规划提示 -->
+                <div class="route-tip" v-if="selectedCount >= 2">
                   <el-tooltip
                     effect="dark"
                     placement="top-start"
@@ -57,17 +68,43 @@
                   >
                     <template #content>
                       <div class="tip-content">
-                        <p>1. 勾选景点类型的日程</p>
-                        <p>2. 系统将自动规划最优路线</p>
-                        <p>3. 支持驾车、公交、步行和骑行等多种出行方式</p>
+                        <p>1. 选择多个景点进行智能规划</p>
+                        <p>2. 系统将自动优化游览顺序</p>
+                        <p>3. 综合考虑距离、时间等因素</p>
                       </div>
                     </template>
                     <div class="tip-trigger">
                       <el-icon><InfoFilled /></el-icon>
-                      <span>路线规划说明</span>
+                      <span>智能路线规划说明</span>
                     </div>
                   </el-tooltip>
                 </div>
+
+                <!-- 路线规划按钮组 -->
+                <el-button-group v-if="selectedCount > 0">
+                  <!-- 普通路线规划按钮 -->
+                  <el-button
+                    type="primary"
+                    @click="handleNormalRoutePlanning"
+                    :disabled="selectedCount !== 2"
+                    :loading="normalPlanningLoading"
+                  >
+                    <el-icon><Location /></el-icon>
+                    普通路线规划
+                  </el-button>
+
+                  <!-- 智能路线规划按钮 -->
+                  <el-button
+                    type="success" 
+                    @click="handleSmartRoutePlanning"
+                    :disabled="selectedCount < 2"
+                    :loading="smartPlanningLoading"
+                  >
+                    <el-icon><Share /></el-icon>
+                    智能路线规划
+                  </el-button>
+                </el-button-group>
+
                 <el-button-group>
                   <el-button type="primary" @click="handleAddSchedule(currentDay)">
                     <el-icon><Plus /></el-icon>添加日程
@@ -384,6 +421,149 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 添加普通路线规划对话框 -->
+    <el-dialog
+      v-model="normalRoutePlanningVisible"
+      title="普通路线规划"
+      width="680px"
+      :close-on-click-modal="false"
+    >
+      <div class="route-planning-content">
+        <!-- 交通方式选择 -->
+        <div class="transport-type">
+          <el-radio-group v-model="transportType">
+            <el-radio-button :label="1">步行</el-radio-button>
+            <el-radio-button :label="2">公交</el-radio-button>
+            <el-radio-button :label="3">地铁</el-radio-button>
+            <el-radio-button :label="4">出租</el-radio-button>
+            <el-radio-button :label="5">自驾</el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <!-- 路线规划结果 -->
+        <div v-if="normalRouteResult" class="route-result">
+          <!-- 显示普通路线规划结果 -->
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 添加智能路线规划对话框 -->
+    <el-dialog
+      v-model="routePlanningVisible"
+      title="智能路线规划"
+      width="680px"
+      :close-on-click-modal="false"
+    >
+      <div class="route-planning-content">
+        <!-- 可行性提示 -->
+        <el-alert
+          v-if="routeResult"
+          :type="routeResult.feasible ? 'success' : 'warning'"
+          :title="routeResult.feasible ? '路线规划成功' : '路线规划存在问题'"
+          :description="routeResult.warnings?.join('；')"
+          show-icon
+          :closable="false"
+          style="margin-bottom: 16px"
+        />
+
+        <!-- 总体概览 -->
+        <div v-if="routeResult" class="route-overview">
+          <div class="overview-stats">
+            <div class="stat-item">
+              <el-icon><Timer /></el-icon>
+              <span>总时间: {{ formatDuration(routeResult.totalTime) }}</span>
+            </div>
+            <div class="stat-item">
+              <el-icon><Location /></el-icon>
+              <span>总距离: {{ (routeResult.totalDistance / 1000).toFixed(1) }}km</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 景点列表 -->
+        <div v-if="routeResult?.destinations" class="destinations-list">
+          <el-timeline>
+            <el-timeline-item
+              v-for="(dest, index) in routeResult.destinations"
+              :key="dest.destinationId"
+              :type="index === 0 ? 'primary' : ''"
+              :timestamp="dest.startTime"
+            >
+              <div class="destination-item">
+                <div class="destination-header">
+                  <el-tag size="small" type="success">第{{ dest.visitOrder }}站</el-tag>
+                  <h4>{{ dest.name }}</h4>
+                </div>
+                
+                <div class="visit-info">
+                  <div class="time-info">
+                    <span>{{ dest.startTime }} - {{ dest.endTime }}</span>
+                    <span class="duration">建议游览 {{ dest.recommendedDuration }}分钟</span>
+                  </div>
+                </div>
+
+                <!-- 到下一个目的地的交通信息 -->
+                <div v-if="dest.nextDestinationTransportInfo" class="transport-info">
+                  <el-divider content-position="left">
+                    <el-icon><Right /></el-icon>
+                    前往下一站
+                  </el-divider>
+                  
+                  <div class="transport-detail">
+                    <el-tag :type="getTransportTypeTag(dest.nextDestinationTransportInfo.type)">
+                      {{ getTransportTypeText(dest.nextDestinationTransportInfo.type) }}
+                    </el-tag>
+                    <span>{{ formatDuration(dest.nextDestinationTransportInfo.time) }}</span>
+                    <span>{{ (dest.nextDestinationTransportInfo.distance / 1000).toFixed(1) }}km</span>
+                    <span v-if="dest.nextDestinationTransportInfo.cost">
+                      预计 ¥{{ dest.nextDestinationTransportInfo.cost }}
+                    </span>
+                  </div>
+
+                  <!-- 路线步骤 -->
+                  <div v-if="dest.nextDestinationTransportInfo.route" class="route-steps">
+                    <el-collapse>
+                      <el-collapse-item title="详细路线">
+                        <el-timeline>
+                          <el-timeline-item
+                            v-for="(step, stepIndex) in dest.nextDestinationTransportInfo.route.steps"
+                            :key="stepIndex"
+                            :type="getRouteStepType(step)"
+                            size="normal"
+                          >
+                            <div class="step-content">
+                              <div class="step-instruction">{{ step.instruction }}</div>
+                              <div class="step-stats">
+                                <span>{{ step.distance }}米</span>
+                                <span>约{{ Math.round(step.duration / 60) }}分钟</span>
+                              </div>
+                            </div>
+                          </el-timeline-item>
+                        </el-timeline>
+                      </el-collapse-item>
+                    </el-collapse>
+                  </div>
+                </div>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="routePlanningVisible = false">关闭</el-button>
+          <el-button 
+            type="primary" 
+            @click="applySmartRoutePlan"
+            :disabled="!routeResult?.feasible"
+          >
+            应用规划方案
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -393,7 +573,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Location, Plus, Download, Document, 
   Money, Edit, Delete, Refresh,
-  Star, InfoFilled
+  Star, InfoFilled, Timer, Right, Share
 } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { 
@@ -411,6 +591,7 @@ import {
   getRecommendRouteAPI,
   searchDestinationsAPI
 } from '@/api/destinationApi'
+import { smartRouteAPI } from '@/api/tripApi'
 
 const props = defineProps({
   tripId: {
@@ -429,6 +610,46 @@ const props = defineProps({
     type: String,
     default: '未命名行程'
   }
+})
+
+// 选择相关的响应式数据 - 移到最前面
+const selectedItems = ref({})  // 使用对象存储选中状态，key为日程id
+const selectedSchedules = computed(() => {
+  return mergedSchedules.value.filter(item => selectedItems.value[item.id])
+})
+
+// 路线规划相关的响应式数据
+const normalRoutePlanningVisible = ref(false)
+const normalRouteResult = ref(null)
+const normalPlanningLoading = ref(false)
+const smartPlanningLoading = ref(false)
+const routePlanningVisible = ref(false)
+const routeResult = ref(null)
+const transportType = ref(1)
+
+// 日程数据
+const schedulesByDay = ref({})
+const dayDestinations = ref({})
+const mergedSchedules = computed(() => {
+  const schedules = (schedulesByDay.value[currentDay.value] || []).map(item => ({
+    ...item,
+    type: 'schedule'
+  }))
+  
+  const destinations = (dayDestinations.value[currentDay.value] || []).map(item => ({
+    ...item,
+    type: 'destination'
+  }))
+  
+  return [...schedules, ...destinations].sort((a, b) => {
+    return dayjs(`1970-01-01T${formatTime(a.startTime)}`).diff(dayjs(`1970-01-01T${formatTime(b.startTime)}`))
+  })
+})
+
+
+// 计算选中数量
+const selectedCount = computed(() => {
+  return Object.values(selectedItems.value).filter(Boolean).length
 })
 
 // 计算总天数
@@ -476,40 +697,6 @@ const getScheduleTypeTag = (type) => {
     4: 'primary'
   }
   return typeMap[type] || ''
-}
-
-// 日程数据
-const schedulesByDay = ref({})
-
-// 加载日程数据
-const loadSchedules = async () => {
-  try {
-    const { code, data, message } = await getScheduleListAPI(props.tripId)
-    if (code === 0) {
-      // 按天数索引重组数据
-      const schedules = {}
-      if (data && data.length > 0) {
-        data.forEach(schedule => {
-          if (!schedules[schedule.dayIndex]) {
-            schedules[schedule.dayIndex] = []
-          }
-          schedules[schedule.dayIndex].push(schedule)
-        })
-        // 对每天的日程按时间排序
-        Object.keys(schedules).forEach(day => {
-          schedules[day].sort((a, b) => {
-            return dayjs(`1970-01-01T${a.startTime}`).diff(dayjs(`1970-01-01T${b.startTime}`))
-          })
-        })
-      }
-      schedulesByDay.value = schedules
-    } else {
-      ElMessage.warning(message || '暂无日程数据')
-    }
-  } catch (error) {
-    console.error('加载日程数据异常:', error)
-    ElMessage.warning('暂无日程数据')
-  }
 }
 
 // 日程表单相关
@@ -683,9 +870,6 @@ const submitScheduleForm = async () => {
   }
 }
 
-// 添加新的响应式数据
-const tripName = computed(() => props.tripName || '未命名行程')
-
 // 添加新的方法
 const handleBatchAdd = () => {
   // TODO: 实现批量添加功能
@@ -733,9 +917,6 @@ const getScheduleTypeClass = (type) => {
 }
 
 // 目的地相关数据和方法
-const dayDestinations = ref({})
-
-// 加载目的地数据
 const loadDayDestinations = async (dayIndex) => {
   try {
     const { code, data } = await getDayDestinationsAPI(props.tripId, dayIndex)
@@ -765,9 +946,14 @@ watch(currentDay, (newDay) => {
   loadDayDestinations(newDay)
 })
 
-onMounted(() => {
-  loadSchedules()
-  loadDayDestinations(currentDay.value)
+onMounted(async () => {
+  try {
+    await loadSchedules()
+    await loadDayDestinations(currentDay.value)
+  } catch (error) {
+    console.error('初始化数据失败:', error)
+    ElMessage.error('加载数据失败')
+  }
 })
 
 // 添加交通方式相关的工具方法
@@ -989,23 +1175,6 @@ const handleTypeChange = (type) => {
   }
 }
 
-// 合并日程和景点的计算属性
-const mergedSchedules = computed(() => {
-  const schedules = (schedulesByDay.value[currentDay.value] || []).map(item => ({
-    ...item,
-    type: 'schedule'
-  }))
-  
-  const destinations = (dayDestinations.value[currentDay.value] || []).map(item => ({
-    ...item,
-    type: 'destination'
-  }))
-  
-  return [...schedules, ...destinations].sort((a, b) => {
-    return dayjs(`1970-01-01T${formatTime(a.startTime)}`).diff(dayjs(`1970-01-01T${formatTime(b.startTime)}`))
-  })
-})
-
 // 统一的类型处理方法
 const getItemTypeTag = (item) => {
   if (item.type === 'destination') {
@@ -1027,12 +1196,6 @@ const getItemClass = (item) => {
     [getScheduleTypeClass(item.scheduleType)]: item.type === 'schedule'
   }
 }
-
-// 选择相关的响应式数据
-const selectedItems = ref({})  // 使用对象存储选中状态，key为日程id
-const selectedSchedules = computed(() => {
-  return mergedSchedules.value.filter(item => selectedItems.value[item.id])
-})
 
 /**
  * @description 判断日程是否可选
@@ -1066,6 +1229,9 @@ watch(() => props.tripId, () => {
 const clearSelection = () => {
   selectedItems.value = {}
   handleScheduleSelect()
+  // 清理路线规划结果
+  normalRouteResult.value = null
+  routeResult.value = null
 }
 
 // 在日期变化时清除选择
@@ -1075,6 +1241,151 @@ watch(currentDay, () => {
 
 // 添加到 defineEmits
 const emit = defineEmits(['back', 'select-schedule'])
+
+// 智能路线规划方法
+const handleNormalRoutePlanning = async () => {
+  if (selectedSchedules.value.length !== 2) {
+    ElMessage.warning('普通路线规划需要选择2个景点')
+    return
+  }
+
+  normalPlanningLoading.value = true
+  try {
+    // 获取两个景点的信息
+    const [start, end] = selectedSchedules.value
+    
+    // 调用路线规划API
+    const { code, data } = await getRouteAPI({
+      startLon: start.longitude,
+      startLat: start.latitude,
+      endLon: end.longitude,
+      endLat: end.latitude,
+      type: transportType.value
+    })
+
+    if (code === 0) {
+      normalRouteResult.value = data
+      normalRoutePlanningVisible.value = true
+    }
+  } catch (error) {
+    ElMessage.error('路线规划失败')
+  } finally {
+    normalPlanningLoading.value = false
+  }
+}
+
+const handleSmartRoutePlanning = async () => {
+  if (selectedSchedules.value.length < 2) {
+    ElMessage.warning('请至少选择两个景点进行智能规划')
+    return
+  }
+
+  smartPlanningLoading.value = true
+  try {
+    const { code, data } = await smartRouteAPI(props.tripId, currentDay.value, {
+      destinations: selectedSchedules.value.map(s => s.destinationId),
+      transportType: transportType.value,
+      startTime: "09:00",
+      endTime: "18:00"
+    })
+
+    if (code === 0) {
+      routeResult.value = data
+      routePlanningVisible.value = true
+    }
+  } catch (error) {
+    ElMessage.error('智能路线规划失败')
+  } finally {
+    smartPlanningLoading.value = false
+  }
+}
+
+// 监听选中日程变化
+watch(() => selectedSchedules.value.length, (newLength) => {
+  if (newLength === 0) {
+    normalRouteResult.value = null
+    routeResult.value = null
+  }
+})
+
+// 监听 tripId 变化
+watch(() => props.tripId, () => {
+  clearSelection()
+})
+
+// 在响应式数据声明之后，添加 loadSchedules 函数
+const loadSchedules = async () => {
+  try {
+    const { code, data, message } = await getScheduleListAPI(props.tripId)
+    if (code === 0) {
+      // 按天数索引重组数据
+      const schedules = {}
+      if (data && data.length > 0) {
+        data.forEach(schedule => {
+          if (!schedules[schedule.dayIndex]) {
+            schedules[schedule.dayIndex] = []
+          }
+          schedules[schedule.dayIndex].push(schedule)
+        })
+        // 对每天的日程按时间排序
+        Object.keys(schedules).forEach(day => {
+          schedules[day].sort((a, b) => {
+            return dayjs(`1970-01-01T${a.startTime}`).diff(dayjs(`1970-01-01T${b.startTime}`))
+          })
+        })
+      }
+      schedulesByDay.value = schedules
+    } else {
+      ElMessage.warning(message || '暂无日程数据')
+    }
+  } catch (error) {
+    console.error('加载日程数据异常:', error)
+    ElMessage.warning('暂无日程数据')
+  }
+}
+
+// 添加格式化时间的工具方法
+const formatDuration = (seconds) => {
+  if (!seconds) return '0分钟'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  
+  if (hours === 0) {
+    return `${minutes}分钟`
+  } else if (minutes === 0) {
+    return `${hours}小时`
+  } else {
+    return `${hours}小时${minutes}分钟`
+  }
+}
+
+// 添加路线步骤类型判断方法
+const getRouteStepType = (step) => {
+  if (step.instruction.includes('到达')) return 'success'
+  if (step.instruction.includes('转')) return 'warning'
+  return 'info'
+}
+
+// 添加应用智能规划方案的方法
+const applySmartRoutePlan = async () => {
+  if (!routeResult.value?.feasible) {
+    ElMessage.warning('当前路线规划方案不可行')
+    return
+  }
+
+  try {
+    // 更新景点访问顺序
+    for (const dest of routeResult.value.destinations) {
+      await updateVisitOrderAPI(props.tripId, dest.destinationId, dest.visitOrder)
+    }
+    
+    ElMessage.success('智能路线规划已应用')
+    routePlanningVisible.value = false
+    await loadDayDestinations(currentDay.value) // 重新加载日程
+  } catch (error) {
+    ElMessage.error('应用智能路线规划失败')
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1168,6 +1479,24 @@ const emit = defineEmits(['back', 'select-schedule'])
               margin-top: 4px;
               font-size: 14px;
               color: var(--el-text-color-secondary);
+            }
+
+            .selection-info {
+              margin-top: 8px;
+              
+              .el-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 0 8px;
+                height: 24px;
+                
+                &.el-tag--info {
+                  background-color: var(--el-color-info-light-9);
+                  border-color: var(--el-color-info-light-7);
+                  color: var(--el-color-info);
+                }
+              }
             }
           }
 
@@ -1288,6 +1617,179 @@ const emit = defineEmits(['back', 'select-schedule'])
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+}
+
+.route-planning-content {
+  padding: 20px;
+
+  .transport-type {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--el-fill-color-light);
+    border-radius: 8px;
+    
+    .el-radio-group {
+      display: flex;
+      width: 100%;
+      
+      .el-radio-button {
+        flex: 1;
+        
+        :deep(.el-radio-button__inner) {
+          width: 100%;
+        }
+      }
+    }
+  }
+  
+  .route-result {
+    .result-overview {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      
+      .overview-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--el-text-color-regular);
+        
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+    }
+    
+    .destination-item {
+      h4 {
+        margin: 0 0 8px;
+        color: var(--el-text-color-primary);
+      }
+      
+      .time-info {
+        display: flex;
+        gap: 12px;
+        color: var(--el-text-color-regular);
+        font-size: 13px;
+        
+        .duration {
+          color: var(--el-color-success);
+        }
+      }
+      
+      .transport-info {
+        margin-top: 12px;
+        
+        .transport-detail {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 8px;
+          color: var(--el-text-color-regular);
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+.dialog-footer {
+  text-align: right;
+}
+
+/* 添加智能路线规划相关样式 */
+.route-planning-content {
+  .route-overview {
+    background: var(--el-bg-color-page);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--el-text-color-regular);
+        
+        .el-icon {
+          color: var(--el-color-primary);
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .destinations-list {
+    .destination-item {
+      padding: 16px;
+      background: var(--el-bg-color-page);
+      border-radius: 8px;
+      margin-bottom: 8px;
+
+      .destination-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        h4 {
+          margin: 0;
+          font-size: 16px;
+          color: var(--el-text-color-primary);
+        }
+      }
+
+      .visit-info {
+        .time-info {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          color: var(--el-text-color-regular);
+          font-size: 14px;
+
+          .duration {
+            color: var(--el-color-success);
+          }
+        }
+      }
+
+      .transport-info {
+        margin-top: 16px;
+
+        .transport-detail {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin: 12px 0;
+          color: var(--el-text-color-regular);
+          font-size: 14px;
+        }
+
+        .route-steps {
+          margin-top: 12px;
+
+          .step-content {
+            .step-instruction {
+              color: var(--el-text-color-primary);
+              margin-bottom: 4px;
+            }
+
+            .step-stats {
+              display: flex;
+              gap: 16px;
+              color: var(--el-text-color-secondary);
+              font-size: 13px;
+            }
+          }
+        }
+      }
+    }
   }
 }
 </style> 

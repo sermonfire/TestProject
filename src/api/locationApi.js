@@ -69,7 +69,7 @@ export const getCurrentLocationAPI = ({ longitude, latitude }) => {
 }
 
 /**
- * @description 获取路线规划
+ * @description 获取普通路线规划
  * @param {Object} params 路线参数
  * @param {string} params.startLon 起点经度(GCJ02)
  * @param {string} params.startLat 起点纬度(GCJ02)
