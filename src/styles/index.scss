@@ -19,6 +19,36 @@
   background-color: #f5f5f5;
 }
 
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  min-height: 100vh;
+  width: calc(100vw - 240px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #f5f5f5;
+  position: relative;
+  padding: 0;
+  
+  .page-wrapper {
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .page-content {
+    background: #f5f5f5;
+    border-radius: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    min-height: calc(100vh - 64px);
+    padding: 16px 24px;
+  }
+}
+
+.content-expanded {
+  margin-left: 80px;
+  width: calc(100vw - 80px);
+}
+
 .sidebar {
   position: fixed;
   height: 100vh;
@@ -224,31 +254,6 @@
       background-color: rgba(255, 255, 255, 0.4);
     }
   }
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 240px;
-  min-height: 100vh;
-  width: calc(100vw - 240px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: #a5e6eb;
-  overflow-y: auto;
-  position: relative;
-  padding: 0;
-  
-  .page-content {
-    background: #f5f5f5;
-    border-radius: 0;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    min-height: calc(100vh - 64px);
-    padding: 16px 24px;
-  }
-}
-
-.content-expanded {
-  margin-left: 80px;
-  width: calc(100vw - 80px);
 }
 
 @keyframes fadeIn {

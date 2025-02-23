@@ -74,14 +74,19 @@ watch(() => route.matched, (newMatched) => {
 
 <style lang="scss" scoped>
 .breadcrumb {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
   padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.95);  // 略微透明的背景
-  border-radius: 8px;  // 增加圆角
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);  // 更柔和的阴影
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   margin-bottom: 16px;
-  backdrop-filter: blur(10px);  // 毛玻璃效果
-  border: 1px solid rgba(0, 0, 0, 0.05);  // 细边框
-  transition: all 0.3s ease;  // 添加过渡效果
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 
   &:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);  // 悬停时加深阴影

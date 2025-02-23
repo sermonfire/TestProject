@@ -49,9 +49,11 @@
 
     <!-- 主内容区 -->
     <div class="main-content" :class="{ 'content-expanded': isCollapsed }">
-      <Breadcrumb />
-      <div class="page-content">
-        <router-view></router-view>
+      <div class="page-wrapper">
+        <Breadcrumb />
+        <div class="page-content">
+          <router-view></router-view>
+        </div>
       </div>
     </div>
   </div>
