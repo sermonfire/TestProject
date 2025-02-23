@@ -124,7 +124,7 @@
                     </div>
                   </div>
 
-                  <!-- 修改时间轴视图 -->
+                  <!-- 时间轴视图 -->
                   <el-timeline v-if="getTodaySchedulesCount(trip.id) > 0">
                     <el-timeline-item 
                       v-for="schedule in getTodaySchedules(trip.id)" 
@@ -145,24 +145,13 @@
                         </div>
 
                         <div class="schedule-body">
-                          <h4>{{ schedule.title }}</h4>
-                          <template v-if="schedule.location">
-                            <p class="location">
-                              <el-icon>
-                                <Location />
-                              </el-icon>
-                              {{ schedule.location }}
-                            </p>
-                          </template>
-                          <template v-if="schedule.description">
-                            <p class="description">{{ schedule.description }}</p>
-                          </template>
+                          <h4 v-if="schedule.title">名称：-- {{ schedule.title }} --</h4>
                           <template v-if="schedule.estimatedCost">
                             <p class="cost">
                               <el-icon>
                                 <Money />
                               </el-icon>
-                              预计费用: ¥{{ schedule.estimatedCost }}
+                              预计费用：¥{{ schedule.estimatedCost }}
                             </p>
                           </template>
                         </div>
@@ -188,7 +177,7 @@
                   <el-icon>
                     <Money />
                   </el-icon>
-                  <span>预算: ¥{{ trip.totalBudget }}</span>
+                  <span>行程预算: ¥{{ trip.totalBudget }}</span>
                   <small>¥{{ calculateDailyBudget(trip) }}/天</small>
                 </div>
                 <div class="meta-item" v-if="trip.schedules?.length">
@@ -236,7 +225,7 @@
 
     <!-- 新建/编辑行程对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑行程' : '新建行程'" width="50%" destroy-on-close>
-      <trip-form v-if="dialogVisible" :trip="currentTrip" @submit="handleTripSubmit" @cancel="dialogVisible = false" />
+      <TripForm v-if="dialogVisible" :trip="currentTrip" @submit="handleTripSubmit" @cancel="dialogVisible = false" />
     </el-dialog>
 
     <!-- 修改日程安排对话框 -->
@@ -443,17 +432,38 @@ const formatTime = (time) => {
   return timeStr.substring(0, 5)
 }
 
-// 修改 getTodaySchedules 方法
+/**
+ * @description 获取今日日程安排
+ * @param {string} tripId 行程ID
+ * @returns {Array} 今日日程安排列表
+ */
 const getTodaySchedules = (tripId) => {
-  // 直接返回缓存中的数据，避免重复调用 fetchTodaySchedules
   const schedules = tripStore.getTodaySchedules(tripId)
-  // 确保返回数组
-  return Array.isArray(schedules) ? schedules : []
+  if (!Array.isArray(schedules)) return []
+  
+  // 获取当前行程
+  const trip = trips.value.find(t => t.id === tripId)
+  if (!trip) return []
+  
+  // 计算当前是第几天
+  const startDate = dayjs(trip.startDate)
+  const today = dayjs()
+  const currentDayIndex = today.diff(startDate, 'day') + 1
+  
+  // 过滤出当天的日程安排并按时间排序
+  return schedules.filter(schedule => {
+    const scheduleDayIndex = parseInt(schedule.dayIndex)
+    return !isNaN(scheduleDayIndex) && scheduleDayIndex === currentDayIndex
+  }).sort((a, b) => dayjs(a.startTime).diff(dayjs(b.startTime)))
 }
 
+/**
+ * @description 获取今日日程数量
+ * @param {string} tripId 行程ID
+ * @returns {number} 今日日程数量
+ */
 const getTodaySchedulesCount = (tripId) => {
-  const schedules = tripStore.getTodaySchedules(tripId)
-  return schedules.length
+  return getTodaySchedules(tripId).length
 }
 
 const loading = ref(false)
@@ -677,7 +687,7 @@ watch(scheduleDialogVisible, (newVal) => {
   }
 })
 
-// 修改查看日程方法
+// 查看日程方法
 const viewSchedule = (trip) => {
   clearRouteData() // 清理之前的路线数据
   currentTrip.value = trip
@@ -1075,6 +1085,13 @@ watch(() => selectedSchedules.value.length, (newLength) => {
 })
 
 const searchKeyword = ref('')
+
+// 修改监听器
+watch(() => Array.from(tripStore.todaySchedulesMap), () => {
+  if (currentTrip.value?.id) {
+    getTodaySchedules(currentTrip.value.id)
+  }
+}, { deep: true })
 </script>
 
 <style lang="scss" scoped>

@@ -137,13 +137,50 @@
 		}
 	}, { deep: true });
 
-	// 获取轮播图数据的函数
+	// 添加新的常量用于缓存 key
+	const CAROUSEL_CACHE_KEY = 'carousel_images_cache';
+
+	// 添加缓存检查函数
+	const isValidCache = (cachedData) => {
+		try {
+			const { data, timestamp } = JSON.parse(cachedData);
+			const now = new Date().getTime();
+			const cacheAge = now - timestamp;
+			const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时
+			
+			return data?.list && 
+				   Array.isArray(data.list) && 
+				   data.list.length > 0 && 
+				   cacheAge < CACHE_DURATION;
+		} catch (e) {
+			return false;
+		}
+	};
+
+	// 修改获取轮播图数据的函数
 	const getCarouselImages = async () => {
 		try {
-			const { code, data } = await getCarouselImagesAPI();
-			if (code === 0 && data?.list?.length > 0) {
-				return data.list.map((url, index) => ({
-					text: ``,
+			// 首先检查缓存
+			const cachedData = localStorage.getItem(CAROUSEL_CACHE_KEY);
+			if (cachedData && isValidCache(cachedData)) {
+				const { data } = JSON.parse(cachedData);
+				return data.list.map(url => ({
+					text: '',
+					image: url
+				}));
+			}
+
+			// 如果没有缓存或缓存无效，则请求新数据
+			const response = await getCarouselImagesAPI();
+			if (response.code === 0 && response.data?.list?.length > 0) {
+				// 将新数据存入缓存
+				localStorage.setItem(CAROUSEL_CACHE_KEY, JSON.stringify({
+					data: response.data,
+					timestamp: Date.now()
+				}));
+				
+				return response.data.list.map(url => ({
+					text: '',
 					image: url
 				}));
 			}
@@ -184,10 +221,11 @@
 		});
 	};
 
+	// 修改 onMounted 钩子
 	onMounted(async () => {
 		try {
-			const carouselImages = await getCarouselImages();
-			slides.value = carouselImages;
+			const images = await getCarouselImages();
+			slides.value = images;
 		} catch (error) {
 			console.error('初始化轮播图失败:', error);
 		}

@@ -19,26 +19,15 @@ export const useTripStore = defineStore('trip', () => {
   // 获取今日日程并缓存
   const fetchTodaySchedules = async (tripId) => {
     try {
-      // 如果缓存中已有数据且未过期，直接返回
-      if (todaySchedulesMap.value.has(tripId)) {
-        const cached = todaySchedulesMap.value.get(tripId)
-        // 如果缓存时间不超过5分钟，直接返回缓存数据
-        if (cached.timestamp && (Date.now() - cached.timestamp) < 300000) {
-          return cached.data
-        }
-      }
-
       const res = await getScheduleListAPI(tripId)
       if (res.code === 0) {
-        const schedules = res.data || []
-        // 将结果缓存，并添加时间戳
         todaySchedulesMap.value.set(tripId, {
-          data: schedules,
+          data: res.data || [],
           timestamp: Date.now()
         })
-        return schedules
+        return res.data || []
       }
-      // 如果获取失败，也缓存空数组，避免重复请求
+      // 如果获取失败，缓存空数组
       todaySchedulesMap.value.set(tripId, {
         data: [],
         timestamp: Date.now()
@@ -46,7 +35,6 @@ export const useTripStore = defineStore('trip', () => {
       return []
     } catch (error) {
       console.error('获取日程列表失败:', error)
-      // 发生错误时也缓存空数组
       todaySchedulesMap.value.set(tripId, {
         data: [],
         timestamp: Date.now()
@@ -55,15 +43,32 @@ export const useTripStore = defineStore('trip', () => {
     }
   }
 
-  // 获取今日日程
+  /**
+   * @description 检查缓存是否有效
+   * @param {number} timestamp - 缓存时间戳
+   * @param {number} validTime - 有效时间(ms)
+   * @returns {boolean} 是否有效
+   */
+  const isCacheValid = (timestamp, validTime = 5 * 60 * 1000) => { // 默认5分钟
+    return timestamp && (Date.now() - timestamp < validTime)
+  }
+
+  /**
+   * @description 获取今日日程
+   * @param {string|number} tripId - 行程ID
+   * @returns {Array} 日程列表
+   */
   const getTodaySchedules = (tripId) => {
-    // 如果缓存中没有数据，先尝试获取
-    if (!todaySchedulesMap.value.has(tripId)) {
-      fetchTodaySchedules(tripId)
-      return []
-    }
     const cached = todaySchedulesMap.value.get(tripId)
-    return cached.data || []
+    
+    // 如果缓存存在且未过期，直接返回缓存数据
+    if (cached && isCacheValid(cached.timestamp)) {
+      return cached.data || []
+    }
+    
+    // 缓存不存在或已过期，重新获取
+    fetchTodaySchedules(tripId)
+    return cached?.data || []
   }
 
   // 清除指定行程的缓存
@@ -194,6 +199,7 @@ export const useTripStore = defineStore('trip', () => {
   return {
     trips,
     loading,
+    todaySchedulesMap,
     getTrips,
     createTrip,
     updateTrip,

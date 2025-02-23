@@ -39,9 +39,19 @@ export const useUserStore = defineStore('user', {
 			localStorage.removeItem('token');
 			localStorage.removeItem('userInfo');
 			localStorage.removeItem('user');
+			// 清除轮播图缓存
+			localStorage.removeItem('carousel_images_cache');
 		},
 		setLoginState(state) {
 			this.isLogin = state;
+		},
+		// 添加登录成功后的处理
+		async loginSuccess(token, userInfo) {
+			this.setToken(token);
+			this.setUserInfo(userInfo);
+			this.setLoginState(true);
+			// 清除旧的轮播图缓存
+			localStorage.removeItem('carousel_images_cache');
 		}
 	},
 	persist: {

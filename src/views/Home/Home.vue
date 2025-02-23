@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Swiper from '@/components/Swiper/Swiper.vue';
 import AIChatBox from '@/components/AIChatBox/AIChatBox.vue';
 
