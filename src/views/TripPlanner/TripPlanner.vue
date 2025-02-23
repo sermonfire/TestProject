@@ -80,7 +80,7 @@
                         :key="schedule.id"
                         :type="getScheduleTypeTag(schedule.scheduleType)"
                         :timestamp="formatTime(schedule.startTime)"
-                        size="small"
+                        size="normal"
                         :hollow="true">
                         <div class="timeline-content">
                           <div class="schedule-header">
