@@ -12,18 +12,109 @@
               </el-icon>新建行程
             </el-button>
           </div>
-          <div v-if="currentOngoingTrip" class="ongoing-trip">
-            <el-tag type="success" effect="dark" class="trip-tag">
-              <el-icon>
-                <Timer />
+          <div v-if="currentOngoingTrip" class="ongoing-trip" :class="{ 'is-collapsed': isCollapsed }">
+            <div class="collapse-trigger" @click="toggleCollapse">
+              <el-icon :class="{ 'is-collapsed': isCollapsed }">
+                <ArrowDown />
               </el-icon>
-              <span>当前进行中</span>
-            </el-tag>
-            <div class="trip-info">
-              <span class="trip-name">{{ currentOngoingTrip.name }}</span>
-              <span class="trip-progress">
-                第 {{ calculateCurrentDay(currentOngoingTrip) }}/{{ calculateTotalDays(currentOngoingTrip) }} 天
-              </span>
+            </div>
+            
+            <div class="ongoing-content">
+              <div class="trip-header">
+                <el-tag type="success" effect="plain" class="trip-tag">
+                  <el-icon><Timer /></el-icon>
+                  <span>当前进行中</span>
+                </el-tag>
+                <div class="trip-info">
+                  <div class="trip-name">{{ currentOngoingTrip.name }}</div>
+                  <div class="trip-progress">
+                    第 {{ calculateCurrentDay(currentOngoingTrip) }}/{{ calculateTotalDays(currentOngoingTrip) }} 天
+                  </div>
+                </div>
+              </div>
+
+              <div class="trip-details">
+                <!-- 进度指示器 -->
+                <div class="trip-progress-bar">
+                  <div class="progress-info">
+                    <div class="progress-stats">
+                      <div class="progress-circle" :style="{ '--progress': `${calculateProgress(currentOngoingTrip)}%` }">
+                        <span class="progress-value">{{ calculateProgress(currentOngoingTrip) }}%</span>
+                      </div>
+                      <div class="progress-details">
+                        <div class="detail-item">
+                          <span class="label">已进行</span>
+                          <span class="value">{{ calculateCurrentDay(currentOngoingTrip) }} 天</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="label">总天数</span>
+                          <span class="value">{{ calculateTotalDays(currentOngoingTrip) }} 天</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 日程概览 -->
+                <div class="schedule-overview">
+                  <div class="overview-container">
+                    <div class="overview-header">
+                      <div class="header-left">
+                        <el-icon><List /></el-icon>
+                        <span>今日安排</span>
+                        <el-tag size="small" type="info" class="schedule-count">
+                          共 {{ getTodaySchedulesCount(currentOngoingTrip.id) }} 项
+                        </el-tag>
+                      </div>
+                      <div class="header-right">
+                        <el-button type="primary" link @click="viewSchedule(currentOngoingTrip)"
+                          v-if="getTodaySchedulesCount(currentOngoingTrip.id) > 0">
+                          查看全部
+                        </el-button>
+                      </div>
+                    </div>
+
+                    <el-timeline v-if="getTodaySchedulesCount(currentOngoingTrip.id) > 0">
+                      <el-timeline-item
+                        v-for="schedule in getTodaySchedules(currentOngoingTrip.id)"
+                        :key="schedule.id"
+                        :type="getScheduleTypeTag(schedule.scheduleType)"
+                        :timestamp="formatTime(schedule.startTime)"
+                        size="small"
+                        :hollow="true">
+                        <div class="timeline-content">
+                          <div class="schedule-header">
+                            <el-tag size="small" :type="getScheduleTypeTag(schedule.scheduleType)">
+                              {{ getScheduleTypeText(schedule.scheduleType) }}
+                            </el-tag>
+                            <span class="duration">
+                              {{ calculateDuration(schedule.startTime, schedule.endTime) }}
+                            </span>
+                          </div>
+                          <div class="schedule-body">
+                            <h4 v-if="schedule.title">{{ schedule.title }}</h4>
+                            <p v-if="schedule.estimatedCost" class="cost">
+                              <el-icon><Money /></el-icon>
+                              预计费用：¥{{ schedule.estimatedCost }}
+                            </p>
+                          </div>
+                        </div>
+                      </el-timeline-item>
+                    </el-timeline>
+
+                    <div v-else class="no-schedule">
+                      <el-empty :image-size="60">
+                        <template #description>
+                          <p>今日暂无安排</p>
+                          <el-button type="primary" link @click="viewSchedule(currentOngoingTrip)">
+                            立即添加
+                          </el-button>
+                        </template>
+                      </el-empty>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -71,106 +162,7 @@
                 <span class="trip-duration">{{ calculateTotalDays(trip) }}天</span>
               </p>
 
-              <!-- 添加进度指示器 -->
-              <div v-if="trip.status === 2" class="trip-progress-bar">
-                <div class="progress-header">
-                  <div class="progress-info">
-                    <div class="info-label">
-                      <el-icon>
-                        <Timer />
-                      </el-icon>
-                      <span>行程进度</span>
-                    </div>
-                    <div class="progress-stats">
-                      <div class="progress-circle" :style="{ '--progress': `${calculateProgress(trip)}%` }">
-                        <span class="progress-value">{{ calculateProgress(trip) }}%</span>
-                      </div>
-                      <div class="progress-details">
-                        <div class="detail-item">
-                          <span class="label">已进行</span>
-                          <span class="value">{{ calculateCurrentDay(trip) }} 天</span>
-                        </div>
-                        <div class="detail-item">
-                          <span class="label">总天数</span>
-                          <span class="value">{{ calculateTotalDays(trip) }} 天</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <p class="trip-desc">{{ trip.description || '暂无描述' }}</p>
-              <!-- 日程概览 -->
-              <div class="schedule-overview" v-if="trip.status === 2">
-                <div class="overview-container">
-                  <div class="overview-header">
-                    <div class="header-left">
-                      <el-icon><List /></el-icon>
-                      <span>今日安排</span>
-                      <el-tag size="small" type="info" class="schedule-count">
-                        共 {{ getTodaySchedulesCount(trip.id) }} 项
-                      </el-tag>
-                    </div>
-                    <div class="header-right">
-                      <el-button 
-                        type="primary" 
-                        link 
-                        @click="viewSchedule(trip)"
-                        v-if="getTodaySchedulesCount(trip.id) > 0"
-                      >
-                        查看全部
-                      </el-button>
-                    </div>
-                  </div>
-
-                  <!-- 时间轴视图 -->
-                  <el-timeline v-if="getTodaySchedulesCount(trip.id) > 0">
-                    <el-timeline-item 
-                      v-for="schedule in getTodaySchedules(trip.id)" 
-                      :key="schedule.id"
-                      :type="getScheduleTypeTag(schedule.scheduleType)"
-                      :timestamp="formatTime(schedule.startTime)"
-                      size="normal"
-                      :hollow="true"
-                    >
-                      <div class="timeline-content">
-                        <div class="schedule-header">
-                          <el-tag size="small" :type="getScheduleTypeTag(schedule.scheduleType)">
-                            {{ getScheduleTypeText(schedule.scheduleType) }}
-                          </el-tag>
-                          <span class="duration">
-                            {{ calculateDuration(schedule.startTime, schedule.endTime) }}
-                          </span>
-                        </div>
-
-                        <div class="schedule-body">
-                          <h4 v-if="schedule.title">名称：-- {{ schedule.title }} --</h4>
-                          <template v-if="schedule.estimatedCost">
-                            <p class="cost">
-                              <el-icon>
-                                <Money />
-                              </el-icon>
-                              预计费用：¥{{ schedule.estimatedCost }}
-                            </p>
-                          </template>
-                        </div>
-                      </div>
-                    </el-timeline-item>
-                  </el-timeline>
-
-                  <div v-else class="no-schedule">
-                    <el-empty :image-size="60">
-                      <template #description>
-                        <p>今日暂无安排</p>
-                        <el-button type="primary" link @click="viewSchedule(trip)">
-                          立即添加
-                        </el-button>
-                      </template>
-                    </el-empty>
-                  </div>
-                </div>
-              </div>
 
               <div class="trip-meta">
                 <div class="meta-item" v-if="trip.totalBudget">
@@ -228,7 +220,7 @@
       <TripForm v-if="dialogVisible" :trip="currentTrip" @submit="handleTripSubmit" @cancel="dialogVisible = false" />
     </el-dialog>
 
-    <!-- 修改日程安排对话框 -->
+    <!-- 日程安排对话框 -->
     <Transition name="dialog-fade">
       <div v-if="scheduleDialogVisible" class="schedule-dialog-container">
         <div class="schedule-dialog-mask" @click="scheduleDialogVisible = false"></div>
@@ -440,16 +432,16 @@ const formatTime = (time) => {
 const getTodaySchedules = (tripId) => {
   const schedules = tripStore.getTodaySchedules(tripId)
   if (!Array.isArray(schedules)) return []
-  
+
   // 获取当前行程
   const trip = trips.value.find(t => t.id === tripId)
   if (!trip) return []
-  
+
   // 计算当前是第几天
   const startDate = dayjs(trip.startDate)
   const today = dayjs()
   const currentDayIndex = today.diff(startDate, 'day') + 1
-  
+
   // 过滤出当天的日程安排并按时间排序
   return schedules.filter(schedule => {
     const scheduleDayIndex = parseInt(schedule.dayIndex)
@@ -1092,6 +1084,13 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
     getTodaySchedules(currentTrip.value.id)
   }
 }, { deep: true })
+
+// 添加折叠状态控制
+const isCollapsed = ref(false)
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1135,33 +1134,365 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
         }
 
         .ongoing-trip {
-          display: flex;
-          align-items: center;
-          gap: 12px;
+          position: relative;
+          margin-bottom: 20px;
+          background: var(--el-bg-color);
+          border-radius: 12px;
+          border: 1px solid var(--el-border-color-light);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s ease;
 
-          .trip-tag {
-            padding: 6px 12px;
-            border-radius: 4px;
+          .collapse-trigger {
+            position: absolute;
+            top: 0;
+            right: 20px;
+            width: 32px;
+            height: 20px;
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-weight: 500;
-          }
+            justify-content: center;
+            cursor: pointer;
+            background: var(--el-fill-color-light);
+            border-radius: 0 0 16px 16px;
+            transition: all 0.3s ease;
 
-          .trip-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-
-            .trip-name {
-              font-size: 16px;
-              font-weight: 500;
-              color: var(--el-text-color-primary);
+            &:hover {
+              background: var(--el-fill-color-darker);
             }
 
-            .trip-progress {
-              font-size: 14px;
+            .el-icon {
+              font-size: 16px;
               color: var(--el-text-color-secondary);
+              transition: transform 0.3s ease;
+
+              &.is-collapsed {
+                transform: rotate(-180deg);
+              }
+            }
+          }
+          
+          .ongoing-content {
+            padding: 20px;
+            transition: all 0.3s ease;
+          }
+
+          &.is-collapsed {
+            .trip-details {
+              display: none;
+            }
+
+            .ongoing-content {
+              padding: 16px 20px;
+            }
+
+            .trip-header {
+              margin-bottom: 0;
+            }
+          }
+
+          // 头部区域
+          .trip-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+
+            .trip-tag {
+              padding: 6px 12px;
+              border-radius: 16px;
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              font-size: 13px;
+              font-weight: 500;
+              background: var(--el-color-success-light-9);
+              border: 1px solid var(--el-color-success-light-5);
+              color: var(--el-color-success);
+              white-space: nowrap;
+
+              .el-icon {
+                font-size: 14px;
+              }
+            }
+
+            .trip-info {
+              flex: 1;
+              min-width: 0;
+
+              .trip-name {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--el-text-color-primary);
+                margin-bottom: 4px;
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+              }
+
+              .trip-progress {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 8px;
+                background: var(--el-fill-color-light);
+                border-radius: 4px;
+                color: var(--el-text-color-regular);
+                font-size: 13px;
+
+                &::before {
+                  content: '';
+                  display: inline-block;
+                  width: 4px;
+                  height: 4px;
+                  border-radius: 50%;
+                  background: var(--el-color-success);
+                  margin-right: 6px;
+                }
+              }
+            }
+          }
+
+          .trip-details {
+            display: flex;
+            gap: 16px;
+
+            .trip-progress-bar {
+              flex: 1;
+              min-width: 0;
+              padding: 20px;
+              background: var(--el-fill-color-light);
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+              transition: all 0.3s ease;
+
+              &:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                transform: translateY(-2px);
+              }
+
+              .progress-info {
+                .progress-stats {
+                  display: flex;
+                  align-items: center;
+                  gap: 32px;
+
+                  .progress-circle {
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    background: conic-gradient(
+                      var(--el-color-success) calc(var(--progress) * 1%),
+                      var(--el-fill-color) 0deg
+                    );
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    padding: 6px;
+                    box-shadow: 0 4px 12px rgba(var(--el-color-success-rgb), 0.2);
+                    animation: progress-appear 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+                    &::before {
+                      content: '';
+                      position: absolute;
+                      inset: 6px;
+                      background: var(--el-bg-color);
+                      border-radius: 50%;
+                      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+                    }
+
+                    .progress-value {
+                      position: relative;
+                      font-size: 28px;
+                      font-weight: 600;
+                      color: var(--el-color-success);
+                      display: flex;
+                      align-items: baseline;
+                      
+                      &::after {
+                        content: '%';
+                        font-size: 16px;
+                        margin-left: 2px;
+                        font-weight: 500;
+                      }
+                    }
+                  }
+
+                  .progress-details {
+                    flex: 1;
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 16px;
+
+                    .detail-item {
+                      padding: 20px;
+                      background: var(--el-bg-color);
+                      border-radius: 10px;
+                      text-align: center;
+                      transition: all 0.3s ease;
+                      border: 1px solid var(--el-border-color-light);
+
+                      &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                        border-color: var(--el-color-success-light-5);
+                      }
+
+                      .label {
+                        display: block;
+                        font-size: 14px;
+                        color: var(--el-text-color-secondary);
+                        margin-bottom: 8px;
+                      }
+
+                      .value {
+                        display: block;
+                        font-size: 24px;
+                        font-weight: 600;
+                        color: var(--el-text-color-primary);
+                        background: linear-gradient(45deg, var(--el-color-success), var(--el-color-primary));
+                        -webkit-background-clip: text;
+                        color: transparent;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            .schedule-overview {
+              flex: 2;
+              min-width: 0;
+              
+              .overview-container {
+                .overview-header {
+                  padding: 16px 20px;
+                  background: var(--el-bg-color);
+                  border-bottom: 1px solid var(--el-border-color-light);
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+
+                  .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .el-icon {
+                      font-size: 18px;
+                      color: var(--el-color-primary);
+                    }
+
+                    span {
+                      font-size: 16px;
+                      font-weight: 500;
+                      color: var(--el-text-color-primary);
+                    }
+
+                    .schedule-count {
+                      margin-left: 12px;
+                      background: var(--el-color-info-light-9);
+                      border: none;
+                    }
+                  }
+
+                  .header-right {
+                    .el-button {
+                      padding: 8px 16px;
+                    }
+                  }
+                }
+
+                .el-timeline {
+                  padding: 20px;
+
+                  :deep(.el-timeline-item__node) {
+                    width: 12px;
+                    height: 12px;
+                  }
+
+                  :deep(.el-timeline-item__wrapper) {
+                    padding-left: 28px;
+                  }
+
+                  .timeline-content {
+                    background: var(--el-bg-color);
+                    padding: 16px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                      transform: translateY(-2px);
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                    }
+
+                    .schedule-header {
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      margin-bottom: 12px;
+
+                      .el-tag {
+                        font-size: 12px;
+                        padding: 0 8px;
+                        height: 24px;
+                        line-height: 22px;
+                      }
+
+                      .duration {
+                        font-size: 13px;
+                        color: var(--el-text-color-secondary);
+                      }
+                    }
+
+                    .schedule-body {
+                      h4 {
+                        margin: 0 0 8px;
+                        font-size: 15px;
+                        color: var(--el-text-color-primary);
+                      }
+
+                      .cost {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        font-size: 13px;
+                        color: var(--el-text-color-regular);
+
+                        .el-icon {
+                          font-size: 14px;
+                          color: var(--el-color-danger);
+                        }
+                      }
+                    }
+                  }
+                }
+
+                .no-schedule {
+                  padding: 32px;
+                  
+                  :deep(.el-empty) {
+                    padding: 0;
+                    
+                    .el-empty__description {
+                      margin-top: 12px;
+                      
+                      p {
+                        margin: 0 0 12px;
+                        color: var(--el-text-color-secondary);
+                      }
+
+                      .el-button {
+                        padding: 8px 16px;
+                        font-size: 14px;
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1261,92 +1592,6 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
         }
       }
 
-      .trip-progress-bar {
-        margin: 16px 0;
-        padding: 16px;
-        background: var(--el-bg-color-page);
-        border-radius: 8px;
-
-        .progress-header {
-          .progress-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-
-            .info-label {
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              color: var(--el-text-color-primary);
-              font-weight: 500;
-
-              .el-icon {
-                font-size: 16px;
-                color: var(--el-color-primary);
-              }
-            }
-
-            .progress-stats {
-              display: flex;
-              align-items: center;
-              gap: 24px;
-
-              .progress-circle {
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                background: conic-gradient(var(--el-color-primary) calc(var(--progress) * 1%),
-                    var(--el-fill-color-light) 0deg);
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                &::before {
-                  content: '';
-                  position: absolute;
-                  width: 90%;
-                  height: 90%;
-                  background: var(--el-bg-color);
-                  border-radius: 50%;
-                }
-
-                .progress-value {
-                  position: relative;
-                  font-size: 18px;
-                  font-weight: 600;
-                  color: var(--el-color-primary);
-                }
-              }
-
-              .progress-details {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-
-                .detail-item {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-
-                  .label {
-                    font-size: 13px;
-                    color: var(--el-text-color-secondary);
-                  }
-
-                  .value {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: var(--el-text-color-primary);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
       .trip-desc {
         color: #606266;
         font-size: 14px;
@@ -1384,57 +1629,6 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
           color: #909399;
           font-size: 12px;
           margin: 3px 0;
-        }
-      }
-
-      .schedule-overview {
-        margin-top: 20px;
-        background: var(--el-bg-color-page);
-        border-radius: 8px;
-        overflow: hidden;
-
-        .overview-container {
-          padding: 16px;
-
-          .overview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-
-            .header-left {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-
-              .el-icon {
-                font-size: 18px;
-                color: var(--el-color-primary);
-              }
-
-              span {
-                font-size: 16px;
-                font-weight: 500;
-                color: var(--el-text-color-primary);
-              }
-
-              .schedule-count {
-                margin-left: 8px;
-              }
-            }
-          }
-
-          .el-timeline {
-            padding: 8px 16px;
-
-            :deep(.el-timeline-item__node) {
-              background-color: var(--el-color-primary-light-5);
-            }
-
-            :deep(.el-timeline-item__content) {
-              color: var(--el-text-color-regular);
-            }
-          }
         }
       }
     }
@@ -1489,24 +1683,7 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
   }
 }
 
-// 过渡动画
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.fade-slide-enter-to,
-.fade-slide-leave-from {
-  opacity: 1;
-  transform: translateX(0);
-}
-
+// 添加/修改日程安排对话框的样式
 .schedule-dialog-container {
   position: fixed;
   top: 0;
@@ -1570,13 +1747,100 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
 
       .schedule-dialog-body {
         flex: 1;
-        overflow-y: auto;
-        padding: 20px;
+        overflow: hidden;
+        display: flex;
+
+        .schedule-content {
+          flex: 1;
+          display: flex;
+          height: 100%;
+
+          .schedule-list {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            border-right: 1px solid var(--el-border-color-light);
+          }
+
+          .route-planning {
+            width: 360px;
+            background: var(--el-bg-color);
+            border-left: 1px solid var(--el-border-color-light);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            
+            &.is-expanded {
+              transform: translateX(0);
+            }
+
+            .route-toggle {
+              position: absolute;
+              left: -20px;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 20px;
+              height: 60px;
+              background: var(--el-color-primary);
+              border-radius: 4px 0 0 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              color: white;
+
+              .el-icon {
+                transition: transform 0.3s ease;
+
+                &.is-expanded {
+                  transform: rotate(180deg);
+                }
+              }
+            }
+
+            .route-content {
+              height: 100%;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+
+              .route-header {
+                padding: 16px;
+                border-bottom: 1px solid var(--el-border-color-light);
+
+                .header-title {
+                  margin-bottom: 12px;
+
+                  h4 {
+                    margin: 0 0 4px;
+                    font-size: 16px;
+                    font-weight: 500;
+                  }
+
+                  .subtitle {
+                    font-size: 13px;
+                    color: var(--el-text-color-secondary);
+                  }
+                }
+              }
+
+              .route-body {
+                flex: 1;
+                overflow: auto;
+                padding: 16px;
+              }
+            }
+          }
+        }
       }
     }
   }
 }
 
+// 添加过渡动画
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
   transition: all 0.3s ease-out;
@@ -1616,247 +1880,14 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
   }
 }
 
-.schedule-dialog-body {
-  .schedule-content {
-    display: flex;
-    height: 100%;
-
-    .schedule-list {
-      flex: 1;
-      min-width: 0;
-      padding-right: 20px;
-      border-right: 1px solid var(--el-border-color-light);
-    }
-
-    .route-planning {
-      position: absolute;
-      right: -360px;
-      top: 0;
-      bottom: 0;
-      width: 360px;
-      display: flex;
-      flex-direction: column;
-      background: var(--el-bg-color);
-      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      z-index: 10;
-
-      &.is-expanded {
-        transform: translateX(-360px);
-      }
-
-      .route-toggle {
-        position: absolute;
-        left: -20px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 20px;
-        height: 60px;
-        background: var(--el-color-primary);
-        border-radius: 4px 0 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: white;
-
-        .el-icon {
-          transition: transform 0.3s ease;
-
-          &.is-expanded {
-            transform: rotate(180deg);
-          }
-        }
-      }
-
-      .route-content {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-
-        .route-header {
-          padding: 20px;
-          background: var(--el-bg-color-page);
-          border-bottom: 1px solid var(--el-border-color-light);
-          margin-bottom: 16px;
-
-          .header-title {
-            margin-bottom: 12px;
-
-            h4 {
-              margin: 0 0 4px;
-              font-size: 18px;
-              font-weight: 600;
-              color: var(--el-text-color-primary);
-            }
-
-            .subtitle {
-              font-size: 13px;
-              color: var(--el-text-color-secondary);
-            }
-          }
-
-          .transport-options {
-            background: var(--el-fill-color-light);
-            padding: 8px;
-            border-radius: 6px;
-
-            .el-radio-group {
-              display: flex;
-              width: 100%;
-
-              .el-radio-button {
-                flex: 1;
-
-                :deep(.el-radio-button__inner) {
-                  width: 100%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 4px;
-                  padding: 8px 12px;
-                  font-size: 13px;
-                }
-              }
-            }
-          }
-        }
-
-        .route-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0 20px 20px;
-
-          &::-webkit-scrollbar {
-            width: 4px;
-          }
-
-          &::-webkit-scrollbar-thumb {
-            background: var(--el-border-color-darker);
-            border-radius: 2px;
-          }
-
-          .route-overview {
-            background: var(--el-bg-color-page);
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-
-            .route-locations {
-              padding: 16px;
-              border-bottom: 1px solid var(--el-border-color-light);
-
-              .location-wrapper {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-
-                .location-item {
-                  flex: 1;
-                  min-width: 0;
-
-                  .location-label {
-                    font-size: 12px;
-                    margin-bottom: 4px;
-
-                    &.start {
-                      color: var(--el-color-success);
-                    }
-
-                    &.end {
-                      color: var(--el-color-danger);
-                    }
-                  }
-
-                  .location-name {
-                    font-weight: 500;
-                    margin-bottom: 4px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  }
-
-                  .location-address {
-                    font-size: 12px;
-                    color: var(--el-text-color-secondary);
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  }
-                }
-
-                .location-divider {
-                  color: var(--el-text-color-secondary);
-                  display: flex;
-                  align-items: center;
-
-                  .el-icon {
-                    font-size: 20px;
-                  }
-                }
-              }
-            }
-
-            .route-summary {
-              padding: 16px;
-              background: var(--el-fill-color-light);
-
-              .summary-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-
-                .summary-item {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  color: var(--el-text-color-regular);
-                  font-size: 13px;
-
-                  .el-icon {
-                    color: var(--el-color-primary);
-                    font-size: 16px;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+@keyframes progress-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
   }
-}
-
-.route-steps {
-  padding: 16px;
-
-  .route-step {
-    color: var(--el-text-color-primary);
-
-    .step-detail {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-    }
-  }
-}
-
-.transit-routes {
-  .transit-route {
-    padding: 16px;
-    margin-bottom: 16px;
-
-    .transit-summary,
-    .line-stops {
-      color: var(--el-text-color-secondary);
-      font-size: 13px;
-    }
-
-    .line-name {
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 </style>
