@@ -1096,6 +1096,7 @@ const toggleCollapse = () => {
 <style lang="scss" scoped>
 .trip-planner {
   padding: 20px;
+  user-select: none;
 
   .planner-header {
     margin-bottom: 20px;
@@ -1173,20 +1174,43 @@ const toggleCollapse = () => {
           
           .ongoing-content {
             padding: 20px;
-            transition: all 0.3s ease;
+            transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+            .trip-header {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              margin-bottom: 20px;
+              transition: margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .trip-details {
+              display: flex;
+              gap: 16px;
+              height: 400px;
+              opacity: 1;
+              overflow: hidden;
+              transform-origin: top;
+              transform: scaleY(1);
+              margin-top: 0;
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
           }
 
           &.is-collapsed {
             .trip-details {
-              display: none;
+              height: 0;
+              opacity: 0;
+              transform: scaleY(0);
+              margin-top: -20px;
+            }
+
+            .trip-header {
+              margin-bottom: 20px;
             }
 
             .ongoing-content {
               padding: 16px 20px;
-            }
-
-            .trip-header {
-              margin-bottom: 0;
             }
           }
 
@@ -1354,6 +1378,7 @@ const toggleCollapse = () => {
                         color: var(--el-text-color-primary);
                         background: linear-gradient(45deg, var(--el-color-success), var(--el-color-primary));
                         -webkit-background-clip: text;
+                        background-clip: text;
                         color: transparent;
                       }
                     }
