@@ -1187,7 +1187,7 @@ const toggleCollapse = () => {
             .trip-details {
               display: flex;
               gap: 16px;
-              height: 400px;
+              height: 170px;
               opacity: 1;
               overflow: hidden;
               transform-origin: top;
@@ -1380,139 +1380,6 @@ const toggleCollapse = () => {
                         -webkit-background-clip: text;
                         background-clip: text;
                         color: transparent;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            .schedule-overview {
-              flex: 2;
-              min-width: 0;
-              
-              .overview-container {
-                .overview-header {
-                  padding: 16px 20px;
-                  background: var(--el-bg-color);
-                  border-bottom: 1px solid var(--el-border-color-light);
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-
-                  .header-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-
-                    .el-icon {
-                      font-size: 18px;
-                      color: var(--el-color-primary);
-                    }
-
-                    span {
-                      font-size: 16px;
-                      font-weight: 500;
-                      color: var(--el-text-color-primary);
-                    }
-
-                    .schedule-count {
-                      margin-left: 12px;
-                      background: var(--el-color-info-light-9);
-                      border: none;
-                    }
-                  }
-
-                  .header-right {
-                    .el-button {
-                      padding: 8px 16px;
-                    }
-                  }
-                }
-
-                .el-timeline {
-                  padding: 20px;
-
-                  :deep(.el-timeline-item__node) {
-                    width: 12px;
-                    height: 12px;
-                  }
-
-                  :deep(.el-timeline-item__wrapper) {
-                    padding-left: 28px;
-                  }
-
-                  .timeline-content {
-                    background: var(--el-bg-color);
-                    padding: 16px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                      transform: translateY(-2px);
-                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    }
-
-                    .schedule-header {
-                      display: flex;
-                      align-items: center;
-                      justify-content: space-between;
-                      margin-bottom: 12px;
-
-                      .el-tag {
-                        font-size: 12px;
-                        padding: 0 8px;
-                        height: 24px;
-                        line-height: 22px;
-                      }
-
-                      .duration {
-                        font-size: 13px;
-                        color: var(--el-text-color-secondary);
-                      }
-                    }
-
-                    .schedule-body {
-                      h4 {
-                        margin: 0 0 8px;
-                        font-size: 15px;
-                        color: var(--el-text-color-primary);
-                      }
-
-                      .cost {
-                        display: flex;
-                        align-items: center;
-                        gap: 6px;
-                        font-size: 13px;
-                        color: var(--el-text-color-regular);
-
-                        .el-icon {
-                          font-size: 14px;
-                          color: var(--el-color-danger);
-                        }
-                      }
-                    }
-                  }
-                }
-
-                .no-schedule {
-                  padding: 32px;
-                  
-                  :deep(.el-empty) {
-                    padding: 0;
-                    
-                    .el-empty__description {
-                      margin-top: 12px;
-                      
-                      p {
-                        margin: 0 0 12px;
-                        color: var(--el-text-color-secondary);
-                      }
-
-                      .el-button {
-                        padding: 8px 16px;
-                        font-size: 14px;
                       }
                     }
                   }
@@ -1913,6 +1780,143 @@ const toggleCollapse = () => {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+.schedule-overview {
+  flex: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  
+  .overview-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .overview-header {
+      flex-shrink: 0; // 防止头部被压缩
+      padding: 16px 20px;
+      background: var(--el-bg-color);
+      border-bottom: 1px solid var(--el-border-color-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .el-timeline {
+      flex: 1; // 占用剩余空间
+      padding: 20px;
+      overflow-y: auto; // 添加垂直滚动
+      overflow-x: hidden; // 防止水平滚动
+      
+      // 美化滚动条
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--el-border-color-lighter);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+    }
+
+    .overview-header {
+      flex-shrink: 0; // 防止头部被压缩
+      padding: 16px 20px;
+      background: var(--el-bg-color);
+      border-bottom: 1px solid var(--el-border-color-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .el-timeline {
+      flex: 1; // 占用剩余空间
+      padding: 20px;
+      overflow-y: auto; // 添加垂直滚动
+      overflow-x: hidden; // 防止水平滚动
+      
+      // 美化滚动条
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--el-border-color-lighter);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+    }
+
+    .overview-header {
+      flex-shrink: 0; // 防止头部被压缩
+      padding: 16px 20px;
+      background: var(--el-bg-color);
+      border-bottom: 1px solid var(--el-border-color-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .el-timeline {
+      flex: 1; // 占用剩余空间
+      padding: 20px;
+      overflow-y: auto; // 添加垂直滚动
+      overflow-x: hidden; // 防止水平滚动
+      
+      // 美化滚动条
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--el-border-color-lighter);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+    }
+
+    .overview-header {
+      flex-shrink: 0; // 防止头部被压缩
+      padding: 16px 20px;
+      background: var(--el-bg-color);
+      border-bottom: 1px solid var(--el-border-color-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .el-timeline {
+      flex: 1; // 占用剩余空间
+      padding: 20px;
+      overflow-y: auto; // 添加垂直滚动
+      overflow-x: hidden; // 防止水平滚动
+      
+      // 美化滚动条
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--el-border-color-lighter);
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+    }
   }
 }
 </style>
