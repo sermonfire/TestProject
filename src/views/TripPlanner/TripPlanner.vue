@@ -1662,4 +1662,161 @@ const toggleCollapse = () => {
     transform: scale(1);
   }
 }
+
+// 添加日程安排对话框的样式
+.schedule-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .schedule-dialog-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .schedule-dialog-wrapper {
+    position: relative;
+    width: 50vw;
+    height: 80vh;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+
+    .schedule-dialog {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .schedule-dialog-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--el-border-color-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--el-bg-color);
+
+        h3 {
+          margin: 0;
+          font-size: 18px;
+          color: var(--el-text-color-primary);
+        }
+
+        .close-btn {
+          font-size: 18px;
+          color: var(--el-text-color-secondary);
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: var(--el-text-color-primary);
+            transform: rotate(90deg);
+          }
+        }
+      }
+
+      .schedule-dialog-body {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+
+        .schedule-content {
+          flex: 1;
+          display: flex;
+          height: 100%;
+
+          .schedule-list {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            border-right: 1px solid var(--el-border-color-light);
+          }
+
+          .route-planning {
+            width: 360px;
+            background: var(--el-bg-color);
+            border-left: 1px solid var(--el-border-color-light);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+
+            &.is-expanded {
+              transform: translateX(0);
+            }
+
+            .route-toggle {
+              position: absolute;
+              left: -20px;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 20px;
+              height: 60px;
+              background: var(--el-color-primary);
+              border-radius: 4px 0 0 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              color: white;
+
+              .el-icon {
+                transition: transform 0.3s ease;
+
+                &.is-expanded {
+                  transform: rotate(180deg);
+                }
+              }
+            }
+
+            .route-content {
+              height: 100%;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+
+              .route-header {
+                padding: 16px;
+                border-bottom: 1px solid var(--el-border-color-light);
+
+                .header-title {
+                  margin-bottom: 12px;
+
+                  h4 {
+                    margin: 0 0 4px;
+                    font-size: 16px;
+                    font-weight: 500;
+                  }
+
+                  .subtitle {
+                    font-size: 13px;
+                    color: var(--el-text-color-secondary);
+                  }
+                }
+              }
+
+              .route-body {
+                flex: 1;
+                overflow: auto;
+                padding: 16px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 </style>
