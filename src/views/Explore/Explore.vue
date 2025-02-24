@@ -339,7 +339,6 @@ onUnmounted(() => {
 // 内容区域
 .content-wrapper {
 	padding: 16px 20px;
-	// height: calc(100vh - 140px);
 	overflow-y: auto;
 
 	&::-webkit-scrollbar {
@@ -456,7 +455,12 @@ onUnmounted(() => {
 
 // 动画
 @keyframes spin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
 }
 </style>

@@ -2,31 +2,33 @@
   <div class="trip-planner">
 
     <div class="planner-header">
+      <div class="title-section">
+        <h2>行程规划</h2>
+        <el-button type="primary" @click="createNewTrip" class="create-btn">
+          <el-icon>
+            <Plus />
+          </el-icon>新建行程
+        </el-button>
+      </div>
       <div class="header-container">
-        <div class="header-left">
-          <div class="title-section">
-            <h2>行程规划</h2>
-            <el-button type="primary" @click="createNewTrip" class="create-btn">
-              <el-icon>
-                <Plus />
-              </el-icon>新建行程
-            </el-button>
-          </div>
+        <div class="planner-left">
           <div v-if="currentOngoingTrip" class="ongoing-trip" :class="{ 'is-collapsed': isCollapsed }">
             <div class="collapse-trigger" @click="toggleCollapse">
               <el-icon :class="{ 'is-collapsed': isCollapsed }">
                 <ArrowDown />
               </el-icon>
             </div>
-            
+
             <div class="ongoing-content">
               <div class="trip-header">
                 <el-tag type="success" effect="plain" class="trip-tag">
-                  <el-icon><Timer /></el-icon>
+                  <el-icon>
+                    <Timer />
+                  </el-icon>
                   <span>当前进行中</span>
                 </el-tag>
-                <div class="trip-info">
-                  <div class="trip-name">{{ currentOngoingTrip.name }}</div>
+                <div class="trip-info-wrapper">
+                  <div class="trip-title">{{ currentOngoingTrip.name }}</div>
                   <div class="trip-progress">
                     第 {{ calculateCurrentDay(currentOngoingTrip) }}/{{ calculateTotalDays(currentOngoingTrip) }} 天
                   </div>
@@ -38,7 +40,8 @@
                 <div class="trip-progress-bar">
                   <div class="progress-info">
                     <div class="progress-stats">
-                      <div class="progress-circle" :style="{ '--progress': `${calculateProgress(currentOngoingTrip)}%` }">
+                      <div class="progress-circle"
+                        :style="{ '--progress': `${calculateProgress(currentOngoingTrip)}%` }">
                         <span class="progress-value">{{ calculateProgress(currentOngoingTrip) }}%</span>
                       </div>
                       <div class="progress-details">
@@ -59,14 +62,16 @@
                 <div class="schedule-overview">
                   <div class="overview-container">
                     <div class="overview-header">
-                      <div class="header-left">
-                        <el-icon><List /></el-icon>
+                      <div class="overview-left">
+                        <el-icon class="overview-icon">
+                          <List />
+                        </el-icon>
                         <span>今日安排</span>
                         <el-tag size="small" type="info" class="schedule-count">
                           共 {{ getTodaySchedulesCount(currentOngoingTrip.id) }} 项
                         </el-tag>
                       </div>
-                      <div class="header-right">
+                      <div class="overview-right">
                         <el-button type="primary" link @click="viewSchedule(currentOngoingTrip)"
                           v-if="getTodaySchedulesCount(currentOngoingTrip.id) > 0">
                           查看全部
@@ -74,14 +79,10 @@
                       </div>
                     </div>
 
-                    <el-timeline v-if="getTodaySchedulesCount(currentOngoingTrip.id) > 0">
-                      <el-timeline-item
-                        v-for="schedule in getTodaySchedules(currentOngoingTrip.id)"
-                        :key="schedule.id"
-                        :type="getScheduleTypeTag(schedule.scheduleType)"
-                        :timestamp="formatTime(schedule.startTime)"
-                        size="normal"
-                        :hollow="true">
+                    <el-timeline class="schedule-timeline" v-if="getTodaySchedulesCount(currentOngoingTrip.id) > 0">
+                      <el-timeline-item v-for="schedule in getTodaySchedules(currentOngoingTrip.id)" :key="schedule.id"
+                        :type="getScheduleTypeTag(schedule.scheduleType)" :timestamp="formatTime(schedule.startTime)"
+                        size="normal" :hollow="true">
                         <div class="timeline-content">
                           <div class="schedule-header">
                             <el-tag size="small" :type="getScheduleTypeTag(schedule.scheduleType)">
@@ -94,7 +95,9 @@
                           <div class="schedule-body">
                             <h4 v-if="schedule.title">{{ schedule.title }}</h4>
                             <p v-if="schedule.estimatedCost" class="cost">
-                              <el-icon><Money /></el-icon>
+                              <el-icon>
+                                <Money />
+                              </el-icon>
                               预计费用：¥{{ schedule.estimatedCost }}
                             </p>
                           </div>
@@ -117,10 +120,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="header-right">
-          <el-input v-model="searchKeyword" placeholder="搜索行程..." prefix-icon="Search" clearable class="search-input" />
         </div>
       </div>
     </div>
@@ -152,27 +151,27 @@
                 </template>
               </el-dropdown>
             </div>
-            <div class="trip-info">
-              <h3>{{ trip.name }}</h3>
-              <p class="trip-date">
+            <div class="card-info">
+              <h3 class="card-title">{{ trip.name }}</h3>
+              <p class="card-date">
                 <el-icon>
                   <Calendar />
                 </el-icon>
                 {{ formatDateRange(trip.startDate, trip.endDate) }}
-                <span class="trip-duration">{{ calculateTotalDays(trip) }}天</span>
+                <span class="duration-text">{{ calculateTotalDays(trip) }}天</span>
               </p>
 
-              <p class="trip-desc">{{ trip.description || '暂无描述' }}</p>
+              <p class="card-description">{{ trip.description || '暂无描述' }}</p>
 
-              <div class="trip-meta">
-                <div class="meta-item" v-if="trip.totalBudget">
+              <div class="card-meta">
+                <div class="meta-detail" v-if="trip.totalBudget">
                   <el-icon>
                     <Money />
                   </el-icon>
                   <span>行程预算: ¥{{ trip.totalBudget }}</span>
                   <small>¥{{ calculateDailyBudget(trip) }}/天</small>
                 </div>
-                <div class="meta-item" v-if="trip.schedules?.length">
+                <div class="meta-detail" v-if="trip.schedules?.length">
                   <el-icon>
                     <Timer />
                   </el-icon>
@@ -1068,7 +1067,7 @@ const toggleRoute = () => {
   isRouteExpanded.value = !isRouteExpanded.value
 }
 
-// 修改监听选中日程变化的逻辑
+// 监听选中日程变化的逻辑
 watch(() => selectedSchedules.value.length, (newLength) => {
   if (newLength === 0) {
     // 清理路线规划结果
@@ -1076,9 +1075,7 @@ watch(() => selectedSchedules.value.length, (newLength) => {
   }
 })
 
-const searchKeyword = ref('')
-
-// 修改监听器
+// 监听器
 watch(() => Array.from(tripStore.todaySchedulesMap), () => {
   if (currentTrip.value?.id) {
     getTodaySchedules(currentTrip.value.id)
@@ -1105,34 +1102,35 @@ const toggleCollapse = () => {
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 
+    .title-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+
+      h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      .create-btn {
+        padding: 8px 16px;
+        font-weight: 500;
+      }
+    }
+
     .header-container {
       display: flex;
-      justify-content: space-between;
+      flex-direction: row;
       align-items: flex-start;
       gap: 24px;
 
-      .header-left {
-        flex: 1;
+      .planner-left {
+        flex-direction: row;
         min-width: 0;
-
-        .title-section {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 16px;
-
-          h2 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--el-text-color-primary);
-          }
-
-          .create-btn {
-            padding: 8px 16px;
-            font-weight: 500;
-          }
-        }
 
         .ongoing-trip {
           position: relative;
@@ -1171,7 +1169,7 @@ const toggleCollapse = () => {
               }
             }
           }
-          
+
           .ongoing-content {
             padding: 20px;
             transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1239,15 +1237,15 @@ const toggleCollapse = () => {
               }
             }
 
-            .trip-info {
-              flex: 1;
-              min-width: 0;
+            .trip-info-wrapper {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
 
-              .trip-name {
+              .trip-title {
                 font-size: 16px;
                 font-weight: 600;
                 color: var(--el-text-color-primary);
-                margin-bottom: 4px;
                 display: -webkit-box;
                 -webkit-line-clamp: 1;
                 line-clamp: 1;
@@ -1263,6 +1261,7 @@ const toggleCollapse = () => {
                 border-radius: 4px;
                 color: var(--el-text-color-regular);
                 font-size: 13px;
+                margin-left: 10px;
 
                 &::before {
                   content: '';
@@ -1282,7 +1281,6 @@ const toggleCollapse = () => {
             gap: 16px;
 
             .trip-progress-bar {
-              flex: 1;
               min-width: 0;
               padding: 20px;
               background: var(--el-fill-color-light);
@@ -1305,10 +1303,8 @@ const toggleCollapse = () => {
                     width: 120px;
                     height: 120px;
                     border-radius: 50%;
-                    background: conic-gradient(
-                      var(--el-color-success) calc(var(--progress) * 1%),
-                      var(--el-fill-color) 0deg
-                    );
+                    background: conic-gradient(var(--el-color-success) calc(var(--progress) * 1%),
+                        var(--el-fill-color) 0deg);
                     position: relative;
                     display: flex;
                     align-items: center;
@@ -1334,7 +1330,7 @@ const toggleCollapse = () => {
                       color: var(--el-color-success);
                       display: flex;
                       align-items: baseline;
-                      
+
                       &::after {
                         content: '%';
                         font-size: 16px;
@@ -1386,23 +1382,68 @@ const toggleCollapse = () => {
                 }
               }
             }
-          }
-        }
-      }
 
-      .header-right {
-        .search-input {
-          width: 280px;
+            .schedule-overview {
+              width: 300px;
+              display: flex;
+              flex-direction: column;
 
-          :deep(.el-input__wrapper) {
-            box-shadow: 0 0 0 1px var(--el-border-color) inset;
+              .overview-container {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
 
-            &:hover {
-              box-shadow: 0 0 0 1px var(--el-border-color-darker) inset;
-            }
+                .overview-header {
+                  padding: 0px 5px;
+                  background: var(--el-bg-color);
+                  border-bottom: 1px solid var(--el-border-color-light);
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
 
-            &.is-focus {
-              box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+                  .overview-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .overview-icon {
+                      font-size: 16px;
+                      color: var(--el-text-color-regular);
+                    }
+
+                    .schedule-count {
+                      margin-left: 8px;
+                    }
+                  }
+
+                  .overview-right {
+                    .overview-button {
+                      padding: 4px 0;
+                    }
+                  }
+                }
+
+                .schedule-timeline {
+                  flex: 1;
+                  padding: 20px;
+                  overflow-y: auto;
+                  overflow-x: hidden;
+
+                  &::-webkit-scrollbar {
+                    width: 6px;
+                  }
+
+                  &::-webkit-scrollbar-thumb {
+                    background: var(--el-border-color-lighter);
+                    border-radius: 3px;
+                  }
+
+                  &::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                }
+              }
             }
           }
         }
@@ -1463,28 +1504,28 @@ const toggleCollapse = () => {
       }
     }
 
-    .trip-info {
+    .card-info {
       padding: 20px;
 
-      h3 {
+      .card-title {
         margin: 0 0 10px;
         font-size: 18px;
         color: #303133;
       }
 
-      .trip-date {
+      .card-date {
         display: flex;
         align-items: center;
         gap: 8px;
         color: var(--el-text-color-regular);
 
-        .trip-duration {
+        .duration-text {
           color: var(--el-text-color-secondary);
           font-size: 12px;
         }
       }
 
-      .trip-desc {
+      .card-description {
         color: #606266;
         font-size: 14px;
         margin: 10px 0;
@@ -1493,22 +1534,17 @@ const toggleCollapse = () => {
         text-overflow: ellipsis;
       }
 
-      .trip-meta {
+      .card-meta {
         display: flex;
         gap: 16px;
         margin: 12px 0;
 
-        .meta-item {
+        .meta-detail {
           display: flex;
           align-items: center;
           gap: 4px;
           color: var(--el-text-color-regular);
           font-size: 14px;
-
-          small {
-            color: var(--el-text-color-secondary);
-            font-size: 12px;
-          }
         }
       }
 
@@ -1575,164 +1611,7 @@ const toggleCollapse = () => {
   }
 }
 
-// 添加/修改日程安排对话框的样式
-.schedule-dialog-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .schedule-dialog-mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-  }
-
-  .schedule-dialog-wrapper {
-    position: relative;
-    width: 50vw;
-    height: 80vh;
-    background: var(--el-bg-color);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-
-    .schedule-dialog {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-
-      .schedule-dialog-header {
-        padding: 16px 24px;
-        border-bottom: 1px solid var(--el-border-color-light);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: var(--el-bg-color);
-
-        h3 {
-          margin: 0;
-          font-size: 18px;
-          color: var(--el-text-color-primary);
-        }
-
-        .close-btn {
-          font-size: 18px;
-          color: var(--el-text-color-secondary);
-          transition: all 0.3s ease;
-
-          &:hover {
-            color: var(--el-text-color-primary);
-            transform: rotate(90deg);
-          }
-        }
-      }
-
-      .schedule-dialog-body {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-
-        .schedule-content {
-          flex: 1;
-          display: flex;
-          height: 100%;
-
-          .schedule-list {
-            flex: 1;
-            min-width: 0;
-            height: 100%;
-            border-right: 1px solid var(--el-border-color-light);
-          }
-
-          .route-planning {
-            width: 360px;
-            background: var(--el-bg-color);
-            border-left: 1px solid var(--el-border-color-light);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            
-            &.is-expanded {
-              transform: translateX(0);
-            }
-
-            .route-toggle {
-              position: absolute;
-              left: -20px;
-              top: 50%;
-              transform: translateY(-50%);
-              width: 20px;
-              height: 60px;
-              background: var(--el-color-primary);
-              border-radius: 4px 0 0 4px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-              color: white;
-
-              .el-icon {
-                transition: transform 0.3s ease;
-
-                &.is-expanded {
-                  transform: rotate(180deg);
-                }
-              }
-            }
-
-            .route-content {
-              height: 100%;
-              overflow: hidden;
-              display: flex;
-              flex-direction: column;
-
-              .route-header {
-                padding: 16px;
-                border-bottom: 1px solid var(--el-border-color-light);
-
-                .header-title {
-                  margin-bottom: 12px;
-
-                  h4 {
-                    margin: 0 0 4px;
-                    font-size: 16px;
-                    font-weight: 500;
-                  }
-
-                  .subtitle {
-                    font-size: 13px;
-                    color: var(--el-text-color-secondary);
-                  }
-                }
-              }
-
-              .route-body {
-                flex: 1;
-                overflow: auto;
-                padding: 16px;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// 添加过渡动画
+// 动画相关样式
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
   transition: all 0.3s ease-out;
@@ -1777,146 +1656,10 @@ const toggleCollapse = () => {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-.schedule-overview {
-  flex: 2;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  
-  .overview-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    .overview-header {
-      flex-shrink: 0; // 防止头部被压缩
-      padding: 16px 20px;
-      background: var(--el-bg-color);
-      border-bottom: 1px solid var(--el-border-color-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .el-timeline {
-      flex: 1; // 占用剩余空间
-      padding: 20px;
-      overflow-y: auto; // 添加垂直滚动
-      overflow-x: hidden; // 防止水平滚动
-      
-      // 美化滚动条
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        background: var(--el-border-color-lighter);
-        border-radius: 3px;
-      }
-      
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-    }
-
-    .overview-header {
-      flex-shrink: 0; // 防止头部被压缩
-      padding: 16px 20px;
-      background: var(--el-bg-color);
-      border-bottom: 1px solid var(--el-border-color-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .el-timeline {
-      flex: 1; // 占用剩余空间
-      padding: 20px;
-      overflow-y: auto; // 添加垂直滚动
-      overflow-x: hidden; // 防止水平滚动
-      
-      // 美化滚动条
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        background: var(--el-border-color-lighter);
-        border-radius: 3px;
-      }
-      
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-    }
-
-    .overview-header {
-      flex-shrink: 0; // 防止头部被压缩
-      padding: 16px 20px;
-      background: var(--el-bg-color);
-      border-bottom: 1px solid var(--el-border-color-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .el-timeline {
-      flex: 1; // 占用剩余空间
-      padding: 20px;
-      overflow-y: auto; // 添加垂直滚动
-      overflow-x: hidden; // 防止水平滚动
-      
-      // 美化滚动条
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        background: var(--el-border-color-lighter);
-        border-radius: 3px;
-      }
-      
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-    }
-
-    .overview-header {
-      flex-shrink: 0; // 防止头部被压缩
-      padding: 16px 20px;
-      background: var(--el-bg-color);
-      border-bottom: 1px solid var(--el-border-color-light);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .el-timeline {
-      flex: 1; // 占用剩余空间
-      padding: 20px;
-      overflow-y: auto; // 添加垂直滚动
-      overflow-x: hidden; // 防止水平滚动
-      
-      // 美化滚动条
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        background: var(--el-border-color-lighter);
-        border-radius: 3px;
-      }
-      
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-    }
   }
 }
 </style>
