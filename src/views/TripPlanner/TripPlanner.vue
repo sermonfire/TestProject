@@ -1105,8 +1105,7 @@ const toggleCollapse = () => {
     .title-section {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      gap: 20px;
       margin-bottom: 16px;
 
       h2 {
@@ -1330,13 +1329,6 @@ const toggleCollapse = () => {
                       color: var(--el-color-success);
                       display: flex;
                       align-items: baseline;
-
-                      &::after {
-                        content: '%';
-                        font-size: 16px;
-                        margin-left: 2px;
-                        font-weight: 500;
-                      }
                     }
                   }
 
@@ -1442,6 +1434,15 @@ const toggleCollapse = () => {
                   &::-webkit-scrollbar-track {
                     background: transparent;
                   }
+                }
+
+                .no-schedule {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 85%;
+                  font-size: 14px;
+                  color: var(--el-text-color-secondary);
                 }
               }
             }
