@@ -17,7 +17,7 @@ export default defineConfig({
         },
     },
     server: {
-        port: 5173,
+        port: 9876,
         open: true,
         proxy: {
             '/dev-api': {
