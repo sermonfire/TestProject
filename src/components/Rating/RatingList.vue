@@ -44,8 +44,9 @@
             </el-button>
         </div>
 
-        <el-dialog v-model="showRatingForm" title="发表评价" width="650px" destroy-on-close>
-            <RatingForm :destination-id="destinationId" @submit-success="handleRatingSubmitted" />
+        <el-dialog v-model="showRatingForm" :title="isEditMode ? '编辑评价' : '发表评价'" width="650px" destroy-on-close>
+            <RatingForm :destination-id="destinationId" :is-edit="isEditMode" :rating-data="currentEditRating"
+                @submit-success="handleRatingSubmitted" />
         </el-dialog>
 
         <div class="ratings-container">
@@ -123,12 +124,21 @@
                                 <span>{{ rating.likeCount || 0 }}</span>
                             </div>
 
-                            <div class="delete-action" v-if="canDelete(rating)" @click="deleteRating(rating.id)">
-                                <el-icon>
-                                    <Delete />
-                                </el-icon>
-                                <span>删除</span>
-                            </div>
+                            <template v-if="canManageRating(rating)">
+                                <div class="edit-action" @click="handleEdit(rating)">
+                                    <el-icon>
+                                        <Edit />
+                                    </el-icon>
+                                    <span>编辑</span>
+                                </div>
+
+                                <div class="delete-action" @click="deleteRating(rating.id)">
+                                    <el-icon>
+                                        <Delete />
+                                    </el-icon>
+                                    <span>删除</span>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -146,7 +156,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Promotion, Delete } from '@element-plus/icons-vue'
+import { Promotion, Delete, Edit } from '@element-plus/icons-vue'
 import { getDestinationRatingsAPI, getRatingStatsAPI, toggleRatingLikeAPI, deleteRatingAPI, checkRatedAPI, checkLikedAPI } from '@/api/ratingApi'
 import { useUserStore } from '@/stores/userstore'
 import RatingForm from './RatingForm.vue'
@@ -168,6 +178,8 @@ const showRatingForm = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const isEditMode = ref(false)
+const currentEditRating = ref(null)
 
 // 人流量级别文本
 const crowdLevelTexts = ['空旷', '稀少', '适中', '拥挤', '非常拥挤']
@@ -322,11 +334,20 @@ const deleteRating = async (ratingId) => {
 }
 
 /**
- * @description 判断是否可以删除评价
+ * @description 判断是否可以管理评价（编辑/删除）
  */
-const canDelete = (rating) => {
+const canManageRating = (rating) => {
     if (!userStore.isLogin) return false
     return rating.userId === userStore.userInfo.id
+}
+
+/**
+ * @description 处理编辑评价
+ */
+const handleEdit = (rating) => {
+    isEditMode.value = true
+    currentEditRating.value = { ...rating }
+    showRatingForm.value = true
 }
 
 /**
@@ -334,9 +355,13 @@ const canDelete = (rating) => {
  */
 const handleRatingSubmitted = () => {
     showRatingForm.value = false
+    isEditMode.value = false
+    currentEditRating.value = null
     fetchRatings()
     fetchRatingStats()
-    hasRated.value = true
+    if (!isEditMode.value) {
+        hasRated.value = true
+    }
 }
 
 /**
@@ -558,6 +583,7 @@ onMounted(() => {
         margin-bottom: 24px;
         display: flex;
         justify-content: flex-end;
+        gap: 16px;
     }
 
     .ratings-container {
@@ -656,6 +682,7 @@ onMounted(() => {
                     margin: 0px;
 
                     .like-action,
+                    .edit-action,
                     .delete-action {
                         display: flex;
                         align-items: center;
@@ -671,6 +698,14 @@ onMounted(() => {
                         &.is-liked {
                             color: #ff9900;
                         }
+                    }
+
+                    .edit-action:hover {
+                        color: #409EFF;
+                    }
+
+                    .delete-action:hover {
+                        color: #F56C6C;
                     }
                 }
             }

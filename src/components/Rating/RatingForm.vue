@@ -5,7 +5,6 @@
         <el-form ref="ratingFormRef" :model="ratingForm" :rules="rules" label-position="top">
             <el-form-item label="评分" prop="rating">
                 <el-rate v-model="ratingForm.rating" allow-half show-score score-template="{value}" />
-                <div class="rating-tip">您可以点击星星或半星进行评分</div>
             </el-form-item>
 
             <el-form-item label="评价内容" prop="comment">
@@ -55,14 +54,22 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { submitRatingAPI } from '@/api/ratingApi'
+import { submitRatingAPI, updateRatingAPI } from '@/api/ratingApi'
 
 const props = defineProps({
     destinationId: {
         type: [Number, String],
         required: true
+    },
+    isEdit: {
+        type: Boolean,
+        default: false
+    },
+    ratingData: {
+        type: Object,
+        default: () => null
     }
 })
 
@@ -93,6 +100,22 @@ const ratingForm = reactive({
     isAnonymous: false
 })
 
+// 监听ratingData变化，用于编辑模式
+watch(() => props.ratingData, (newData) => {
+    if (newData && props.isEdit) {
+        Object.assign(ratingForm, {
+            rating: newData.rating,
+            comment: newData.comment,
+            tags: newData.tags || [],
+            visitTime: newData.visitTime,
+            visitDuration: newData.visitDuration,
+            crowdLevel: newData.crowdLevel,
+            costPerPerson: newData.costPerPerson,
+            isAnonymous: newData.isAnonymous
+        })
+    }
+}, { immediate: true })
+
 // 表单验证规则
 const rules = {
     rating: [
@@ -117,7 +140,7 @@ const rules = {
  * @description 提交表单
  */
 const submitForm = async () => {
-    if (!props.destinationId) {
+    if (!props.destinationId && !props.isEdit) {
         ElMessage.error('目的地ID不能为空')
         return
     }
@@ -126,18 +149,27 @@ const submitForm = async () => {
         if (valid) {
             try {
                 submitting.value = true
-                const { code, message, data } = await submitRatingAPI(props.destinationId, ratingForm)
+                let response
 
+                if (props.isEdit && props.ratingData?.id) {
+                    // 更新评价
+                    response = await updateRatingAPI(props.ratingData.id, ratingForm)
+                } else {
+                    // 新增评价
+                    response = await submitRatingAPI(props.destinationId, ratingForm)
+                }
+
+                const { code, message } = response
                 if (code === 0) {
-                    ElMessage.success('评价提交成功')
+                    ElMessage.success(props.isEdit ? '评价更新成功' : '评价提交成功')
                     resetForm()
                     emit('submit-success')
                 } else {
-                    ElMessage.error(message || '评价提交失败')
+                    ElMessage.error(message || (props.isEdit ? '评价更新失败' : '评价提交失败'))
                 }
             } catch (error) {
-                console.error('提交评价失败:', error)
-                ElMessage.error(error.message || '评价提交失败')
+                console.error(props.isEdit ? '更新评价失败:' : '提交评价失败:', error)
+                ElMessage.error(error.message || (props.isEdit ? '评价更新失败' : '评价提交失败'))
             } finally {
                 submitting.value = false
             }
@@ -163,12 +195,6 @@ const resetForm = () => {
         font-weight: 600;
         margin-bottom: 24px;
         color: var(--el-color-primary);
-    }
-
-    .rating-tip {
-        font-size: 12px;
-        color: #909399;
-        margin-top: 4px;
     }
 
     .form-row {

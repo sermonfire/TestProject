@@ -119,4 +119,27 @@ export const checkLikedAPI = (ratingId) => {
         method: 'GET',
         needToken: true
     })
+}
+
+/**
+ * @description 更新评价
+ * @param {number} ratingId - 评价ID
+ * @param {Object} ratingData - 评价数据
+ * @param {number} ratingData.rating - 评分(1-5分)
+ * @param {string} ratingData.comment - 评价内容
+ * @param {Array} ratingData.tags - 标签
+ * @param {string} ratingData.visitTime - 游览时间
+ * @param {number} ratingData.visitDuration - 游览时长(分钟)
+ * @param {number} ratingData.crowdLevel - 人流量级别(1-5)
+ * @param {number} ratingData.costPerPerson - 人均消费
+ * @param {boolean} ratingData.isAnonymous - 是否匿名
+ * @returns {Promise} 请求结果
+ */
+export const updateRatingAPI = (ratingId, ratingData) => {
+    return request({
+        url: `/dev-api/destination/rating/${ratingId}`,
+        method: 'PUT',
+        data: ratingData,
+        needToken: true
+    })
 } 
