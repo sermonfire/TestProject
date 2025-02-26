@@ -22,9 +22,6 @@
                             @collection-error="handleCollectionError" @click.stop @mouseenter="handleButtonHover"
                             @mouseleave="handleButtonLeave" />
                     </div>
-                    <div class="actions-wrapper">
-                        <slot name="actions"></slot>
-                    </div>
                 </div>
                 <div class="destination-info">
                     <div class="info-header">
@@ -56,12 +53,14 @@
                                 <el-icon class="share-icon">
                                     <Share />
                                 </el-icon>
-                                <div class="share-popup" :class="{ 'is-visible': isHoveringShare }" ref="sharePopupRef"
-                                    @mouseenter="handlePopupMouseEnter" @mouseleave="handlePopupMouseLeave">
-                                    <ShareCard :title="destination.name" :share-url="shareUrl"
-                                        @share-success="handleShareSuccess" />
-                                </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="info-share">
+                        <div class="share-popup" :class="{ 'is-visible': isHoveringShare }" ref="sharePopupRef"
+                            @mouseenter="handlePopupMouseEnter" @mouseleave="handlePopupMouseLeave">
+                            <ShareCard :title="destination.name" :share-url="shareUrl"
+                                @share-success="handleShareSuccess" />
                         </div>
                     </div>
                 </div>
@@ -473,12 +472,12 @@ onUnmounted(() => {
 }
 
 .destination-info {
-    padding: 20px;
+    padding: 18px 20px;
     background: #fff;
     border-radius: 0 0 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 
     .info-header {
         display: flex;
@@ -605,7 +604,7 @@ onUnmounted(() => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
 
         .tags-wrapper {
             flex: 1;
@@ -636,79 +635,89 @@ onUnmounted(() => {
             display: flex;
             align-items: center;
             gap: 8px;
-        }
 
-        .view-more {
-            flex-shrink: 0;
-            font-size: 13px;
-            color: var(--el-color-primary);
-            padding: 4px 12px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-
-            &:hover {
-                background-color: var(--el-color-primary-light-9);
-            }
-        }
-
-        .share-wrapper {
-            position: relative;
-            padding: 4px;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-
-            .share-icon {
-                font-size: 16px;
-                color: #666;
+            .view-more {
+                flex-shrink: 0;
+                font-size: 13px;
+                color: var(--el-color-primary);
+                padding: 4px 12px;
+                border-radius: 4px;
                 transition: all 0.3s ease;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: var(--el-color-primary-light-9);
+                }
             }
 
-            .share-popup {
+            .share-wrapper {
+                position: relative;
+                padding: 4px;
+                cursor: pointer;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+
+                .share-icon {
+                    font-size: 16px;
+                    color: #4c2cdd;
+                    transition: all 0.3s ease;
+                }
+
+                &:hover {
+                    color: #4c2cdd;
+                    transform: scale(1.3);
+                    background-color: var(--el-color-primary-light-9);
+                }
+            }
+        }
+    }
+
+    .info-share {
+        display: flex;
+
+        .share-popup {
+            display: flex;
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            min-width: 240px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            width: 300px;
+            padding: 10px 0px;
+
+            &.is-visible {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            &::after {
+                content: '';
                 position: absolute;
-                top: calc(100% + 8px);
+                top: -8px;
+                left: 0;
                 right: 0;
+                height: 8px;
+                background: transparent;
+            }
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: -4px;
+                right: 12px;
+                width: 8px;
+                height: 8px;
                 background: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-                padding: 16px;
-                z-index: 10;
-                min-width: 240px;
-                opacity: 0;
-                visibility: hidden;
-                transform: translateY(-10px);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                pointer-events: none;
-
-                &.is-visible {
-                    opacity: 1;
-                    visibility: visible;
-                    transform: translateY(0);
-                    pointer-events: auto;
-                }
-
-                &::after {
-                    content: '';
-                    position: absolute;
-                    top: -8px;
-                    left: 0;
-                    right: 0;
-                    height: 8px;
-                    background: transparent;
-                }
-
-                &::before {
-                    content: '';
-                    position: absolute;
-                    top: -4px;
-                    right: 12px;
-                    width: 8px;
-                    height: 8px;
-                    background: white;
-                    transform: rotate(45deg);
-                    box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
-                }
+                transform: rotate(45deg);
+                box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
             }
         }
     }

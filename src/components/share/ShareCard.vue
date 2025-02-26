@@ -126,17 +126,23 @@ const copyLink = async () => {
 @use "sass:color";
 
 .share-card {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+
     .share-options {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
+        display: flex;
+        align-items: center;
 
         .share-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            flex: 1;
             cursor: pointer;
+            margin: 0 10px;
+            width: 50px;
+
 
             span {
                 font-size: 12px;
