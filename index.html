@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <script>
-      var coverSupport = 'CSS' in window && typeof CSS.supports === 'function' && (CSS.supports('top: env(a)') ||
-        CSS.supports('top: constant(a)'))
-      document.write(
-        '<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' +
-        (coverSupport ? ', viewport-fit=cover' : '') + '" />')
+        var coverSupport = 'CSS' in window && typeof CSS.supports === 'function' && (CSS.supports('top: env(a)') ||
+            CSS.supports('top: constant(a)'))
+        document.write(
+            '<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' +
+            (coverSupport ? ', viewport-fit=cover' : '') + '" />')
     </script>
-    <link rel="icon" type="image/x-icon" href="/static/logo/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/src/assets/logo/favicon.ico">
     <meta name="description" content="TravelRec - 您的个性化旅游推荐助手">
     <meta name="keywords" content="旅游,推荐,景点,行程规划">
     <meta name="theme-color" content="#2ecc71">
     <title>TravelRec - 智能旅游推荐</title>
     <!--preload-links-->
     <!--app-context-->
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="app"><!--app-html--></div>
     <script type="module" src="/src/main.js"></script>
-  </body>
+</body>
+
 </html>

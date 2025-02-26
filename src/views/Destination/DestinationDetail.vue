@@ -8,13 +8,11 @@
 
         <template v-else>
             <div class="detail-header glass-card">
-                <div class="nav-actions">
-                    <el-button class="back-button" @click="handleBack" type="primary" text>
-                        <el-icon>
-                            <ArrowLeft />
-                        </el-icon>
-                        返回上页
-                    </el-button>
+                <div class="nav-actions" @click="handleBack">
+                    <el-icon>
+                        <ArrowLeft />
+                    </el-icon>
+                    返回上页
                 </div>
 
                 <div class="cover-image">
@@ -243,7 +241,7 @@ onMounted(() => {
         .nav-actions {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 20px;
             z-index: 10;
             display: flex;
             align-items: center;
@@ -254,30 +252,19 @@ onMounted(() => {
             backdrop-filter: blur(8px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            color: rgba(69, 156, 236, 0.95);
+            font: 700;
 
-            .back-button {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                font-size: 16px;
-                padding: 8px 0;
-
-                .el-icon {
-                    font-size: 18px;
-                }
-
-                &:hover {
-                    transform: translateX(-4px);
-                }
-            }
-
-            .collection-button {
-                margin-left: 8px;
+            .el-icon {
+                font-size: 20px;
+                font-weight: 700;
             }
 
             &:hover {
-                background: rgba(255, 255, 255, 0.95);
+                background: rgba(173, 239, 248, 0.95);
                 box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+                transform: scale(1.05);
+                cursor: pointer;
             }
         }
 
