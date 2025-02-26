@@ -1,42 +1,39 @@
 <template>
     <div class="share-card">
-        <!-- 分享对话框 -->
-        <div class="dialog-container">
-            <div class="share-options">
-                <div class="share-item" @click="shareToWeChat">
-                    <el-button circle class="wechat">
-                        <el-icon>
-                            <ChatDotRound />
-                        </el-icon>
-                    </el-button>
-                    <span>微信</span>
-                </div>
-                <div class="share-item" @click="shareToWeibo">
-                    <el-button circle class="weibo">
-                        <i class="fab fa-weibo"></i>
-                    </el-button>
-                    <span>微博</span>
-                </div>
-                <div class="share-item" @click="shareToQQ">
-                    <el-button circle class="qq">
-                        <i class="fab fa-qq"></i>
-                    </el-button>
-                    <span>QQ</span>
-                </div>
-                <div class="share-item" @click="copyLink">
-                    <el-button circle class="link">
-                        <el-icon>
-                            <Link />
-                        </el-icon>
-                    </el-button>
-                    <span>复制链接</span>
-                </div>
+        <div class="share-options">
+            <div class="share-item" @click="shareToWeChat">
+                <el-button circle class="wechat">
+                    <el-icon>
+                        <ChatDotRound />
+                    </el-icon>
+                </el-button>
+                <span>微信</span>
             </div>
+            <div class="share-item" @click="shareToWeibo">
+                <el-button circle class="weibo">
+                    <i class="fab fa-weibo"></i>
+                </el-button>
+                <span>微博</span>
+            </div>
+            <div class="share-item" @click="shareToQQ">
+                <el-button circle class="qq">
+                    <i class="fab fa-qq"></i>
+                </el-button>
+                <span>QQ</span>
+            </div>
+            <div class="share-item" @click="copyLink">
+                <el-button circle class="link">
+                    <el-icon>
+                        <Link />
+                    </el-icon>
+                </el-button>
+                <span>复制链接</span>
+            </div>
+        </div>
 
-            <div class="qrcode-section" v-if="showQRCode">
-                <el-image :src="qrCodeUrl" class="qrcode" />
-                <p>请使用微信扫描二维码分享</p>
-            </div>
+        <div class="qrcode-section" v-if="showQRCode">
+            <el-image :src="qrCodeUrl" class="qrcode" />
+            <p>请使用微信扫描二维码分享</p>
         </div>
     </div>
 </template>
@@ -126,65 +123,88 @@ const copyLink = async () => {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
+
 .share-card {
-    width: 100%;
+    .share-options {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
 
-    .dialog-container {
-        margin-bottom: 20px;
-        display: flex;
-
-        .share-options {
+        .share-item {
             display: flex;
-            gap: 16px;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
 
-            .share-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-                cursor: pointer;
+            span {
+                font-size: 12px;
+                color: #666;
+            }
 
-                .wechat {
-                    background-color: #07c160;
-                    color: white;
-                }
+            .el-button {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
 
-                .weibo {
-                    background-color: #e6162d;
-                    color: white;
-                }
+            .wechat {
+                background-color: #07c160;
+                color: white;
+                border: none;
 
-                .qq {
-                    background-color: #12b7f5;
-                    color: white;
-                }
-
-                .link {
-                    background-color: #666;
-                    color: white;
+                &:hover {
+                    background-color: color.adjust(#07c160, $lightness: -5%);
                 }
             }
 
-            .share-item span {
-                font-size: 12px;
+            .weibo {
+                background-color: #e6162d;
+                color: white;
+                border: none;
+
+                &:hover {
+                    background-color: color.adjust(#e6162d, $lightness: -5%);
+                }
+            }
+
+            .qq {
+                background-color: #12b7f5;
+                color: white;
+                border: none;
+
+                &:hover {
+                    background-color: color.adjust(#12b7f5, $lightness: -5%);
+                }
+            }
+
+            .link {
+                background-color: #666;
+                color: white;
+                border: none;
+
+                &:hover {
+                    background-color: color.adjust(#666, $lightness: -5%);
+                }
             }
         }
+    }
 
-        .qrcode-section {
-            text-align: center;
-            padding: 20px 0;
+    .qrcode-section {
+        margin-top: 16px;
+        text-align: center;
 
-            .qrcode {
-                width: 150px;
-                height: 150px;
-                margin-bottom: 10px;
-            }
+        .qrcode {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 8px;
+        }
 
-            p {
-                color: #666;
-                font-size: 14px;
-                margin: 0;
-            }
+        p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
         }
     }
 }
