@@ -14,7 +14,7 @@
 <script setup>
 import { ref, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked, Location, Calendar } from '@element-plus/icons-vue'
+import { HomeFilled, StarFilled, Search, UserFilled, HotWater, Compass, Checked, Location, Calendar, ChatLineRound } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -28,6 +28,7 @@ const routeMap = {
     favorites: { title: '偏好设置', icon: markRaw(Checked) },
     about: { title: '关于', icon: markRaw(HotWater) },
     userInfo: { title: '用户信息', icon: markRaw(UserFilled) },
+    historyRating: { title: '历史评价', icon: markRaw(ChatLineRound) },
     searchResults: { title: '搜索结果', icon: markRaw(Search) },
     collection: { title: '我的收藏', icon: markRaw(StarFilled) },
     destinationDetail: { title: '目的地详情', icon: markRaw(Location) },

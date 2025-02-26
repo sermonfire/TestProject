@@ -53,6 +53,17 @@ const routes = [
                 meta: {
                     requiresAuth: true,
                 },
+                children: [
+                    {
+                        path: 'historyRating',
+                        name: 'historyRating',
+                        component: () => import('@/views/userInfo/historyRating.vue'),
+                        meta: {
+                            title: '历史评价',
+                            requiresAuth: true
+                        }
+                    }
+                ]
             },
             {
                 path: 'collection',
