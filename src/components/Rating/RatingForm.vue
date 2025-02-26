@@ -5,6 +5,7 @@
         <el-form ref="ratingFormRef" :model="ratingForm" :rules="rules" label-position="top">
             <el-form-item label="评分" prop="rating">
                 <el-rate v-model="ratingForm.rating" allow-half show-score score-template="{value}" />
+                <div class="rating-tip">您可以点击星星或半星进行评分</div>
             </el-form-item>
 
             <el-form-item label="评价内容" prop="comment">
@@ -162,6 +163,12 @@ const resetForm = () => {
         font-weight: 600;
         margin-bottom: 24px;
         color: var(--el-color-primary);
+    }
+
+    .rating-tip {
+        font-size: 12px;
+        color: #909399;
+        margin-top: 4px;
     }
 
     .form-row {

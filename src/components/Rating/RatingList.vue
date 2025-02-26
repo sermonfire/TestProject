@@ -2,9 +2,9 @@
     <div class="rating-list">
         <div class="rating-stats glass-card" v-if="stats">
             <div class="stats-header">
-                <h3 class="stats-title">评价统计</h3>
+                <h3 class="stats-title">目的地评价</h3>
                 <div class="avg-rating">
-                    <span class="rating-value">{{ stats.avgRating }}</span>
+                    <span class="rating-value">{{ formatRating(stats.avgRating) }}</span>
                     <el-rate :model-value="stats.avgRating" disabled allow-half />
                     <span class="rating-count">{{ stats.totalRatings }}条评价</span>
                 </div>
@@ -27,11 +27,13 @@
 
             <div class="rating-distribution">
                 <div class="distribution-item" v-for="(count, index) in starCounts" :key="index">
-                    <div class="star-label">{{ 5 - index }}星</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" :style="{ width: getPercentage(count) + '%' }"></div>
+                    <div class="star-label">{{ getStarLabel(index) }}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" :style="{ width: getPercentage(count) + '%' }"></div>
+                        </div>
+                        <div class="percentage-label">{{ getPercentage(count) }}%</div>
                     </div>
-                    <div class="count-label">{{ count }}</div>
                 </div>
             </div>
         </div>
@@ -131,10 +133,10 @@
                     </div>
                 </div>
 
-                <div class="pagination-container" v-if="total > pageSize">
-                    <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
-                        :page-sizes="[5, 10, 20, 50]" layout="total, sizes, prev, pager, next, jumper" :total="total"
-                        @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+                <div class="pagination-container">
+                    <el-pagination v-model:current-page="currentPage" layout="prev, pager, next, jumper"
+                        :total="total || 0" :page-size="10" :disabled="total === 0"
+                        @current-change="handleCurrentChange" />
                 </div>
             </template>
         </div>
@@ -173,12 +175,19 @@ const crowdLevelTexts = ['空旷', '稀少', '适中', '拥挤', '非常拥挤']
 // 星级评分计数
 const starCounts = computed(() => {
     if (!stats.value) return [0, 0, 0, 0, 0]
+
+    // 将评分按照0~1、1~2、2~3、3~4、4~5分组，从高到低排列
     return [
-        stats.value.fiveStarCount || 0,
-        stats.value.fourStarCount || 0,
-        stats.value.threeStarCount || 0,
-        stats.value.twoStarCount || 0,
-        stats.value.oneStarCount || 0
+        // 4~5星评分：5星 + 4.5星
+        (stats.value.fiveStarCount || 0) + (stats.value.fourPointFiveStarCount || 0),
+        // 3~4星评分：4星 + 3.5星
+        (stats.value.fourStarCount || 0) + (stats.value.threePointFiveStarCount || 0),
+        // 2~3星评分：3星 + 2.5星
+        (stats.value.threeStarCount || 0) + (stats.value.twoPointFiveStarCount || 0),
+        // 1~2星评分：2星 + 1.5星
+        (stats.value.twoStarCount || 0) + (stats.value.onePointFiveStarCount || 0),
+        // 0~1星评分：1星
+        (stats.value.oneStarCount || 0)
     ]
 })
 
@@ -332,6 +341,8 @@ const handleRatingSubmitted = () => {
 
 /**
  * @description 获取百分比
+ * @param {number} count - 评分计数
+ * @returns {number} 百分比
  */
 const getPercentage = (count) => {
     if (!stats.value || !stats.value.totalRatings || stats.value.totalRatings === 0) {
@@ -371,13 +382,37 @@ const handleCurrentChange = (page) => {
 }
 
 /**
- * @description 处理每页条数变化
+ * @description 格式化评分，确保显示一位小数
+ * @param {number} rating - 评分值
+ * @returns {string} 格式化后的评分
  */
-const handleSizeChange = (size) => {
-    pageSize.value = size
-    currentPage.value = 1
-    fetchRatings()
+const formatRating = (rating) => {
+    if (rating === undefined || rating === null) return '0.0'
+    return rating.toFixed(1)
 }
+
+/**
+ * @description 获取星级标签
+ * @param {number} index - 星级索引
+ * @returns {string} 星级标签
+ */
+const getStarLabel = (index) => {
+    const starRanges = ['4~5星', '3~4星', '2~3星', '1~2星', '0~1星']
+    return starRanges[index]
+}
+
+/**
+ * 注意: 评价列表分页功能已按照后端接口要求实现
+ * 请求参数:
+ * - pageNum: 当前页码
+ * - pageSize: 固定为10
+ * 响应数据:
+ * - list: 评价列表
+ * - total: 总条数
+ * - pageNum: 当前页码
+ * - pageSize: 每页条数
+ * - pages: 总页数
+ */
 
 // 监听目的地ID变化
 watch(() => props.destinationId, (newId) => {
@@ -478,34 +513,42 @@ onMounted(() => {
             .distribution-item {
                 display: flex;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
 
                 .star-label {
-                    width: 40px;
+                    width: 60px;
                     text-align: right;
                     margin-right: 12px;
                     color: #606266;
+                    font-size: 14px;
                 }
 
-                .progress-bar {
+                .progress-container {
                     flex: 1;
-                    height: 12px;
-                    background-color: #f0f0f0;
-                    border-radius: 6px;
-                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
 
-                    .progress-fill {
-                        height: 100%;
-                        background-color: #ff9900;
+                    .progress-bar {
+                        flex: 1;
+                        height: 12px;
+                        background-color: #f0f0f0;
                         border-radius: 6px;
-                    }
-                }
+                        overflow: hidden;
 
-                .count-label {
-                    width: 40px;
-                    text-align: left;
-                    margin-left: 12px;
-                    color: #606266;
+                        .progress-fill {
+                            height: 100%;
+                            background-color: #ff9900;
+                            border-radius: 6px;
+                        }
+                    }
+
+                    .percentage-label {
+                        width: 40px;
+                        text-align: right;
+                        color: #606266;
+                        font-size: 12px;
+                    }
                 }
             }
         }
@@ -573,7 +616,6 @@ onMounted(() => {
                 }
 
                 .rating-meta {
-                    margin-bottom: 16px;
 
                     .meta-items {
                         display: flex;
@@ -611,7 +653,7 @@ onMounted(() => {
                 .rating-actions {
                     display: flex;
                     justify-content: flex-end;
-                    gap: 16px;
+                    margin: 0px;
 
                     .like-action,
                     .delete-action {
@@ -636,8 +678,12 @@ onMounted(() => {
 
         .pagination-container {
             margin-top: 24px;
+            margin-bottom: 24px;
+            padding: 16px 0;
             display: flex;
             justify-content: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
         }
     }
 }
