@@ -50,7 +50,13 @@
                             </el-tag>
                         </div>
                         <span class="view-more" @click="handleCardClick(destination)">查看详情</span>
+                        <el-icon>
+                            <Share />
+                        </el-icon>
                     </div>
+                </div>
+                <div class="share" v-if="true" @mouseenter="handleShareHover" @mouseleave="handleShareLeave">
+                    <ShareCard :title="destination.name" :share-url="shareUrl" @share-success="handleShareSuccess" />
                 </div>
             </div>
             <div class="card-back">
@@ -70,11 +76,14 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted, onMounted } from 'vue';
+import { ref, onUnmounted, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Picture, ArrowRight } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
+import ShareCard from '@/components/share/ShareCard.vue';
+import { useShareStore } from '@/stores/shareStore';
+import { Title } from 'tdesign-vue-next';
 
 const props = defineProps({
     destination: {
@@ -86,6 +95,7 @@ const props = defineProps({
 const emit = defineEmits(['cardClick', 'collection-change', 'collection-error']);
 
 const favoriteStore = useFavoriteStore();
+const shareStore = useShareStore();
 
 const router = useRouter();
 
@@ -160,6 +170,22 @@ const handleCardClick = (destination) => {
         params: { id: destination.id }
     });
 };
+
+/**
+ * 处理分享成功事件
+ * @param {Object} shareData - 分享数据
+ * @param {string} platform - 分享平台
+ */
+const handleShareSuccess = (shareData, platform) => {
+    shareStore.recordShare(shareData, platform);
+};
+
+/**
+ * 生成分享URL
+ */
+const shareUrl = computed(() => {
+    return `${import.meta.env.VITE_APP_BASE_URL || ''}/destination/${props.destination.id}`;
+});
 
 onMounted(async () => {
     // 检查当前目的地的收藏状态
@@ -563,6 +589,7 @@ onUnmounted(() => {
         }
     }
 }
+
 
 @keyframes progressFlow {
     0% {
