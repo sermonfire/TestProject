@@ -50,12 +50,14 @@
                             </el-tag>
                         </div>
                         <span class="view-more" @click="handleCardClick(destination)">查看详情</span>
-                        <el-icon>
-                            <Share />
-                        </el-icon>
+                        <div class="share-wrapper" @mouseenter="handleShareHover" @mouseleave="handleShareLeave">
+                            <el-icon>
+                                <Share />
+                            </el-icon>
+                        </div>
                     </div>
                 </div>
-                <div class="share" v-if="true" @mouseenter="handleShareHover" @mouseleave="handleShareLeave">
+                <div class="share">
                     <ShareCard :title="destination.name" :share-url="shareUrl" @share-success="handleShareSuccess" />
                 </div>
             </div>
