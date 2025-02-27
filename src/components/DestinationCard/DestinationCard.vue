@@ -97,16 +97,8 @@ const isFlipped = ref(false);
 const isHoveringButton = ref(false);
 const isHoveringImage = ref(false);
 const isHoveringName = ref(false);
-const isHoveringShare = ref(false);
-const shareButtonRef = ref(null);
-const sharePopupRef = ref(null);
 let flipTimer = null;
 let hoverStartTime = null;
-let hideTimer = null;
-let showTimer = null;
-
-// 新增一个变量来跟踪鼠标是否在整个分享区域内
-const isMouseInShareArea = ref(false);
 
 const handleNameHover = () => {
     isHoveringName.value = true;

@@ -30,11 +30,19 @@
                                     </div>
                                 </template>
                             </el-image>
+                            <div class="image-overlay">
+                                <span class="view-details" @click="handleViewDetails(item)">
+                                    查看详情
+                                </span>
+                            </div>
                         </div>
                         <div class="hotel-info">
                             <h3 class="hotel-name">{{ item.name }}</h3>
                             <div class="hotel-type">
-                                <el-tag size="small" effect="plain">{{ item.type }}</el-tag>
+                                <el-tag v-for="(type, index) in getHotelTypes(item.type)" :key="index" size="small"
+                                    effect="plain" class="type-tag">
+                                    {{ type }}
+                                </el-tag>
                             </div>
                             <div class="hotel-address">
                                 <el-icon>
@@ -167,12 +175,12 @@ const handleCurrentChange = (newPage) => {
 
 const tp = ref(2)
 
-// 修改计算总页数的逻辑
+// 计算总页数的逻辑
 const totalPages = computed(() => {
     return tp.value
 })
 
-// 修改下一页处理函数，移除25页的硬编码限制
+// 下一页处理函数
 const handleNextPage = () => {
     if (currentPage.value < 25) {
         currentPage.value++
@@ -182,7 +190,7 @@ const handleNextPage = () => {
     }
 }
 
-// 添加上一页处理函数
+// 上一页处理函数
 const handlePrevPage = () => {
     if (currentPage.value > 1) {
         currentPage.value--
@@ -205,6 +213,28 @@ watch(
     },
     { immediate: true, deep: true }
 )
+
+/**
+ * 处理酒店类型标签
+ * @param {string} typeString - 原始类型字符串，格式如："住宿服务;宾馆酒店;宾馆酒店"
+ * @returns {string[]} 去重后的类型数组
+ */
+const getHotelTypes = (typeString) => {
+    if (!typeString) return []
+    // 使用分号分割字符串，并去重
+    return [...new Set(typeString.split(';'))].filter(Boolean)
+}
+
+// 添加查看详情处理函数
+const handleViewDetails = (hotel) => {
+    //功能开发中
+    ElMessage({
+        message: '酒店详情功能开发中，敬请期待...',
+        type: 'info',
+        duration: 2000,
+        showClose: true
+    })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -212,6 +242,7 @@ watch(
 
     .local-hotel-content {
         min-height: 200px;
+
     }
 
     .empty-state {
@@ -241,12 +272,18 @@ watch(
 
     .local-hotel-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
         margin-bottom: 24px;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1300px;
 
         .hotel-card {
+            position: relative;
+            width: 100%;
             height: 100%;
+            border-radius: 15px;
             transition: transform 0.3s ease;
             overflow: hidden;
 
@@ -256,8 +293,48 @@ watch(
 
             .hotel-card-content {
                 .hotel-image {
+                    position: relative;
                     height: 200px;
                     overflow: hidden;
+
+                    .image-overlay {
+                        position: absolute;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.2);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+
+                        .view-details {
+                            color: white;
+                            font-size: 15px;
+                            padding: 8px 20px;
+                            background: rgba(255, 255, 255, 0.15);
+                            border: 1px solid rgba(255, 255, 255, 0.3);
+                            border-radius: 20px;
+                            backdrop-filter: blur(8px);
+                            transform: translateY(20px);
+                            opacity: 0;
+                            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+
+                            &:hover {
+                                background: rgba(255, 255, 255, 0.25);
+                                transform: translateY(0) scale(1.05);
+                            }
+                        }
+
+                        &:hover {
+                            opacity: 1;
+
+                            .view-details {
+                                opacity: 1;
+                                transform: translateY(0);
+                            }
+                        }
+                    }
 
                     .el-image {
                         width: 100%;
@@ -280,6 +357,8 @@ watch(
 
                 .hotel-info {
                     padding: 16px;
+                    display: flex;
+                    flex-direction: column;
 
                     .hotel-name {
                         margin: 0 0 12px;
@@ -289,7 +368,16 @@ watch(
                     }
 
                     .hotel-type {
-                        margin-bottom: 12px;
+                        display: flex;
+                        flex-wrap: wrap;
+                        align-content: flex-start;
+                        gap: 6px;
+                        min-height: 46px;
+                        margin-bottom: 15px;
+
+                        .type-tag {
+                            margin: 0;
+                        }
                     }
 
                     .hotel-address,
@@ -297,7 +385,6 @@ watch(
                         display: flex;
                         align-items: center;
                         gap: 8px;
-                        margin-bottom: 8px;
                         color: var(--el-text-color-regular);
                         font-size: 14px;
 
@@ -306,9 +393,14 @@ watch(
                         }
                     }
 
+                    .hotel-distance {
+                        margin-bottom: 40px;
+                    }
+
                     .hotel-actions {
-                        margin-top: 16px;
-                        display: flex;
+                        position: absolute;
+                        right: 15px;
+                        bottom: 15px;
                         justify-content: flex-end;
                     }
                 }
@@ -391,17 +483,18 @@ watch(
             }
         }
     }
-}
 
-// 响应式布局
-@media screen and (max-width: 768px) {
-    .local-hotel {
+    @media screen and (max-width: 1200px) {
+        .local-hotel-list {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 900px;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
         .local-hotel-list {
             grid-template-columns: 1fr;
-        }
-
-        .hotel-card {
-            margin-bottom: 16px;
+            max-width: 100%;
         }
     }
 }
