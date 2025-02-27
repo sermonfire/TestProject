@@ -66,9 +66,17 @@
             <!-- 分页器 - 修复类型和废弃用法 -->
             <div class="pagination-container glass-card">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
-                    :page-sizes="[10, 20, 30]" :total="total" :disabled="total === 0" :background="true"
-                    layout="total, sizes, prev, pager, next" @size-change="handleSizeChange"
+                    :page-sizes="[12, 16, 20, 24]" :total="Number(total)" :disabled="total === 0" :background="true"
+                    layout="total, sizes, pager" @size-change="handleSizeChange"
                     @current-change="handleCurrentChange" />
+                <div class="adPage">
+                    <el-icon class="prevPage-icon">
+                        <ArrowLeft />
+                    </el-icon>
+                    <el-icon class="nextPage-icon">
+                        <ArrowRight />
+                    </el-icon>
+                </div>
             </div>
         </div>
     </div>
@@ -77,7 +85,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useHotelStore } from '@/stores/hotelStore'
-import { Picture, Location, Position, MapLocation, House } from '@element-plus/icons-vue'
+import { Picture, Location, Position, MapLocation, House, ArrowDown, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const hotelStore = useHotelStore()
 const localHotelList = ref([])
@@ -121,11 +130,13 @@ const getLocalHotelList = async () => {
         const { province, city } = destinationAddressData.locationInfo
         const name = destinationAddressData.destinationData.destination.name
         const keyword = `${province}${city}${name}`
-        const data = await hotelStore.getHotels(keyword, currentPage.value, pageSize.value)
-        localHotelList.value = data.data || []
-        total.value = parseInt(data.total || '0', 10)
+        const result = await hotelStore.getHotels(keyword, currentPage.value, pageSize.value)
+        localHotelList.value = result.data
+        total.value = Number(result.total)
     } catch (error) {
         console.error('获取酒店列表失败:', error)
+        ElMessage.error('获取酒店列表失败')
+        localHotelList.value = []
         total.value = 0
     } finally {
         loading.value = false
@@ -133,13 +144,22 @@ const getLocalHotelList = async () => {
 }
 
 const handleSizeChange = (newSize) => {
+    if (newSize > 25) {
+        ElMessage.warning('每页显示数量不能超过25条')
+        return
+    }
     pageSize.value = newSize
-    currentPage.value = 1
+    currentPage.value = 1  // 切换每页数量时重置为第一页
     getLocalHotelList()
 }
 
 const handleCurrentChange = (newPage) => {
+    if (newPage > 100) {
+        ElMessage.warning('页码不能超过100')
+        return
+    }
     currentPage.value = newPage
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     getLocalHotelList()
 }
 
@@ -152,6 +172,7 @@ watch(
     ],
     () => {
         currentPage.value = 1
+        pageSize.value = 12
         getLocalHotelList()
     },
     { immediate: true, deep: true }
@@ -288,6 +309,36 @@ watch(
 
             &.is-disabled {
                 opacity: 0.7;
+            }
+        }
+
+        .adPage {
+            display: flex;
+            margin-left: 16px;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+
+            .prevPage-icon {
+                font-size: 24px;
+                color: var(--el-color-primary);
+
+                &:hover {
+                    border-radius: 50%;
+                    background-color: #b7f7ee;
+                    transform: scale(1.3);
+                }
+            }
+
+            .nextPage-icon {
+                font-size: 24px;
+                color: var(--el-color-primary);
+
+                &:hover {
+                    border-radius: 50%;
+                    background-color: #b7f7ee;
+                    transform: scale(1.3);
+                }
             }
         }
     }
