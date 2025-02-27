@@ -6,10 +6,6 @@
                     <h2 class="dialog-title">{{ destination?.name }}</h2>
                     <div class="header-actions">
 
-                        <div class="share">
-
-                        </div>
-
                         <CollectionButton :item-id="destination?.id" :initial-state="destination?.isCollected"
                             class="detail-collection-btn" @collection-change="handleCollectionChange" />
                         <button class="close-button" @click="handleClose">×</button>
@@ -80,6 +76,12 @@
                                     <Wallet />
                                 </el-icon>
                                 <span>人均 ¥{{ destination?.averageBudget }}/天</span>
+                            </div>
+                            <div class="meta-item" @mouseenter="isShareHovered = true"
+                                @mouseleave="isShareHovered = false">
+                                <SharePopover :title="destination?.name" :share-url="shareUrl"
+                                    :is-hovered="isShareHovered" @share-success="handleShareSuccess" />
+                                <span class="share-text">分享</span>
                             </div>
                         </div>
 
@@ -177,6 +179,7 @@ import CollectionButton from '@/components/CollectionButton/CollectionButton.vue
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { getLocationFromDestination } from '@/utils/cityMapping';
 import WeatherCard from '@/components/Weather/WeatherCard.vue';
+import SharePopover from '@/components/share/SharePopover.vue';
 
 const props = defineProps({
     modelValue: {
@@ -198,6 +201,23 @@ const emit = defineEmits(['update:modelValue', 'close', 'similar-click', 'tag-cl
 const favoriteStore = useFavoriteStore();
 
 const locationInfo = ref(null);
+const isShareHovered = ref(false);
+
+/**
+ * 处理分享成功事件
+ * @param {Object} shareData - 分享数据
+ * @param {string} platform - 分享平台
+ */
+const handleShareSuccess = (shareData, platform) => {
+    shareStore.recordShare(shareData, platform);
+};
+
+/**
+ * 生成分享URL
+ */
+const shareUrl = computed(() => {
+    return `${import.meta.env.VITE_APP_BASE_URL || ''}/destination/${props.destination.id}`;
+});
 
 const handleClose = () => {
     emit('update:modelValue', false);
@@ -423,6 +443,26 @@ watch(() => props.destination, (newDest) => {
 </script>
 
 <style lang="scss" scoped>
+// 定义通用变量
+$transition-cubic: cubic-bezier(0.4, 0, 0.2, 1);
+$box-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.05);
+$box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+// 通用动画
+@mixin hover-transform {
+    transition: transform 0.3s $transition-cubic;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .dialog-overlay {
     position: fixed;
     top: 0;
@@ -679,24 +719,26 @@ watch(() => props.destination, (newDest) => {
         padding: 20px;
         border-radius: 16px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        box-shadow: $box-shadow-light;
         border: 1px solid rgba(0, 0, 0, 0.05);
 
         .meta-item {
-            display: flex;
-            align-items: center;
+            @include flex-center;
             gap: 8px;
             color: #2c3e50;
             font-weight: 500;
+            cursor: pointer;
 
             .icon {
                 font-size: 20px;
                 color: var(--el-color-primary);
-                -webkit-background-clip: initial;
-                background-clip: initial;
+            }
 
-                &.is-loading {
-                    animation: rotating 2s linear infinite;
+            .share-text {
+                transition: color 0.3s ease;
+
+                &:hover {
+                    color: var(--el-color-primary);
                 }
             }
         }
@@ -940,12 +982,11 @@ watch(() => props.destination, (newDest) => {
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        @include hover-transform;
+        box-shadow: $box-shadow-light;
 
         &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: $box-shadow-medium;
 
             .similar-image {
                 transform: scale(1.05);
@@ -992,40 +1033,37 @@ watch(() => props.destination, (newDest) => {
 </style>
 
 <style>
-/* 全局样式 - 自定义 ElMessage 样式 */
-.tag-added-message {
-    background: rgba(var(--el-color-success-rgb), 0.9) !important;
-    border-width: 0 !important;
+/* 全局样式 */
+:root {
+    --message-padding: 12px 24px;
+    --message-border-radius: 8px;
+    --message-backdrop-filter: blur(8px);
+    --box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tag-added-message,
+.collection-message {
+    border: none !important;
     color: white !important;
-    padding: 12px 24px !important;
-    min-width: 240px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    backdrop-filter: blur(8px) !important;
+    padding: var(--message-padding) !important;
+    border-radius: var(--message-border-radius) !important;
+    backdrop-filter: var(--message-backdrop-filter) !important;
 
-    .el-message__content {
-        color: white !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-    }
-
+    .el-message__content,
     .el-message__icon {
         color: white !important;
-        font-size: 18px !important;
-        margin-right: 10px !important;
+        font-weight: 500 !important;
     }
+}
+
+.tag-added-message {
+    background: rgba(var(--el-color-success-rgb), 0.9) !important;
+    min-width: 240px !important;
+    box-shadow: var(--box-shadow-medium) !important;
 }
 
 .collection-message {
     background: linear-gradient(45deg, #f56c6c, #e64242) !important;
-    border: none !important;
-    color: white !important;
-    padding: 12px 24px !important;
-    border-radius: 8px !important;
     box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
-
-    .el-message__content {
-        color: white !important;
-        font-weight: 500 !important;
-    }
 }
 </style>

@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, watch } from 'vue';
 import { Share } from '@element-plus/icons-vue';
 import ShareCard from './ShareCard.vue';
 
@@ -31,6 +31,13 @@ const props = defineProps({
     shareUrl: {
         type: String,
         required: true
+    },
+    /**
+     * 外部控制悬浮状态
+     */
+    isHovered: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -54,6 +61,15 @@ const clearTimers = () => {
         showTimer = null;
     }
 };
+
+// 监听外部悬浮状态
+watch(() => props.isHovered, (newVal) => {
+    if (newVal) {
+        handleShareHover();
+    } else {
+        handleShareLeave();
+    }
+});
 
 const handleShareHover = () => {
     isMouseInShareArea.value = true;
