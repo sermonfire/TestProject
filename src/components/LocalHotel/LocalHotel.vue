@@ -63,17 +63,19 @@
                 </el-card>
             </div>
 
-            <!-- 分页器 - 修复类型和废弃用法 -->
+            <!-- 分页器 - 修改layout移除prev, next -->
             <div class="pagination-container glass-card">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                     :page-sizes="[12, 16, 20, 24]" :total="Number(total)" :disabled="total === 0" :background="true"
-                    layout="total, sizes, pager" @size-change="handleSizeChange"
-                    @current-change="handleCurrentChange" />
+                    layout="total, sizes" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
                 <div class="adPage">
-                    <el-icon class="prevPage-icon">
+                    <el-icon class="prevPage-icon" :class="{ 'disabled': currentPage <= 1 }" @click="handlePrevPage">
                         <ArrowLeft />
                     </el-icon>
-                    <el-icon class="nextPage-icon">
+                    <div class="currentPage">
+                        {{ currentPage }} / {{ totalPages }}
+                    </div>
+                    <el-icon class="nextPage-icon" :class="{ 'disabled': currentPage >= 25 }" @click="handleNextPage">
                         <ArrowRight />
                     </el-icon>
                 </div>
@@ -83,9 +85,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useHotelStore } from '@/stores/hotelStore'
-import { Picture, Location, Position, MapLocation, House, ArrowDown, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
+import { Picture, Location, Position, MapLocation, House, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const hotelStore = useHotelStore()
@@ -161,6 +163,32 @@ const handleCurrentChange = (newPage) => {
     currentPage.value = newPage
     window.scrollTo({ top: 0, behavior: 'smooth' })
     getLocalHotelList()
+}
+
+const tp = ref(2)
+
+// 修改计算总页数的逻辑
+const totalPages = computed(() => {
+    return tp.value
+})
+
+// 修改下一页处理函数，移除25页的硬编码限制
+const handleNextPage = () => {
+    if (currentPage.value < 25) {
+        currentPage.value++
+        tp.value++
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        getLocalHotelList()
+    }
+}
+
+// 添加上一页处理函数
+const handlePrevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        getLocalHotelList()
+    }
 }
 
 // 监听目的地信息变化
@@ -318,26 +346,47 @@ watch(
             cursor: pointer;
             justify-content: center;
             align-items: center;
+            gap: 12px;
 
-            .prevPage-icon {
-                font-size: 24px;
-                color: var(--el-color-primary);
-
-                &:hover {
-                    border-radius: 50%;
-                    background-color: #b7f7ee;
-                    transform: scale(1.3);
-                }
-            }
-
+            .prevPage-icon,
             .nextPage-icon {
                 font-size: 24px;
                 color: var(--el-color-primary);
+                transition: all 0.3s ease;
+                border-radius: 50%;
+
+                &:hover:not(.disabled) {
+                    background-color: #b7f7ee;
+                    transform: scale(1.2);
+                }
+
+                &.disabled {
+                    color: var(--el-text-color-disabled);
+                    cursor: not-allowed;
+                    opacity: 0.5;
+
+                    &:hover {
+                        background-color: transparent;
+                        transform: none;
+                    }
+                }
+            }
+
+            .currentPage {
+                font-size: 16px;
+                color: var(--el-color-primary);
+                font-weight: bold;
+                min-width: 80px;
+                text-align: center;
+                padding: 0 12px;
+                background-color: rgba(183, 247, 238, 0.3);
+                border-radius: 20px;
+                height: 32px;
+                line-height: 32px;
+                transition: all 0.3s ease;
 
                 &:hover {
-                    border-radius: 50%;
-                    background-color: #b7f7ee;
-                    transform: scale(1.3);
+                    background-color: rgba(183, 247, 238, 0.5);
                 }
             }
         }
