@@ -55,7 +55,7 @@ export const useHotelStore = defineStore('hotel', {
     state: () => ({
         /**
          * 酒店数据缓存
-         * @type {Object.<string, { data: Array, timestamp: number }>}
+         * @type {Object.<string, { data: Array, timestamp: number, total: number }>}
          */
         hotelCache: loadCacheFromStorage(),
     }),
@@ -66,7 +66,7 @@ export const useHotelStore = defineStore('hotel', {
          * @param {string} keyword - 搜索关键字
          * @param {number} page_num - 页码
          * @param {number} page_size - 每页数量
-         * @returns {Promise<Array>} 酒店数据列表
+         * @returns {Promise<{data: Array, total: number}>} 酒店数据列表和总数
          */
         async getHotels(keyword, page_num = 1, page_size = 10) {
             // 清理过期缓存
@@ -80,7 +80,10 @@ export const useHotelStore = defineStore('hotel', {
                 this.hotelCache[cacheKey] &&
                 now - this.hotelCache[cacheKey].timestamp < TWO_DAYS
             ) {
-                return this.hotelCache[cacheKey].data
+                return {
+                    data: this.hotelCache[cacheKey].data,
+                    total: this.hotelCache[cacheKey].total
+                }
             }
 
             // 缓存不存在或已过期，重新请求数据
@@ -89,13 +92,17 @@ export const useHotelStore = defineStore('hotel', {
             // 更新缓存
             this.hotelCache[cacheKey] = {
                 data: res.data,
+                total: res.count,
                 timestamp: now
             }
 
             // 保存到localStorage
             saveCacheToStorage(this.hotelCache)
 
-            return res.data
+            return {
+                data: res.data,
+                total: res.count
+            }
         },
 
         /**

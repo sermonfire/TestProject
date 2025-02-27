@@ -107,8 +107,11 @@
 
                             <h3>住宿信息</h3>
                             <p>{{ destinationData?.accommodationInfo || '暂无住宿信息' }}</p>
+
+                            <h3>本地酒店</h3>
+                            <p>为您推荐附近的优质酒店</p>
+                            <LocalHotel :destination-data="destinationData" :location-info="locationInfo" />
                         </div>
-                        <LocalHotel :destination-data="destinationData" :location-info="locationInfo" />
                     </el-tab-pane>
 
                     <el-tab-pane label="美食购物">

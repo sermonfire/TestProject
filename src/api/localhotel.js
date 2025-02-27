@@ -11,7 +11,7 @@ export const AMAP_API_CONFIG = {
  * @param {string} keyword - 搜索关键字
  * @param {number} page_num - 页码，默认为1
  * @param {number} page_size - 每页数量，默认为10
- * @returns {Promise} 返回酒店搜索结果
+ * @returns {Promise<{data: Array, count: number}>} 返回酒店搜索结果和总数
  */
 export const getLocalHotelAPI = (keyword, page_num = 1, page_size = 10) => {
     return request({
@@ -23,7 +23,9 @@ export const getLocalHotelAPI = (keyword, page_num = 1, page_size = 10) => {
             key: AMAP_API_CONFIG.key,
             types: '酒店',
             page_num,
-            page_size
+            page_size,
+            offset: page_size,
+            page: page_num
         },
         needToken: false,
         isPublic: true

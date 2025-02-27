@@ -56,7 +56,7 @@ const responseInterceptors = [
     {
         name: 'handleStatus',
         success: (response) => {
-            const { status, data, config, } = response;
+            const { status, data, config } = response;
 
             // 如果是DeepSeek API的请求，直接返回原始响应
             if (config.url?.includes('deepseek')) {
@@ -65,10 +65,20 @@ const responseInterceptors = [
 
             // 对于其他API请求保持原有的处理逻辑
             if (status === 200 && data) {
+
+                if (!(data.data)) {
+                    return {
+                        code: data.code || 0,
+                        data: data.pois,
+                        message: data.message || 'success',
+                        count: data.count || 0
+                    }
+                }
+
                 return {
                     code: data.code || 0,
-                    data: data.data || data.pois,
-                    message: data.message || 'success'
+                    data: data.data,
+                    message: data.message || 'success',
                 };
             }
 

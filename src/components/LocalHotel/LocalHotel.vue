@@ -1,18 +1,74 @@
 <template>
     <div class="local-hotel">
-        <div class="local-hotel-header">
-            <h2>本地酒店</h2>
-        </div>
-        <div class="local-hotel-list">
-            <div class="local-hotel-item" v-for="item in localHotelList" :key="item.id">
-                <div class="local-hotel-item-img">
-                </div>
-                <div class="local-hotel-item-info">
-                    <h3>{{ item.name }}</h3>
-                    <p>{{ item.type }}</p>
-                    <p>{{ (item.pname) + (item.cityname) + (item.adname) + (item.address) }}</p>
-                    <p>{{ '距离：' + getDistance(item.distance) }}</p>
-                </div>
+
+        <div v-loading="loading" class="local-hotel-content">
+            <div v-if="!loading && (!localHotelList || localHotelList.length === 0)" class="empty-state glass-card">
+                <el-empty description="暂无酒店信息">
+                    <template #image>
+                        <el-icon :size="60" class="empty-icon">
+                            <House />
+                        </el-icon>
+                    </template>
+                    <template #description>
+                        <p class="empty-text">暂无酒店信息</p>
+                        <p class="empty-subtext">该地区暂时没有找到相关酒店信息</p>
+                    </template>
+                </el-empty>
+            </div>
+
+            <div v-else class="local-hotel-list">
+                <el-card v-for="item in localHotelList" :key="item.id" class="hotel-card glass-card"
+                    :body-style="{ padding: '0px' }">
+                    <div class="hotel-card-content">
+                        <div class="hotel-image">
+                            <el-image :src="item.photos?.[0] || '/src/assets/images/hotel-default.jpg'" fit="cover">
+                                <template #error>
+                                    <div class="image-slot">
+                                        <el-icon>
+                                            <Picture />
+                                        </el-icon>
+                                    </div>
+                                </template>
+                            </el-image>
+                        </div>
+                        <div class="hotel-info">
+                            <h3 class="hotel-name">{{ item.name }}</h3>
+                            <div class="hotel-type">
+                                <el-tag size="small" effect="plain">{{ item.type }}</el-tag>
+                            </div>
+                            <div class="hotel-address">
+                                <el-icon>
+                                    <Location />
+                                </el-icon>
+                                <span>{{ (item.pname) + (item.cityname) + (item.adname) + (item.address) }}</span>
+                            </div>
+                            <div class="hotel-distance">
+                                <el-icon>
+                                    <Position />
+                                </el-icon>
+                                <span>距离：{{ getDistance(item.distance) }}</span>
+                            </div>
+                            <div class="hotel-actions">
+                                <el-button type="primary" link
+                                    :href="'https://map.amap.com/search/poi?query=' + encodeURIComponent(item.name)"
+                                    target="_blank">
+                                    <el-icon>
+                                        <MapLocation />
+                                    </el-icon>
+                                    查看地图
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </el-card>
+            </div>
+
+            <!-- 分页器 - 修复类型和废弃用法 -->
+            <div class="pagination-container glass-card">
+                <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 30]" :total="total" :disabled="total === 0" :background="true"
+                    layout="total, sizes, prev, pager, next" @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange" />
             </div>
         </div>
     </div>
@@ -21,9 +77,15 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useHotelStore } from '@/stores/hotelStore'
+import { Picture, Location, Position, MapLocation, House } from '@element-plus/icons-vue'
 
 const hotelStore = useHotelStore()
 const localHotelList = ref([])
+const loading = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
 const destinationAddressData = defineProps({
     destinationData: {
         type: Object,
@@ -54,11 +116,31 @@ const getLocalHotelList = async () => {
         return
     }
 
-    const { province, city } = destinationAddressData.locationInfo
-    const name = destinationAddressData.destinationData.destination.name
-    const keyword = `${province}${city}${name}`
-    const data = await hotelStore.getHotels(keyword, 1, 10)
-    localHotelList.value = data
+    loading.value = true
+    try {
+        const { province, city } = destinationAddressData.locationInfo
+        const name = destinationAddressData.destinationData.destination.name
+        const keyword = `${province}${city}${name}`
+        const data = await hotelStore.getHotels(keyword, currentPage.value, pageSize.value)
+        localHotelList.value = data.data || []
+        total.value = parseInt(data.total || '0', 10)
+    } catch (error) {
+        console.error('获取酒店列表失败:', error)
+        total.value = 0
+    } finally {
+        loading.value = false
+    }
+}
+
+const handleSizeChange = (newSize) => {
+    pageSize.value = newSize
+    currentPage.value = 1
+    getLocalHotelList()
+}
+
+const handleCurrentChange = (newPage) => {
+    currentPage.value = newPage
+    getLocalHotelList()
 }
 
 // 监听目的地信息变化
@@ -69,15 +151,158 @@ watch(
         destinationAddressData.destinationData?.destination?.name
     ],
     () => {
+        currentPage.value = 1
         getLocalHotelList()
     },
     { immediate: true, deep: true }
 )
-
-onMounted(() => {
-    getLocalHotelList()
-})
-
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.local-hotel {
+
+    .local-hotel-content {
+        min-height: 200px;
+    }
+
+    .empty-state {
+        padding: 40px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        margin-bottom: 24px;
+
+        .empty-icon {
+            color: var(--el-color-primary);
+            opacity: 0.7;
+        }
+
+        .empty-text {
+            color: var(--el-text-color-primary);
+            font-size: 16px;
+            margin: 16px 0 8px;
+        }
+
+        .empty-subtext {
+            color: var(--el-text-color-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+    }
+
+    .local-hotel-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+
+        .hotel-card {
+            height: 100%;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+
+            &:hover {
+                transform: translateY(-5px);
+            }
+
+            .hotel-card-content {
+                .hotel-image {
+                    height: 200px;
+                    overflow: hidden;
+
+                    .el-image {
+                        width: 100%;
+                        height: 100%;
+                    }
+
+                    .image-slot {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100%;
+                        background: var(--el-fill-color-light);
+
+                        .el-icon {
+                            font-size: 30px;
+                            color: var(--el-text-color-secondary);
+                        }
+                    }
+                }
+
+                .hotel-info {
+                    padding: 16px;
+
+                    .hotel-name {
+                        margin: 0 0 12px;
+                        font-size: 18px;
+                        font-weight: 600;
+                        color: var(--el-text-color-primary);
+                    }
+
+                    .hotel-type {
+                        margin-bottom: 12px;
+                    }
+
+                    .hotel-address,
+                    .hotel-distance {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-bottom: 8px;
+                        color: var(--el-text-color-regular);
+                        font-size: 14px;
+
+                        .el-icon {
+                            color: var(--el-color-primary);
+                        }
+                    }
+
+                    .hotel-actions {
+                        margin-top: 16px;
+                        display: flex;
+                        justify-content: flex-end;
+                    }
+                }
+            }
+        }
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 24px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+
+        :deep(.el-pagination) {
+            --el-pagination-hover-color: var(--el-color-primary);
+
+            .el-pagination__total {
+                margin-right: 16px;
+            }
+
+            .el-pagination__sizes {
+                margin-right: 16px;
+            }
+
+            &.is-disabled {
+                opacity: 0.7;
+            }
+        }
+    }
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+    .local-hotel {
+        .local-hotel-list {
+            grid-template-columns: 1fr;
+        }
+
+        .hotel-card {
+            margin-bottom: 16px;
+        }
+    }
+}
+</style>
