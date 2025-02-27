@@ -6,10 +6,10 @@ import request from '@/utils/request'
  * @returns {Promise} 返回日程列表
  */
 export const getScheduleListAPI = (tripId) => {
-  return request({
-    url: `/dev-api/trip/${tripId}/schedule/list`,
-    method: 'GET'
-  })
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule/list`,
+        method: 'GET'
+    })
 }
 
 /**
@@ -19,12 +19,12 @@ export const getScheduleListAPI = (tripId) => {
  * @returns {Promise} 返回创建结果
  */
 export const createScheduleAPI = (tripId, scheduleData) => {
-  return request({
-    url: `/dev-api/trip/${tripId}/schedule`,
-    method: 'POST',
-    data: scheduleData,
-    needToken: true
-  })
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule`,
+        method: 'POST',
+        data: scheduleData,
+        needToken: true
+    })
 }
 
 /**
@@ -35,12 +35,12 @@ export const createScheduleAPI = (tripId, scheduleData) => {
  * @returns {Promise} 返回更新结果
  */
 export const updateScheduleAPI = (tripId, scheduleId, scheduleData) => {
-  return request({
-    url: `/dev-api/trip/${tripId}/schedule/${scheduleId}`,
-    method: 'PUT',
-    data: scheduleData,
-    needToken: true
-  })
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule/${scheduleId}`,
+        method: 'PUT',
+        data: scheduleData,
+        needToken: true
+    })
 }
 
 /**
@@ -50,11 +50,11 @@ export const updateScheduleAPI = (tripId, scheduleId, scheduleData) => {
  * @returns {Promise} 返回删除结果
  */
 export const deleteScheduleAPI = (tripId, scheduleId) => {
-  return request({
-    url: `/dev-api/trip/${tripId}/schedule/${scheduleId}`,
-    method: 'DELETE',
-    needToken: true
-  })
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule/${scheduleId}`,
+        method: 'DELETE',
+        needToken: true
+    })
 }
 
 /**
@@ -64,9 +64,9 @@ export const deleteScheduleAPI = (tripId, scheduleId) => {
  * @returns {Promise} 返回当天日程列表
  */
 export const getDaySchedulesAPI = (tripId, dayIndex) => {
-  return request({
-    url: `/dev-api/trip/${tripId}/schedule/day/${dayIndex}`,
-    method: 'GET',
-    needToken: true
-  })
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule/day/${dayIndex}`,
+        method: 'GET',
+        needToken: true
+    })
 } 
