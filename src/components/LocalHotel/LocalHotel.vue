@@ -19,9 +19,10 @@
 </template>
 
 <script setup>
-import { getLocalHotelAPI } from '@/api/localhotel'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useHotelStore } from '@/stores/hotelStore'
 
+const hotelStore = useHotelStore()
 const localHotelList = ref([])
 const destinationAddressData = defineProps({
     destinationData: {
@@ -47,12 +48,31 @@ const getDistance = (distance) => {
 }
 
 const getLocalHotelList = async () => {
+    if (!destinationAddressData.locationInfo?.province ||
+        !destinationAddressData.locationInfo?.city ||
+        !destinationAddressData.destinationData?.destination?.name) {
+        return
+    }
+
     const { province, city } = destinationAddressData.locationInfo
     const name = destinationAddressData.destinationData.destination.name
     const keyword = `${province}${city}${name}`
-    const res = await getLocalHotelAPI(keyword, 1, 10)
-    localHotelList.value = res.data
+    const data = await hotelStore.getHotels(keyword, 1, 10)
+    localHotelList.value = data
 }
+
+// 监听目的地信息变化
+watch(
+    () => [
+        destinationAddressData.locationInfo?.province,
+        destinationAddressData.locationInfo?.city,
+        destinationAddressData.destinationData?.destination?.name
+    ],
+    () => {
+        getLocalHotelList()
+    },
+    { immediate: true, deep: true }
+)
 
 onMounted(() => {
     getLocalHotelList()
