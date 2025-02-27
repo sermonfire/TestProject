@@ -48,18 +48,7 @@
                         </div>
                         <div class="actions">
                             <span class="view-more" @click="handleCardClick(destination)">查看详情</span>
-                            <div class="share-wrapper" @mouseenter="handleShareHover" @mouseleave="handleShareLeave"
-                                ref="shareButtonRef">
-                                <el-icon class="share-icon">
-                                    <Share />
-                                </el-icon>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="info-share">
-                        <div class="share-popup" :class="{ 'is-visible': isHoveringShare }" ref="sharePopupRef"
-                            @mouseenter="handlePopupMouseEnter" @mouseleave="handlePopupMouseLeave">
-                            <ShareCard :title="destination.name" :share-url="shareUrl"
+                            <SharePopover :title="destination.name" :share-url="shareUrl"
                                 @share-success="handleShareSuccess" />
                         </div>
                     </div>
@@ -86,8 +75,8 @@ import { ref, onUnmounted, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Picture, ArrowRight } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
+import SharePopover from '@/components/share/SharePopover.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
-import ShareCard from '@/components/share/ShareCard.vue';
 import { useShareStore } from '@/stores/shareStore';
 
 const props = defineProps({
@@ -200,56 +189,12 @@ const shareUrl = computed(() => {
     return `${import.meta.env.VITE_APP_BASE_URL || ''}/destination/${props.destination.id}`;
 });
 
-const handleShareHover = () => {
-    isMouseInShareArea.value = true;
-    clearTimers();
-
-    // 直接设置显示状态
-    showTimer = setTimeout(() => {
-        isHoveringShare.value = true;
-    }, 100);
-};
-
-const handleShareLeave = () => {
-    isMouseInShareArea.value = false;
-    clearTimers();
-
-    hideTimer = setTimeout(() => {
-        if (!isMouseInShareArea.value) {
-            isHoveringShare.value = false;
-        }
-    }, 200);
-};
-
-// 清理所有定时器的辅助函数
-const clearTimers = () => {
-    if (hideTimer) {
-        clearTimeout(hideTimer);
-        hideTimer = null;
-    }
-    if (showTimer) {
-        clearTimeout(showTimer);
-        showTimer = null;
-    }
-};
-
-const handlePopupMouseEnter = () => {
-    isMouseInShareArea.value = true;
-    clearTimers();
-};
-
-const handlePopupMouseLeave = () => {
-    isMouseInShareArea.value = false;
-    handleShareLeave();
-};
-
 onMounted(async () => {
     // 检查当前目的地的收藏状态
     await favoriteStore.checkIsFavorite(props.destination.id);
 });
 
 onUnmounted(() => {
-    clearTimers();
     if (flipTimer) {
         clearInterval(flipTimer);
         flipTimer = null;
@@ -648,76 +593,6 @@ onUnmounted(() => {
                 &:hover {
                     background-color: var(--el-color-primary-light-9);
                 }
-            }
-
-            .share-wrapper {
-                position: relative;
-                padding: 4px;
-                cursor: pointer;
-                border-radius: 4px;
-                transition: all 0.3s ease;
-
-                .share-icon {
-                    font-size: 16px;
-                    color: #4c2cdd;
-                    transition: all 0.3s ease;
-                }
-
-                &:hover {
-                    color: #4c2cdd;
-                    transform: scale(1.3);
-                    background-color: var(--el-color-primary-light-9);
-                }
-            }
-        }
-    }
-
-    .info-share {
-        display: flex;
-
-        .share-popup {
-            display: flex;
-            flex: 1;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-            z-index: 10;
-            min-width: 240px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            width: 300px;
-            padding: 10px 0px;
-
-            &.is-visible {
-                opacity: 1;
-                visibility: visible;
-                transform: translateY(0);
-                pointer-events: auto;
-            }
-
-            &::after {
-                content: '';
-                position: absolute;
-                top: -8px;
-                left: 0;
-                right: 0;
-                height: 8px;
-                background: transparent;
-            }
-
-            &::before {
-                content: '';
-                position: absolute;
-                top: -4px;
-                right: 12px;
-                width: 8px;
-                height: 8px;
-                background: white;
-                transform: rotate(45deg);
-                box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
             }
         }
     }
