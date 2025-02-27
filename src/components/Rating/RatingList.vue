@@ -63,20 +63,19 @@
                     <div v-for="rating in ratingList" :key="rating.id" class="rating-item glass-card">
                         <div class="rating-header">
                             <div class="user-info">
-                                <el-avatar :src="rating.isAnonymous ? '' : rating.userInfo?.avatar" :size="40">
-                                    {{ rating.isAnonymous ? '匿' : rating.userInfo?.username?.substring(0, 1) }}
+                                <el-avatar :src="rating.userInfo?.userPic" :size="40">
+                                    {{ rating.isAnonymous ? '匿' : (rating.userInfo?.username?.charAt(0) || '?') }}
                                 </el-avatar>
                                 <div class="user-details">
                                     <div class="username">
-                                        {{ rating.isAnonymous ? '匿名用户' : rating.userInfo?.username }}
+                                        {{ rating.isAnonymous ? '匿名用户' : (rating.userInfo?.username || '未知用户') }}
                                     </div>
                                     <div class="rating-time">{{ formatDate(rating.createTime) }}</div>
                                 </div>
                             </div>
 
                             <div class="rating-score">
-                                <el-rate :model-value="rating.rating" disabled allow-half show-score
-                                    score-template="{value}" />
+                                <el-rate :model-value="rating.rating" disabled allow-half score-template="{value}" />
                             </div>
                         </div>
 
@@ -422,7 +421,7 @@ const formatRating = (rating) => {
  * @returns {string} 星级标签
  */
 const getStarLabel = (index) => {
-    const starRanges = ['4~5星', '3~4星', '2~3星', '1~2星', '0~1星']
+    const starRanges = ['4~5星', '3~4星', '2~3星', '1~2星', '1星']
     return starRanges[index]
 }
 
