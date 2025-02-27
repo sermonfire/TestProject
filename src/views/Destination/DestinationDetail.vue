@@ -108,6 +108,7 @@
                             <h3>住宿信息</h3>
                             <p>{{ destinationData?.accommodationInfo || '暂无住宿信息' }}</p>
                         </div>
+                        <LocalHotel :destination-data="destinationData" :location-info="locationInfo" />
                     </el-tab-pane>
 
                     <el-tab-pane label="美食购物">
@@ -147,6 +148,7 @@ import { getDestinationDetailAPI } from '@/api/recommendApi'
 import { getLocationFromDestination } from '@/utils/cityMapping'
 import WeatherCard from '@/components/Weather/WeatherCard.vue'
 import RatingList from '@/components/Rating/RatingList.vue'
+import LocalHotel from '@/components/LocalHotel/LocalHotel.vue'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
