@@ -33,6 +33,14 @@
                                 </div>
                             </template>
                         </el-image>
+                        <div class="image-overlay" @click="handleImageClick">
+                            <div class="overlay-content">
+                                <el-icon class="overlay-icon">
+                                    <ZoomIn />
+                                </el-icon>
+                                <span class="view-details">查看简介</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="detail-info-section">
@@ -164,8 +172,7 @@
 
 <script setup>
 import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import {
     Picture,
     Loading,
@@ -173,7 +180,11 @@ import {
     Star,
     Calendar,
     Wallet,
-    Location
+    Location,
+    ZoomIn,
+    Clock,
+    Ticket,
+    InfoFilled
 } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
@@ -196,7 +207,6 @@ const props = defineProps({
     }
 });
 
-const router = useRouter();
 const emit = defineEmits(['update:modelValue', 'close', 'similar-click', 'tag-click']);
 const favoriteStore = useFavoriteStore();
 
@@ -366,19 +376,7 @@ watch(() => props.modelValue, (newVal) => {
     }
 });
 
-// 添加图片加载状态管理
-const isLoading = ref(true);
 const isLoadingMap = ref({});
-const hasError = ref(false);
-
-const handleImageLoad = () => {
-    isLoading.value = false;
-};
-
-const handleImageError = () => {
-    isLoading.value = false;
-    hasError.value = true;
-};
 
 const handleSimilarImageLoad = (id) => {
     isLoadingMap.value[id] = false;
@@ -440,6 +438,85 @@ watch(() => props.destination, (newDest) => {
         locationInfo.value = getLocationFromDestination(newDest);
     }
 }, { immediate: true });
+
+// 添加图片点击处理函数
+const handleImageClick = async () => {
+    if (props.destination?.imageUrl) {
+        try {
+            await ElMessageBox.alert(
+                `<div class="image-preview-container">
+                    <div class="image-preview">
+                        <img src="${props.destination.imageUrl}" alt="${props.destination?.name}" />
+                    </div>
+                    <div class="destination-info">
+                        <div class="destination-description">
+                            <h3>景点简介</h3>
+                            <p>${props.destination?.description}</p>
+                        </div>
+                        <div class="destination-notice-board">
+                            <h3>景点信息</h3>
+                            <div class="notice-grid">
+                                <div class="notice-item">
+                                    <span class="notice-title">
+                                        <el-icon><Clock /></el-icon>
+                                        营业时间
+                                    </span>
+                                    <span class="notice-value">暂未获取</span>
+                                </div>
+                                <div class="notice-item">
+                                    <span class="notice-title">
+                                        <el-icon><Ticket /></el-icon>
+                                        门票信息
+                                    </span>
+                                    <span class="notice-value">暂未获取</span>
+                                </div>
+                                <div class="notice-item">
+                                    <span class="notice-title">
+                                        <el-icon><Location /></el-icon>
+                                        交通方式
+                                    </span>
+                                    <span class="notice-value">暂未获取</span>
+                                </div>
+                                <div class="notice-item">
+                                    <span class="notice-title">
+                                        <el-icon><InfoFilled /></el-icon>
+                                        特别提醒
+                                    </span>
+                                    <span class="notice-value">暂未获取</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`,
+                // 标题
+                props.destination?.name,
+                // 配置
+                {
+                    // 是否使用HTML字符串
+                    dangerouslyUseHTMLString: true,
+                    // 是否显示关闭按钮
+                    showClose: true,
+                    // 是否显示确认按钮
+                    showConfirmButton: false,
+                    // 自定义样式
+                    customClass: 'image-preview-dialog',
+                    // 点击蒙版关闭
+                    closeOnClickModal: true,
+                    // 点击蒙版时的回调函数
+                    callback: (action) => {
+                    }
+                }
+            );
+        } catch (err) {
+            // 用户关闭弹窗，不需要处理错误
+            if (err === 'cancel') {
+                return;
+            }
+            // 处理其他可能的错误
+            console.error('预览图片时发生错误:', err);
+        }
+    }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -601,30 +678,65 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
     height: 280px;
     background: #f5f5f5;
     overflow: hidden;
+    cursor: zoom-in;
 
-    &::after {
-        content: '';
+    .image-overlay {
         position: absolute;
         top: 0;
         left: 0;
-        right: 0;
+        width: 100%;
         height: 100%;
-        background: linear-gradient(to bottom,
-                rgba(0, 0, 0, 0.2),
-                transparent 50%,
-                rgba(0, 0, 0, 0.1));
-        pointer-events: none;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+
+        .overlay-content {
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            text-align: center;
+            color: white;
+
+            .overlay-icon {
+                font-size: 32px;
+                margin-bottom: 8px;
+                background: rgba(255, 255, 255, 0.2);
+                padding: 12px;
+                border-radius: 50%;
+                backdrop-filter: blur(4px);
+            }
+
+            .view-details {
+                display: block;
+                font-size: 16px;
+                font-weight: 500;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+        }
+    }
+
+    &:hover {
+        .image-overlay {
+            opacity: 1;
+
+            .overlay-content {
+                transform: translateY(0);
+            }
+        }
+
+        .detail-image {
+            transform: scale(1.05);
+            filter: brightness(0.8);
+        }
     }
 
     .detail-image {
         width: 100%;
         height: 100%;
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-
-        &:hover {
-            transform: scale(1.05);
-            filter: brightness(1.05);
-        }
     }
 
     .image-placeholder {
@@ -1065,5 +1177,202 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 .collection-message {
     background: linear-gradient(45deg, #f56c6c, #e64242) !important;
     box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
+}
+
+.image-preview-dialog {
+    min-width: 40vw !important;
+    min-height: 90vh !important;
+    background: #f8f9fa;
+    border-radius: 16px;
+    overflow: hidden;
+
+    .el-message-box__header {
+        padding: 20px 24px;
+        background: linear-gradient(to right, #fff, #f8f9fa);
+        border-bottom: 1px solid #ebeef5;
+
+        .el-message-box__title {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(45deg, var(--el-color-primary), var(--el-color-primary-light-3));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .el-message-box__headerbtn {
+            top: 20px;
+            right: 24px;
+
+            .el-message-box__close {
+                font-size: 20px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    transform: rotate(90deg);
+                    color: var(--el-color-primary);
+                }
+            }
+        }
+    }
+
+    .el-message-box__content {
+        padding: 0 !important;
+
+        .el-message-box__container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 100%;
+
+            .el-message-box__message {
+                height: 100%;
+            }
+        }
+    }
+
+    .image-preview-container {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 32px;
+        padding: 24px;
+        flex-direction: column;
+        height: calc(90vh - 120px);
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #dcdfe6;
+            border-radius: 3px;
+
+            &:hover {
+                background: #c0c4cc;
+            }
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #f5f7fa;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s ease;
+
+            &:hover {
+                transform: translateY(-4px);
+            }
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+        }
+
+        .destination-info {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            padding: 0 16px;
+
+            h3 {
+                font-size: 20px;
+                font-weight: 600;
+                color: #2c3e50;
+                margin-bottom: 20px;
+                position: relative;
+                padding-left: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 4px;
+                    height: 24px;
+                    background: var(--el-color-primary);
+                    border-radius: 2px;
+                }
+            }
+
+            .destination-description {
+                background: white;
+                padding: 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+                p {
+                    color: #4a5568;
+                    line-height: 1.8;
+                    font-size: 15px;
+                    margin: 0;
+                    text-align: justify;
+                }
+            }
+
+            .notice-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+
+                .notice-item {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+                    }
+
+                    .notice-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        color: #2c3e50;
+                        font-weight: 500;
+                        margin-bottom: 12px;
+                        font-size: 15px;
+
+                        .el-icon {
+                            color: var(--el-color-primary);
+                            font-size: 18px;
+                            background: var(--el-color-primary-light-9);
+                            padding: 6px;
+                            border-radius: 8px;
+                        }
+                    }
+
+                    .notice-value {
+                        color: #718096;
+                        font-size: 14px;
+                        display: block;
+                        padding: 8px 12px;
+                        background: #f8f9fa;
+                        border-radius: 6px;
+                        margin-left: 28px;
+                    }
+                }
+            }
+        }
+    }
 }
 </style>
