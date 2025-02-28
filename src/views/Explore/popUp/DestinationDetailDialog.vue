@@ -33,12 +33,18 @@
                                 </div>
                             </template>
                         </el-image>
-                        <div class="image-overlay" @click="handleImageClick">
-                            <div class="overlay-content">
+                        <div class="image-overlay">
+                            <div class="overlay-content" @click="handleSnapshotClick">
                                 <el-icon class="overlay-icon">
                                     <ZoomIn />
                                 </el-icon>
-                                <span class="view-details">查看简介</span>
+                                <span class="view-snapshot">查看简介</span>
+                            </div>
+                            <div class="overlay-content" @click="handleDetailClick(destination)">
+                                <el-icon class="overlay-icon">
+                                    <ZoomIn />
+                                </el-icon>
+                                <span class="view-detail">查看详情</span>
                             </div>
                         </div>
                     </div>
@@ -182,16 +188,13 @@ import {
     Wallet,
     Location,
     ZoomIn,
-    Clock,
-    Ticket,
-    InfoFilled
 } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { getLocationFromDestination } from '@/utils/cityMapping';
 import WeatherCard from '@/components/Weather/WeatherCard.vue';
 import SharePopover from '@/components/share/SharePopover.vue';
-
+import { useRouter } from 'vue-router';
 const props = defineProps({
     modelValue: {
         type: Boolean,
@@ -212,6 +215,7 @@ const favoriteStore = useFavoriteStore();
 
 const locationInfo = ref(null);
 const isShareHovered = ref(false);
+const router = useRouter();
 
 /**
  * 处理分享成功事件
@@ -439,8 +443,35 @@ watch(() => props.destination, (newDest) => {
     }
 }, { immediate: true });
 
-// 添加图片点击处理函数
-const handleImageClick = async () => {
+//详情点击处理
+const handleDetailClick = async (destination) => {
+    // 添加过渡动画类
+    document.body.classList.add('page-transitioning');
+
+    // 关闭当前弹窗
+    handleClose();
+
+    // 等待弹窗关闭动画完成
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    try {
+        // 执行路由跳转
+        await router.push({
+            name: 'destinationDetail',
+            params: { id: destination.id }
+        });
+    } catch (err) {
+        console.error('路由跳转失败:', err);
+    } finally {
+        // 移除过渡动画类
+        setTimeout(() => {
+            document.body.classList.remove('page-transitioning');
+        }, 500);
+    }
+}
+
+// 简介点击处理
+const handleSnapshotClick = async () => {
     if (props.destination?.imageUrl) {
         try {
             await ElMessageBox.alert(
@@ -678,60 +709,8 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
     height: 280px;
     background: #f5f5f5;
     overflow: hidden;
-    cursor: zoom-in;
-
-    .image-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.3);
-        opacity: 0;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-
-        .overlay-content {
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            text-align: center;
-            color: white;
-
-            .overlay-icon {
-                font-size: 32px;
-                margin-bottom: 8px;
-                background: rgba(255, 255, 255, 0.2);
-                padding: 12px;
-                border-radius: 50%;
-                backdrop-filter: blur(4px);
-            }
-
-            .view-details {
-                display: block;
-                font-size: 16px;
-                font-weight: 500;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            }
-        }
-    }
-
-    &:hover {
-        .image-overlay {
-            opacity: 1;
-
-            .overlay-content {
-                transform: translateY(0);
-            }
-        }
-
-        .detail-image {
-            transform: scale(1.05);
-            filter: brightness(0.8);
-        }
-    }
+    border-radius: 12px;
+    box-shadow: $box-shadow-medium;
 
     .detail-image {
         width: 100%;
@@ -745,10 +724,8 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
         left: 0;
         width: 100%;
         height: 100%;
-        display: flex;
+        @include flex-center;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
         background: #f5f5f5;
         color: #909399;
 
@@ -763,6 +740,83 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
 
         span {
             font-size: 14px;
+        }
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+
+        .overlay-content {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+
+            .overlay-icon {
+                font-size: 20px;
+                color: white;
+            }
+
+            .view-snapshot,
+            .view-detail {
+                color: white;
+                font-size: 15px;
+                font-weight: 500;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        .overlay-content:first-child {
+            .overlay-icon {
+                transform: scale(0.9);
+            }
+        }
+
+        .overlay-content:last-child {
+            .overlay-icon {
+                transform: scale(1.1);
+            }
+        }
+    }
+
+    &:hover {
+        .image-overlay {
+            opacity: 1;
+        }
+
+        .detail-image {
+            transform: scale(1.05);
         }
     }
 }
@@ -1373,6 +1427,42 @@ $box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
                 }
             }
         }
+    }
+}
+
+/* 页面过渡动画 */
+.page-transitioning {
+    position: relative;
+    overflow: hidden;
+}
+
+.page-transitioning::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--el-color-primary-light-5), var(--el-color-primary));
+    animation: pageTransition 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+@keyframes pageTransition {
+    0% {
+        clip-path: circle(0% at 50% 50%);
+        opacity: 0;
+    }
+
+    50% {
+        clip-path: circle(100% at 50% 50%);
+        opacity: 0.3;
+    }
+
+    100% {
+        clip-path: circle(150% at 50% 50%);
+        opacity: 0;
     }
 }
 </style>
