@@ -83,21 +83,15 @@
                         </div>
                     </el-tab-pane>
 
-                    <el-tab-pane label="景点">
-                        <div class="attractions-section">
-                            <el-card v-for="attraction in destinationData?.attractions || []" :key="attraction.name"
-                                class="attraction-card glass-card" :body-style="{ padding: '0px' }">
-                                <el-carousel v-if="attraction.images?.length" height="240px">
-                                    <el-carousel-item v-for="img in attraction.images" :key="img">
-                                        <el-image :src="img" fit="cover" class="carousel-image" />
-                                    </el-carousel-item>
-                                </el-carousel>
-                                <div class="attraction-info">
-                                    <h4>{{ attraction.name }}</h4>
-                                    <p>{{ attraction.description || '暂无描述' }}</p>
-                                </div>
-                            </el-card>
-                        </div>
+                    <el-tab-pane label="景点位置">
+                        <template
+                            v-if="destinationData?.destination?.longitude && destinationData?.destination?.latitude">
+                            <AMapContainer :longitude="Number(destinationData.destination.longitude)"
+                                :latitude="Number(destinationData.destination.latitude)" />
+                        </template>
+                        <template v-else>
+                            <el-empty description="暂无位置信息" />
+                        </template>
                     </el-tab-pane>
 
                     <el-tab-pane label="交通住宿">
@@ -116,8 +110,11 @@
 
                     <el-tab-pane label="美食购物">
                         <div class="info-section">
-                            <h3>美食信息</h3>
-                            <p>{{ destinationData?.foodInfo || '暂无美食信息' }}</p>
+                            <h3>餐饮服务信息</h3>
+                            <p>{{ destinationData?.foodInfo || '暂无餐饮服务信息' }}</p>
+                            <h3>本地餐饮服务</h3>
+                            <p>为您推荐附近的特色餐饮服务</p>
+                            <LocalFood :destination-data="destinationData" :location-info="locationInfo" />
 
                             <h3>购物信息</h3>
                             <p>{{ destinationData?.shoppingInfo || '暂无购物信息' }}</p>
@@ -152,7 +149,9 @@ import { getLocationFromDestination } from '@/utils/cityMapping'
 import WeatherCard from '@/components/Weather/WeatherCard.vue'
 import RatingList from '@/components/Rating/RatingList.vue'
 import LocalHotel from '@/components/LocalHotel/LocalHotel.vue'
+import LocalFood from '@/components/LocalFood/LocalFood.vue'
 import { ElMessage } from 'element-plus'
+import AMapContainer from '@/components/map/AMapContainer.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -1,27 +1,26 @@
 <template>
-    <div class="local-hotel">
-
-        <div v-loading="loading" class="local-hotel-content">
-            <div v-if="!loading && (!localHotelList || localHotelList.length === 0)" class="empty-state glass-card">
-                <el-empty description="暂无酒店信息">
+    <div class="local-food">
+        <div v-loading="loading" class="local-food-content">
+            <div v-if="!loading && (!localFoodList || localFoodList.length === 0)" class="empty-state glass-card">
+                <el-empty description="暂无餐饮服务信息">
                     <template #image>
                         <el-icon :size="60" class="empty-icon">
-                            <House />
+                            <Food />
                         </el-icon>
                     </template>
                     <template #description>
-                        <p class="empty-text">暂无酒店信息</p>
-                        <p class="empty-subtext">该地区暂时没有找到相关酒店信息</p>
+                        <p class="empty-text">暂无餐饮服务信息</p>
+                        <p class="empty-subtext">该地区暂时没有找到相关餐饮服务信息</p>
                     </template>
                 </el-empty>
             </div>
 
-            <div v-else class="local-hotel-list">
-                <el-card v-for="item in localHotelList" :key="item.id" class="hotel-card glass-card"
+            <div v-else class="local-food-list">
+                <el-card v-for="item in localFoodList" :key="item.id" class="food-card glass-card"
                     :body-style="{ padding: '0px' }">
-                    <div class="hotel-card-content">
-                        <div class="hotel-image">
-                            <el-image :src="item.photos?.[0] || '/src/assets/images/hotel-default.jpg'" fit="cover">
+                    <div class="food-card-content">
+                        <div class="food-image">
+                            <el-image :src="item.photos?.[0] || '/src/assets/images/food-default.jpg'" fit="cover">
                                 <template #error>
                                     <div class="image-slot">
                                         <el-icon>
@@ -36,27 +35,27 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="hotel-info">
-                            <h3 class="hotel-name">{{ item.name }}</h3>
-                            <div class="hotel-type">
-                                <el-tag v-for="(type, index) in getHotelTypes(item.type)" :key="index" size="small"
+                        <div class="food-info">
+                            <h3 class="food-name">{{ item.name }}</h3>
+                            <div class="food-type">
+                                <el-tag v-for="(type, index) in getFoodTypes(item.type)" :key="index" size="small"
                                     effect="plain" class="type-tag">
                                     {{ type }}
                                 </el-tag>
                             </div>
-                            <div class="hotel-address">
+                            <div class="food-address">
                                 <el-icon>
                                     <Location />
                                 </el-icon>
                                 <span>{{ (item.pname) + (item.cityname) + (item.adname) + (item.address) }}</span>
                             </div>
-                            <div class="hotel-distance">
+                            <div class="food-distance">
                                 <el-icon>
                                     <Position />
                                 </el-icon>
                                 <span>距离：{{ getDistance(item.distance) }}</span>
                             </div>
-                            <div class="hotel-actions">
+                            <div class="food-actions">
                                 <el-button type="primary" @click="handleViewMap(item)">
                                     <el-icon>
                                         <MapLocation />
@@ -69,7 +68,7 @@
                 </el-card>
             </div>
 
-            <!-- 分页器 - 修改layout移除prev, next -->
+            <!-- 分页器 -->
             <div class="pagination-container glass-card">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                     :page-sizes="[12, 16, 20, 24]" :total="Number(total)" :disabled="total === 0" :background="true"
@@ -88,27 +87,27 @@
             </div>
         </div>
 
-        <el-dialog v-model="mapDialogVisible" :title="currentHotel?.name" width="90%" :destroy-on-close="true"
+        <el-dialog v-model="mapDialogVisible" :title="currentFood?.name" width="90%" :destroy-on-close="true"
             class="map-dialog" top="5vh">
             <div class="map-container">
-                <div class="hotel-info-panel">
-                    <div class="hotel-detail">
-                        <h3>{{ currentHotel?.name }}</h3>
+                <div class="food-info-panel">
+                    <div class="food-detail">
+                        <h3>{{ currentFood?.name }}</h3>
                         <div class="info-item">
                             <el-icon>
                                 <Location />
                             </el-icon>
-                            <span>{{ currentHotel?.pname }}{{ currentHotel?.cityname }}{{ currentHotel?.adname }}{{
-                                currentHotel?.address }}</span>
+                            <span>{{ currentFood?.pname }}{{ currentFood?.cityname }}{{ currentFood?.adname }}{{
+                                currentFood?.address }}</span>
                         </div>
                         <div class="info-item">
                             <el-icon>
                                 <Position />
                             </el-icon>
-                            <span>距离：{{ getDistance(currentHotel?.distance) }}</span>
+                            <span>距离：{{ getDistance(currentFood?.distance) }}</span>
                         </div>
-                        <div class="hotel-tags">
-                            <el-tag v-for="(type, index) in getHotelTypes(currentHotel?.type)" :key="index" size="small"
+                        <div class="food-tags">
+                            <el-tag v-for="(type, index) in getFoodTypes(currentFood?.type)" :key="index" size="small"
                                 effect="plain" class="type-tag">
                                 {{ type }}
                             </el-tag>
@@ -116,9 +115,9 @@
                     </div>
                 </div>
                 <div class="map-wrapper">
-                    <AMapContainer v-if="mapDialogVisible && currentHotel"
-                        :longitude="Number(currentHotel.location?.split(',')[0])"
-                        :latitude="Number(currentHotel.location?.split(',')[1])" :zoom="15" />
+                    <AMapContainer v-if="mapDialogVisible && currentFood"
+                        :longitude="Number(currentFood.location?.split(',')[0])"
+                        :latitude="Number(currentFood.location?.split(',')[1])" :zoom="15" />
                 </div>
             </div>
         </el-dialog>
@@ -127,13 +126,13 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { Picture, Location, Position, MapLocation, House, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
+import { Picture, Location, Position, MapLocation, Food, ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import AMapContainer from '@/components/map/AMapContainer.vue'
 import { useLocalServiceStore } from '@/stores/localServiceStore'
 
 const localServiceStore = useLocalServiceStore()
-const localHotelList = ref([])
+const localFoodList = ref([])
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -162,25 +161,24 @@ const getDistance = (distance) => {
     }
 }
 
-const getLocalHotelList = async () => {
+const getLocalFoodList = async () => {
     if (!destinationAddressData.locationInfo?.province ||
         !destinationAddressData.locationInfo?.city ||
         !destinationAddressData.destinationData?.destination?.name) {
         return
     }
-
     loading.value = true
     try {
         const { province, city } = destinationAddressData.locationInfo
         const name = destinationAddressData.destinationData.destination.name
         const keyword = `${province}${city}${name}`
-        const result = await localServiceStore.getHotels(keyword, currentPage.value, pageSize.value)
-        localHotelList.value = result.data
+        const result = await localServiceStore.getFoods(keyword, currentPage.value, pageSize.value)
+        localFoodList.value = result.data
         total.value = Number(result.total)
     } catch (error) {
-        console.error('获取酒店列表失败:', error)
-        ElMessage.error('获取酒店列表失败')
-        localHotelList.value = []
+        console.error('获取餐饮服务列表失败:', error)
+        ElMessage.error('获取餐饮服务列表失败')
+        localFoodList.value = []
         total.value = 0
     } finally {
         loading.value = false
@@ -194,7 +192,7 @@ const handleSizeChange = (newSize) => {
     }
     pageSize.value = newSize
     currentPage.value = 1  // 切换每页数量时重置为第一页
-    getLocalHotelList()
+    getLocalFoodList()
 }
 
 const handleCurrentChange = (newPage) => {
@@ -204,12 +202,12 @@ const handleCurrentChange = (newPage) => {
     }
     currentPage.value = newPage
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    getLocalHotelList()
+    getLocalFoodList()
 }
 
 const tp = ref(2)
 
-// 计算总页数的逻辑
+// 计算总页数
 const totalPages = computed(() => {
     return tp.value
 })
@@ -220,7 +218,7 @@ const handleNextPage = () => {
         currentPage.value++
         tp.value++
         window.scrollTo({ top: 0, behavior: 'smooth' })
-        getLocalHotelList()
+        getLocalFoodList()
     }
 }
 
@@ -229,7 +227,7 @@ const handlePrevPage = () => {
     if (currentPage.value > 1) {
         currentPage.value--
         window.scrollTo({ top: 0, behavior: 'smooth' })
-        getLocalHotelList()
+        getLocalFoodList()
     }
 }
 
@@ -243,27 +241,26 @@ watch(
     () => {
         currentPage.value = 1
         pageSize.value = 12
-        getLocalHotelList()
+        getLocalFoodList()
     },
     { immediate: true, deep: true }
 )
 
 /**
- * 处理酒店类型标签
- * @param {string} typeString - 原始类型字符串，格式如："住宿服务;宾馆酒店;宾馆酒店"
+ * 处理餐饮服务类型标签
+ * @param {string} typeString - 原始类型字符串，格式如："餐饮服务;中餐厅;中餐厅"
  * @returns {string[]} 去重后的类型数组
  */
-const getHotelTypes = (typeString) => {
+const getFoodTypes = (typeString) => {
     if (!typeString) return []
     // 使用分号分割字符串，并去重
     return [...new Set(typeString.split(';'))].filter(Boolean)
 }
 
 // 添加查看详情处理函数
-const handleViewDetails = (hotel) => {
-    //功能开发中
+const handleViewDetails = (food) => {
     ElMessage({
-        message: '酒店详情功能开发中，敬请期待...',
+        message: '餐饮服务详情功能开发中，敬请期待...',
         type: 'info',
         duration: 2000,
         showClose: true
@@ -271,11 +268,11 @@ const handleViewDetails = (hotel) => {
 }
 
 const mapDialogVisible = ref(false)
-const currentHotel = ref(null)
+const currentFood = ref(null)
 
 // 修改查看地图按钮的点击处理函数
-const handleViewMap = (hotel) => {
-    currentHotel.value = hotel
+const handleViewMap = (food) => {
+    currentFood.value = food
     mapDialogVisible.value = true
     // 添加自动滚动到顶部
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -283,11 +280,9 @@ const handleViewMap = (hotel) => {
 </script>
 
 <style lang="scss" scoped>
-.local-hotel {
-
-    .local-hotel-content {
+.local-food {
+    .local-food-content {
         min-height: 200px;
-
     }
 
     .empty-state {
@@ -315,7 +310,7 @@ const handleViewMap = (hotel) => {
         }
     }
 
-    .local-hotel-list {
+    .local-food-list {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 40px;
@@ -324,7 +319,7 @@ const handleViewMap = (hotel) => {
         margin-right: auto;
         max-width: 1300px;
 
-        .hotel-card {
+        .food-card {
             position: relative;
             width: 100%;
             height: 100%;
@@ -336,8 +331,8 @@ const handleViewMap = (hotel) => {
                 transform: translateY(-5px);
             }
 
-            .hotel-card-content {
-                .hotel-image {
+            .food-card-content {
+                .food-image {
                     position: relative;
                     height: 200px;
                     overflow: hidden;
@@ -400,19 +395,19 @@ const handleViewMap = (hotel) => {
                     }
                 }
 
-                .hotel-info {
+                .food-info {
                     padding: 16px;
                     display: flex;
                     flex-direction: column;
 
-                    .hotel-name {
+                    .food-name {
                         margin: 0 0 12px;
                         font-size: 18px;
                         font-weight: 600;
                         color: var(--el-text-color-primary);
                     }
 
-                    .hotel-type {
+                    .food-type {
                         display: flex;
                         flex-wrap: wrap;
                         align-content: flex-start;
@@ -425,8 +420,8 @@ const handleViewMap = (hotel) => {
                         }
                     }
 
-                    .hotel-address,
-                    .hotel-distance {
+                    .food-address,
+                    .food-distance {
                         display: flex;
                         align-items: center;
                         gap: 8px;
@@ -438,11 +433,11 @@ const handleViewMap = (hotel) => {
                         }
                     }
 
-                    .hotel-distance {
+                    .food-distance {
                         margin-bottom: 40px;
                     }
 
-                    .hotel-actions {
+                    .food-actions {
                         position: absolute;
                         right: 15px;
                         bottom: 15px;
@@ -530,14 +525,14 @@ const handleViewMap = (hotel) => {
     }
 
     @media screen and (max-width: 1200px) {
-        .local-hotel-list {
+        .local-food-list {
             grid-template-columns: repeat(2, 1fr);
             max-width: 900px;
         }
     }
 
     @media screen and (max-width: 768px) {
-        .local-hotel-list {
+        .local-food-list {
             grid-template-columns: 1fr;
             max-width: 100%;
         }
@@ -572,13 +567,13 @@ const handleViewMap = (hotel) => {
         height: 80vh;
         max-height: 800px;
 
-        .hotel-info-panel {
+        .food-info-panel {
             width: 300px;
             padding: 24px;
             border-right: 1px solid var(--el-border-color-lighter);
             overflow-y: auto;
 
-            .hotel-detail {
+            .food-detail {
                 h3 {
                     margin: 0 0 16px;
                     font-size: 18px;
@@ -604,7 +599,7 @@ const handleViewMap = (hotel) => {
                     }
                 }
 
-                .hotel-tags {
+                .food-tags {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 8px;
@@ -639,7 +634,7 @@ const handleViewMap = (hotel) => {
             flex-direction: column;
             height: calc(100vh - 120px);
 
-            .hotel-info-panel {
+            .food-info-panel {
                 width: 100%;
                 max-height: 200px;
                 border-right: none;
