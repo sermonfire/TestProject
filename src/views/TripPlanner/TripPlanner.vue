@@ -175,36 +175,43 @@ const currentOngoingTrip = computed(() => {
 })
 
 
-// 查看日程方法
+// 查看日程
 const viewSchedule = async (trip) => {
     try {
-        currentTrip.value = trip
+        // 先设置状态
         scheduleDialogVisible.value = true
-        // 确保在打开对话框时重新获取日程数据
-        if (trip?.id) {
-            await tripStore.fetchTodaySchedules(trip.id)
-        }
+        currentTrip.value = trip
+        // 不需要在这里调用getTripSchedules，因为watch会处理
     } catch (error) {
         console.error('查看日程失败:', error)
         ElMessage.error('查看日程失败')
     }
 }
 
-// 替换为新的 watch，只关注数据刷新
-watch(() => Array.from(tripStore.todaySchedulesMap), () => {
-    if (currentTrip.value?.id) {
-        tripStore.fetchTodaySchedules(currentTrip.value.id)
+// 数据刷新 - 优化监听逻辑，避免重复请求
+watch(
+    [() => currentTrip.value?.id, () => scheduleDialogVisible.value],
+    ([newTripId, isVisible]) => {
+        if (newTripId && isVisible) {
+            tripStore.getTripSchedules(newTripId, true) // 在这里统一处理数据获取
+        }
     }
-}, { deep: true })
+)
 
 onMounted(async () => {
-    await loadTrips()// 加载行程列表
-    // 获取所有进行中行程的日程数据
-    trips.value.forEach(trip => {
-        if (trip.status === 2) {
-            tripStore.fetchTodaySchedules(trip.id)
+    try {
+        await loadTrips() // 加载行程列表
+        // 确保trips加载完成后再获取日程数据
+        if (trips.value?.length) {
+            const promises = trips.value
+                .filter(trip => trip.status === 1)
+                .map(trip => tripStore.getTripSchedules(trip.id))
+            await Promise.all(promises) // 并行获取所有进行中行程的日程数据
         }
-    })
+    } catch (error) {
+        console.error('初始化数据失败:', error)
+        ElMessage.error('初始化数据失败')
+    }
 })
 </script>
 

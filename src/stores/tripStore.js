@@ -16,61 +16,38 @@ export const useTripStore = defineStore('trip', () => {
     const loading = ref(false)
     const todaySchedulesMap = ref(new Map())
 
-    // 获取今日日程并缓存
-    const fetchTodaySchedules = async (tripId) => {
-        try {
-            if (!tripId) return
-
-            const res = await getScheduleListAPI(tripId)
-            if (res.code === 0) {
-                todaySchedulesMap.value.set(tripId, {
-                    data: res.data || [],
-                    timestamp: Date.now()
-                })
-                return res.data || []
-            }
-            // 如果获取失败，缓存空数组
-            todaySchedulesMap.value.set(tripId, {
-                data: [],
-                timestamp: Date.now()
-            })
-            return []
-        } catch (error) {
-            console.error('获取今日日程失败:', error)
-            todaySchedulesMap.value.set(tripId, {
-                data: [],
-                timestamp: Date.now()
-            })
-            return []
-        }
-    }
-
     /**
-     * @description 检查缓存是否有效
-     * @param {number} timestamp - 缓存时间戳
-     * @param {number} validTime - 有效时间(ms)
-     * @returns {boolean} 是否有效
-     */
-    const isCacheValid = (timestamp, validTime = 5 * 60 * 1000) => { // 默认5分钟
-        return timestamp && (Date.now() - timestamp < validTime)
-    }
-
-    /**
-     * @description 获取今日日程
+     * @description 获取指定行程的所有日程数据
      * @param {string|number} tripId - 行程ID
-     * @returns {Array} 日程列表
+     * @param {boolean} forceRefresh - 是否强制刷新缓存
+     * @param {number} cacheValidTime - 缓存有效时间(ms)，默认5分钟
+     * @returns {Promise<Array>} 日程列表
      */
-    const getTodaySchedules = (tripId) => {
-        const cached = todaySchedulesMap.value.get(tripId)
+    const getTripSchedules = async (tripId, forceRefresh = false, cacheValidTime = 5 * 60 * 1000) => {
+        if (!tripId) return []
 
-        // 如果缓存存在且未过期，直接返回缓存数据
-        if (cached && isCacheValid(cached.timestamp)) {
+        const cached = todaySchedulesMap.value.get(tripId)
+        const isCacheValid = cached?.timestamp && (Date.now() - cached.timestamp < cacheValidTime)
+
+        // 如果缓存有效且不强制刷新，直接返回缓存数据
+        if (!forceRefresh && isCacheValid) {
             return cached.data || []
         }
 
-        // 缓存不存在或已过期，重新获取
-        fetchTodaySchedules(tripId)
-        return cached?.data || []
+        try {
+            const res = await getScheduleListAPI(tripId)
+            const scheduleData = {
+                data: res.code === 0 ? (res.data || []) : [],
+                timestamp: Date.now()
+            }
+
+            todaySchedulesMap.value.set(tripId, scheduleData)
+            return scheduleData.data
+        } catch (error) {
+            console.error('获取指定行程日程列表失败:', error)
+            // 发生错误时，如果有缓存就返回缓存数据，没有则返回空数组
+            return cached?.data || []
+        }
     }
 
     // 清除指定行程的缓存
@@ -98,10 +75,10 @@ export const useTripStore = defineStore('trip', () => {
                 }))
                 trips.value = formattedList
 
-                // 获取进行中行程的今日日程
+                // 获取进行中行程的日程数据
                 formattedList.forEach(trip => {
                     if (trip.status === 2) { // 只获取进行中的行程日程
-                        fetchTodaySchedules(trip.id)
+                        getTripSchedules(trip.id)
                     }
                 })
 
@@ -187,7 +164,7 @@ export const useTripStore = defineStore('trip', () => {
                 trip.status = status
                 // 如果更新为进行中状态，重新获取日程
                 if (status === 2) {
-                    await fetchTodaySchedules(tripId)
+                    getTripSchedules(tripId)
                 } else {
                     // 如果不是进行中状态，清除缓存
                     clearTripScheduleCache(tripId)
@@ -208,8 +185,7 @@ export const useTripStore = defineStore('trip', () => {
         deleteTrip,
         getTripDetail,
         updateTripStatus,
-        getTodaySchedules,
-        fetchTodaySchedules,
+        getTripSchedules,
         clearTripScheduleCache,
         clearAllScheduleCache
     }
