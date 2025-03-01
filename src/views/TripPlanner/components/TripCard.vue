@@ -1,7 +1,24 @@
 <template>
     <el-card class="trip-card" :body-style="{ padding: '0px' }">
-        <!-- 状态标签 -->
-        <TripStatus :status="trip.status" :has-ongoing-trip="hasOngoingTrip" @status-change="handleStatusChange" />
+        <!-- 简化状态标签 -->
+        <div class="trip-status">
+            <el-dropdown trigger="click" @command="handleStatusChange">
+                <span class="status-text" :class="currentStatus.class">
+                    <el-icon>
+                        <component :is="currentStatus.icon" />
+                    </el-icon>
+                    {{ currentStatus.text }}
+                </span>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item v-for="status in availableStatuses" :key="status.value"
+                            :command="status.value" :disabled="isStatusDisabled(status.value)">
+                            {{ status.text }}
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </div>
 
         <div class="card-info">
             <!-- 基本信息 -->
@@ -54,31 +71,21 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Edit, Delete, Calendar, Timer, Money } from '@element-plus/icons-vue'
+import { Edit, Delete, Calendar, Timer, Money, VideoPlay, CircleCheck } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
-import TripStatus from './TripStatus.vue'
 
-/**
- * @typedef {Object} Trip
- * @property {number} id - 行程ID
- * @property {string} name - 行程名称
- * @property {string} description - 行程描述
- * @property {string} startDate - 开始日期
- * @property {string} endDate - 结束日期
- * @property {number} totalBudget - 总预算
- * @property {Array} schedules - 日程安排
- * @property {string} createTime - 创建时间
- * @property {string} updateTime - 更新时间
- * @property {number} status - 行程状态
- */
+// 状态配置
+const TRIP_STATUS = {
+    PLANNING: { value: 0, text: '计划中', class: 'planning', icon: Calendar },
+    ONGOING: { value: 1, text: '进行中', class: 'ongoing', icon: VideoPlay },
+    COMPLETED: { value: 2, text: '已完成', class: 'completed', icon: CircleCheck }
+}
 
 const props = defineProps({
-    /** @type {Trip} */
     trip: {
         type: Object,
         required: true
     },
-    /** @type {boolean} - 是否有进行中的行程 */
     hasOngoingTrip: {
         type: Boolean,
         default: false
@@ -86,6 +93,48 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['status-change', 'edit', 'view-schedule', 'delete'])
+
+// 状态相关的计算属性
+const currentStatus = computed(() => {
+    return Object.values(TRIP_STATUS).find(status => status.value === props.trip.status) || TRIP_STATUS.PLANNING
+})
+
+// 状态转换规则
+const STATUS_TRANSITIONS = {
+    [TRIP_STATUS.PLANNING.value]: [TRIP_STATUS.ONGOING, TRIP_STATUS.COMPLETED],
+    [TRIP_STATUS.ONGOING.value]: [TRIP_STATUS.COMPLETED],
+    [TRIP_STATUS.COMPLETED.value]: [TRIP_STATUS.PLANNING]
+}
+
+// 可用状态选项
+const availableStatuses = computed(() => {
+    // 获取当前状态
+    const currentStatus = TRIP_STATUS[Object.keys(TRIP_STATUS).find(key =>
+        TRIP_STATUS[key].value === props.trip.status
+    )]
+    // 获取下一个状态
+    const nextStatuses = STATUS_TRANSITIONS[props.trip.status] || []
+
+    return [currentStatus, ...nextStatuses]
+})
+
+// 状态禁用逻辑
+const isStatusDisabled = (statusValue) => {
+    // 当前状态不能选择自己
+    if (statusValue === props.trip.status) return true
+
+    // 如果要切换到进行中状态，且已有进行中的行程，则禁用
+    if (statusValue === TRIP_STATUS.ONGOING.value && props.hasOngoingTrip) return true
+
+    return false
+}
+
+// 状态变更处理
+const handleStatusChange = (newStatus) => {
+    if (newStatus !== props.trip.status) {
+        emit('status-change', props.trip, newStatus)
+    }
+}
 
 // 计算属性
 const formattedDateRange = computed(() => {
@@ -108,11 +157,6 @@ const formattedCreateTime = computed(() => {
 const formattedUpdateTime = computed(() => {
     return dayjs(props.trip.updateTime).format('YYYY-MM-DD HH:mm:ss')
 })
-
-// 方法
-const handleStatusChange = (status) => {
-    emit('status-change', props.trip, status)
-}
 </script>
 
 <style lang="scss" scoped>
@@ -124,6 +168,43 @@ const handleStatusChange = (status) => {
     &:hover {
         transform: translateY(-5px);
         box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+    }
+
+    .trip-status {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 1;
+
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+
+            &.planning {
+                background-color: var(--el-color-primary-light-9);
+                color: var(--el-color-primary);
+            }
+
+            &.ongoing {
+                background-color: var(--el-color-success-light-9);
+                color: var(--el-color-success);
+            }
+
+            &.completed {
+                background-color: var(--el-color-info-light-9);
+                color: var(--el-color-info);
+            }
+
+            &:hover {
+                opacity: 0.8;
+            }
+        }
     }
 
     .card-info {

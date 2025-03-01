@@ -46,7 +46,6 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
-import dayjs from 'dayjs'
 import TripCard from './components/TripCard.vue'
 import LocationDisplay from './components/LocationDisplay.vue'
 
@@ -127,21 +126,10 @@ const handleTripSubmit = async (tripData) => {
 }
 
 // 处理状态变更
-const handleStatusChange = async (trip, status) => {
+const handleStatusChange = async (trip, newStatus) => {
     try {
-        if (status === 2 && currentOngoingTrip.value) {
-            await ElMessageBox.confirm(
-                '当前已有其他行程正在进行中，是否结束其他行程并开始当前行程？',
-                '提示',
-                {
-                    confirmButtonText: '确定',
-                    cancelButtonText: '取消',
-                    type: 'warning'
-                }
-            )
-            await tripStore.updateTripStatus(currentOngoingTrip.value.id, 1)
-        }
-        await tripStore.updateTripStatus(trip.id, status)
+        // 更新目标行程状态
+        await tripStore.updateTripStatus(trip.id, newStatus)
         ElMessage.success('状态更新成功')
         await loadTrips()
     } catch (error) {
@@ -151,7 +139,7 @@ const handleStatusChange = async (trip, status) => {
     }
 }
 
-// 加载行程列表的方法
+// 加载行程列表
 const loadTrips = async () => {
     loading.value = true
     try {
@@ -180,15 +168,10 @@ const handleCurrentChange = (val) => {
     loadTrips()
 }
 
-// 计算当前进行的行程
+// 计算当前进行中的行程
 const currentOngoingTrip = computed(() => {
     if (!trips.value?.length) return null
-    const now = dayjs()
-    return trips.value.find(trip =>
-        trip.status === 2 && // 进行中状态
-        now.isAfter(dayjs(trip.startDate)) &&
-        now.isBefore(dayjs(trip.endDate))
-    ) || null
+    return trips.value.find(trip => trip.status === 1) || null
 })
 
 
@@ -215,7 +198,7 @@ watch(() => Array.from(tripStore.todaySchedulesMap), () => {
 }, { deep: true })
 
 onMounted(async () => {
-    await loadTrips()
+    await loadTrips()// 加载行程列表
     // 获取所有进行中行程的日程数据
     trips.value.forEach(trip => {
         if (trip.status === 2) {
@@ -229,6 +212,15 @@ onMounted(async () => {
 .trip-planner {
     padding: 20px;
     user-select: none;
+    height: 100vh;
+    background-color: #fff;
+
+    .planner-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 
     .trip-card {
         margin-bottom: 20px;
@@ -352,6 +344,7 @@ onMounted(async () => {
         margin-top: 20px;
         display: flex;
         justify-content: center;
+        margin-bottom: 80px;
     }
 }
 </style>
