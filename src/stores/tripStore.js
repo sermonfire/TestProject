@@ -19,6 +19,8 @@ export const useTripStore = defineStore('trip', () => {
     // 获取今日日程并缓存
     const fetchTodaySchedules = async (tripId) => {
         try {
+            if (!tripId) return
+
             const res = await getScheduleListAPI(tripId)
             if (res.code === 0) {
                 todaySchedulesMap.value.set(tripId, {
@@ -34,7 +36,7 @@ export const useTripStore = defineStore('trip', () => {
             })
             return []
         } catch (error) {
-            console.error('获取日程列表失败:', error)
+            console.error('获取今日日程失败:', error)
             todaySchedulesMap.value.set(tripId, {
                 data: [],
                 timestamp: Date.now()

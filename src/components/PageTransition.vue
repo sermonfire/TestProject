@@ -20,8 +20,8 @@ const triggerTransition = (path) => {
     isActive.value = true // 触发过渡动画
     setTimeout(() => {
         router.push(path) // 跳转页面
-        setTimeout(() => isActive.value = false, 300) // 过渡动画结束后，隐藏过渡效果
-    }, 1300) // 过渡动画持续时间
+        setTimeout(() => isActive.value = false, 100) // 过渡动画结束后，隐藏过渡效果
+    }, 500) // 过渡动画持续时间
 }
 
 defineExpose({ triggerTransition })
