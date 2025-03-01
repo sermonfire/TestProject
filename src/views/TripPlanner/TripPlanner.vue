@@ -36,6 +36,10 @@
                 @cancel="dialogVisible = false" />
         </el-dialog>
 
+        <!-- 日程安排对话框 -->
+        <TripScheduleDialog v-model="scheduleDialogVisible" :trip="currentTrip" :schedules="currentTripSchedules"
+            @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule" />
+
         <!-- 位置信息悬浮展示 -->
         <LocationDisplay />
     </div>
@@ -48,6 +52,7 @@ import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
 import TripCard from './components/TripCard.vue'
 import LocationDisplay from './components/LocationDisplay.vue'
+import TripScheduleDialog from './components/TripScheduleDialog.vue'
 
 const tripStore = useTripStore()
 const trips = ref([])
@@ -62,6 +67,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const scheduleDialogVisible = ref(false)
+const currentTripSchedules = ref([])
 
 // 创建新行程
 const createNewTrip = () => {
@@ -174,29 +180,40 @@ const currentOngoingTrip = computed(() => {
     return trips.value.find(trip => trip.status === 1) || null
 })
 
-
 // 查看日程
 const viewSchedule = async (trip) => {
     try {
-        // 先设置状态
-        scheduleDialogVisible.value = true
+        loading.value = true
+        // 先获取行程的日程安排
+        const result = await tripStore.getTripSchedules(trip.id)
+        // 设置数据
         currentTrip.value = trip
-        // 不需要在这里调用getTripSchedules，因为watch会处理
+        currentTripSchedules.value = result
+        // 最后显示对话框
+        scheduleDialogVisible.value = true
     } catch (error) {
         console.error('查看日程失败:', error)
         ElMessage.error('查看日程失败')
+    } finally {
+        loading.value = false
     }
 }
 
-// 数据刷新 - 优化监听逻辑，避免重复请求
-watch(
-    [() => currentTrip.value?.id, () => scheduleDialogVisible.value],
-    ([newTripId, isVisible]) => {
-        if (newTripId && isVisible) {
-            tripStore.getTripSchedules(newTripId, true) // 在这里统一处理数据获取
-        }
-    }
-)
+// 处理日程相关操作
+const handleAddSchedule = (data) => {
+    // TODO: 实现添加日程的逻辑
+    console.log('添加日程:', data)
+}
+
+const handleEditSchedule = (schedule) => {
+    // TODO: 实现编辑日程的逻辑
+    console.log('编辑日程:', schedule)
+}
+
+const handleDeleteSchedule = async (schedule) => {
+    // TODO: 实现删除日程的逻辑
+    console.log('删除日程:', schedule)
+}
 
 onMounted(async () => {
     try {
@@ -204,7 +221,7 @@ onMounted(async () => {
         // 确保trips加载完成后再获取日程数据
         if (trips.value?.length) {
             const promises = trips.value
-                .filter(trip => trip.status === 1)
+                .filter(trip => trip.status === 1)//只获取进行中行程的日程数据
                 .map(trip => tripStore.getTripSchedules(trip.id))
             await Promise.all(promises) // 并行获取所有进行中行程的日程数据
         }
