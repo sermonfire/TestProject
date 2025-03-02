@@ -32,13 +32,14 @@
             </el-form-item>
 
             <el-form-item label="预计花费" prop="estimatedCost">
-                <el-input-number v-model="form.estimatedCost" :min="0" :precision="2" :step="10">
+                <el-input-number v-model="form.estimatedCost" :min="0" :max="999999" :precision="2" :step="10"
+                    :controls="true" placeholder="请输入预计花费">
                     <template #prefix>¥</template>
                 </el-input-number>
             </el-form-item>
 
             <el-form-item label="描述" prop="description">
-                <el-input v-model="form.description" type="textarea" rows="3" placeholder="请输入日程描述" />
+                <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入日程描述" />
             </el-form-item>
         </el-form>
 
@@ -156,7 +157,7 @@ const form = ref({
     title: '',
     timeRange: null,
     location: '',
-    estimatedCost: 0,
+    estimatedCost: null,
     description: ''
 })
 
@@ -180,11 +181,13 @@ watch(() => form.value.scheduleType, (newType) => {
 // 表单校验规则
 const rules = {
     scheduleType: [
-        { required: true, message: '请选择日程类型', trigger: 'change' }
+        { required: true, message: '请选择日程类型', trigger: 'change' },
+        { type: 'number', message: '日程类型必须为数字' }
     ],
     title: [
         { required: true, message: '请输入日程标题', trigger: 'blur' },
-        { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+        { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' },
+        { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9\s-]+$/, message: '标题只能包含中文、英文、数字、空格和连字符', trigger: 'blur' }
     ],
     timeRange: [
         { required: true, message: '请选择时间范围', trigger: 'change' },
@@ -199,16 +202,45 @@ const rules = {
                     callback(new Error('结束时间必须大于开始时间'))
                     return
                 }
+                // 检查时间格式
+                const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/
+                if (!timePattern.test(start) || !timePattern.test(end)) {
+                    callback(new Error('时间格式不正确'))
+                    return
+                }
                 callback()
             },
             trigger: 'change'
         }
     ],
     location: [
-        { required: true, message: '请输入地点', trigger: 'blur' }
+        { required: true, message: '请输入地点', trigger: 'blur' },
+        { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'blur' }
     ],
     estimatedCost: [
-        { type: 'number', message: '预计花费必须为数字' }
+        { required: true, message: '请输入预计花费', trigger: 'blur' },
+        {
+            validator: (rule, value, callback) => {
+                if (value === null || value === undefined) {
+                    callback(new Error('请输入预计花费'))
+                    return
+                }
+                const cost = Number(value)
+                if (isNaN(cost)) {
+                    callback(new Error('预计花费必须为数字'))
+                    return
+                }
+                if (cost < 0 || cost > 999999) {
+                    callback(new Error('预计花费必须在 0-999999 之间'))
+                    return
+                }
+                callback()
+            },
+            trigger: ['blur', 'change']
+        }
+    ],
+    description: [
+        { max: 500, message: '描述不能超过 500 个字符', trigger: 'blur' }
     ]
 }
 
@@ -225,7 +257,7 @@ watch(
                     dayjs(schedule.endTime).format('HH:mm')
                 ],
                 location: schedule.location || '',
-                estimatedCost: schedule.estimatedCost || 0,
+                estimatedCost: schedule.estimatedCost !== null ? Number(schedule.estimatedCost) : null,
                 description: schedule.description || ''
             }
         } else {
@@ -235,13 +267,23 @@ watch(
                 title: '',
                 timeRange: getDefaultTimeRange(defaultType),
                 location: '',
-                estimatedCost: 0,
+                estimatedCost: null,
                 description: ''
             }
         }
     },
     { immediate: true }
 )
+
+/**
+ * 格式化日期时间为ISO 8601格式
+ * @param {string} date - 日期
+ * @param {string} time - 时间
+ * @returns {string} 格式化后的日期时间
+ */
+const formatDateTime = (date, time) => {
+    return dayjs(`${date} ${time}`).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+}
 
 /**
  * 提交表单
@@ -256,11 +298,12 @@ const handleSubmit = async () => {
         const [startTime, endTime] = form.value.timeRange
         const scheduleData = {
             ...form.value,
-            startTime: `${props.date} ${startTime}`,
+            startTime: formatDateTime(props.date, startTime),
             endTime: form.value.scheduleType === 4
-                ? `${dayjs(props.date).add(1, 'day').format('YYYY-MM-DD')} ${endTime}` // 住宿类型自动跨天
-                : `${props.date} ${endTime}`,
-            dayIndex: props.dayIndex
+                ? formatDateTime(dayjs(props.date).add(1, 'day').format('YYYY-MM-DD'), endTime)
+                : formatDateTime(props.date, endTime),
+            dayIndex: props.dayIndex,
+            estimatedCost: form.value.estimatedCost !== null ? Number(form.value.estimatedCost.toFixed(2)) : 0
         }
 
         // 如果是编辑模式，保留原有ID
@@ -271,6 +314,11 @@ const handleSubmit = async () => {
         // 删除timeRange字段
         delete scheduleData.timeRange
 
+        // 清理数据
+        if (!scheduleData.description) {
+            scheduleData.description = null
+        }
+
         await emit('submit', scheduleData)
         dialogVisible.value = false
         ElMessage.success({
@@ -280,10 +328,17 @@ const handleSubmit = async () => {
         })
     } catch (error) {
         console.error('表单验证失败:', error)
-        ElMessage.error({
-            message: '请检查表单填写是否正确',
-            duration: 2000
-        })
+        if (error.estimatedCost) {
+            ElMessage.error({
+                message: error.estimatedCost[0].message || '预计花费验证失败',
+                duration: 2000
+            })
+        } else {
+            ElMessage.error({
+                message: error.message || '请检查表单填写是否正确',
+                duration: 2000
+            })
+        }
     } finally {
         emit('update:loading', false)
     }
