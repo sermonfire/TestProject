@@ -1,5 +1,6 @@
 <template>
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑日程' : '添加日程'" width="50%" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑日程' : '添加日程'" width="50%" destroy-on-close
+        :append-to-body="true" :close-on-click-modal="true" class="schedule-form-dialog">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="schedule-form">
             <el-form-item label="日程类型" prop="scheduleType">
                 <el-select v-model="form.scheduleType" placeholder="请选择日程类型">
@@ -68,7 +69,7 @@
         </template>
     </el-dialog>
     <!-- 目的地选择器组件 -->
-    <DestinationSelector v-model="showDestinationSelector" @select="handleDestinationSelect" />
+    <DestinationSelector v-model="showDestinationSelector" @select="handleDestinationSelect" :append-to-body="true" />
 </template>
 
 <script setup>
@@ -436,6 +437,44 @@ watch(() => props.loading, (newValue) => {
 </script>
 
 <style lang="scss" scoped>
+:deep(.el-dialog) {
+    margin: 0 !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 90vh;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-dialog__header {
+        padding: 20px 24px;
+        margin: 0;
+        border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+
+    .el-dialog__body {
+        padding: 0;
+        max-height: calc(90vh - 180px);
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--el-border-color-darker);
+        }
+
+        &::-webkit-scrollbar-track {
+            border-radius: 3px;
+            background-color: var(--el-border-color-light);
+        }
+    }
+}
+
 .schedule-form {
     margin: 20px;
 

@@ -360,38 +360,41 @@ const handleLoadingChange = (value) => {
 
 <style lang="scss" scoped>
 .schedule-dialog {
-    :deep(.el-dialog__body) {
-        padding: 0;
-        height: 80vh;
-        overflow: hidden;
-    }
-
     :deep(.el-dialog) {
-        margin: 0vh auto;
+        margin: 0 !important;
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        max-height: 90vh;
+        width: 1200px !important; // 固定宽度
+        height: 800px; // 固定高度
+        max-width: 90vw; // 响应式最大宽度
+        max-height: 90vh; // 响应式最大高度
         display: flex;
         flex-direction: column;
-    }
+        border-radius: 8px;
+        overflow: hidden;
 
-    :deep(.el-dialog__header) {
-        margin-right: 0;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--el-border-color-lighter);
-    }
+        .el-dialog__header {
+            padding: 20px 24px;
+            margin: 0;
+            border-bottom: 1px solid var(--el-border-color-lighter);
+            background-color: var(--el-bg-color);
+        }
 
-    :deep(.el-dialog__headerbtn) {
-        top: 22px;
-        right: 20px;
+        .el-dialog__body {
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
     }
 }
 
 .schedule-container {
-    display: flex;
     height: 80vh;
+    display: flex;
     background-color: var(--el-bg-color);
 
     // 左侧日期导航样式
@@ -400,6 +403,20 @@ const handleLoadingChange = (value) => {
         border-right: 1px solid var(--el-border-color-light);
         overflow-y: auto;
         background-color: var(--el-bg-color-page);
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--el-border-color-darker);
+        }
+
+        &::-webkit-scrollbar-track {
+            border-radius: 3px;
+            background-color: var(--el-border-color-light);
+        }
 
         .date-item {
             padding: 12px 16px;
@@ -439,6 +456,20 @@ const handleLoadingChange = (value) => {
         display: flex;
         flex-direction: column;
         gap: 24px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--el-border-color-darker);
+        }
+
+        &::-webkit-scrollbar-track {
+            border-radius: 3px;
+            background-color: var(--el-border-color-light);
+        }
 
         .schedule-header {
             display: flex;
@@ -555,6 +586,16 @@ const handleLoadingChange = (value) => {
 
 // 响应式布局
 @media screen and (max-width: 768px) {
+    .schedule-dialog {
+        :deep(.el-dialog) {
+            width: 100% !important;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+        }
+    }
+
     .schedule-container {
         flex-direction: column;
 
@@ -569,10 +610,6 @@ const handleLoadingChange = (value) => {
         .schedule-content {
             padding: 16px;
         }
-    }
-
-    :deep(.el-dialog__body) {
-        height: 85vh;
     }
 }
 </style>

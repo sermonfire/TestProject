@@ -1,17 +1,7 @@
 <template>
-    <el-dialog v-model="visible" title="选择目的地" width="70%" :close-on-click-modal="false" destroy-on-close>
+    <el-dialog v-model="visible" title="选择目的地" width="70%" :close-on-click-modal="true" destroy-on-close
+        :append-to-body="true" class="destination-selector-dialog">
         <div class="destination-selector">
-            <!-- 搜索栏 -->
-            <div class="search-bar">
-                <el-input v-model="searchKeyword" placeholder="搜索目的地..." clearable @input="handleSearch">
-                    <template #prefix>
-                        <el-icon>
-                            <Search />
-                        </el-icon>
-                    </template>
-                </el-input>
-            </div>
-
             <!-- 目的地列表 -->
             <div class="destination-list" v-loading="loading">
                 <el-empty v-if="destinations.length === 0" description="暂无收藏的目的地" />
@@ -224,88 +214,261 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// 文本溢出省略号混入
+@mixin text-overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.destination-selector-dialog {
+    :deep(.el-dialog) {
+        margin: 0 !important;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-height: 80vh;
+        border-radius: 8px;
+        overflow: hidden;
+
+        .el-dialog__header {
+            padding: 20px 24px;
+            margin: 0;
+            border-bottom: 1px solid var(--el-border-color-lighter);
+            background-color: var(--el-bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .el-dialog__body {
+            padding: 0;
+            overflow: hidden;
+            max-height: calc(80vh - 120px);
+        }
+
+        .el-dialog__footer {
+            padding: 0;
+            margin: 0;
+            background-color: var(--el-bg-color);
+            position: sticky;
+            bottom: 0;
+            z-index: 1;
+        }
+    }
+}
+
 .destination-selector {
-    padding: 20px;
+    padding: 24px;
 
     .search-bar {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
+
+        :deep(.el-input) {
+            .el-input__wrapper {
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+                border-radius: 12px;
+                padding: 8px 16px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+                }
+
+                &.is-focus {
+                    box-shadow: 0 4px 16px rgba(var(--el-color-primary-rgb), 0.1);
+                }
+            }
+
+            .el-input__prefix {
+                font-size: 18px;
+                color: var(--el-color-primary);
+            }
+        }
     }
 
     .destination-list {
-        min-height: 400px;
-    }
+        height: calc(80vh - 250px);
+        min-height: 300px;
+        margin-bottom: 24px;
+        overflow-y: auto;
 
-    .destination-card {
-        margin-bottom: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-            transform: translateY(-5px);
+        &::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
 
-        &.is-selected {
-            border: 2px solid var(--el-color-primary);
+        &::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: var(--el-border-color-darker);
         }
 
-        .destination-image {
-            width: 100%;
-            height: 200px;
-            border-radius: 4px;
-            overflow: hidden;
+        &::-webkit-scrollbar-track {
+            border-radius: 3px;
+            background-color: var(--el-border-color-light);
         }
 
-        .image-placeholder {
-            width: 100%;
+        .el-empty {
+            padding: 40px 0;
+        }
+
+        .destination-card {
+            margin-bottom: 20px;
+            cursor: pointer;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f5f7fa;
-            color: #909399;
-            font-size: 24px;
-        }
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            overflow: hidden;
 
-        .destination-info {
-            padding: 12px;
+            &:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 
-            .destination-name {
-                margin: 0 0 8px;
-                font-size: 16px;
-                font-weight: 500;
-                color: var(--el-text-color-primary);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                .destination-image {
+                    transform: scale(1.05);
+                }
             }
 
-            .destination-rating {
-                margin-bottom: 8px;
+            &.is-selected {
+                border-color: var(--el-color-primary);
+                box-shadow: 0 8px 24px rgba(var(--el-color-primary-rgb), 0.15);
+
+                .destination-info {
+                    background-color: var(--el-color-primary-light-9);
+                }
             }
 
-            .destination-tags {
+            .destination-image {
+                width: 100%;
+                height: 200px;
+                transition: transform 0.3s ease;
+                border-radius: 8px 8px 0 0;
+            }
+
+            .image-placeholder {
+                width: 100%;
+                height: 200px;
                 display: flex;
-                flex-wrap: wrap;
-                gap: 4px;
+                align-items: center;
+                justify-content: center;
+                background-color: var(--el-fill-color-lighter);
+                color: var(--el-text-color-secondary);
+                font-size: 32px;
+            }
 
-                .tag {
-                    margin-right: 4px;
-                    margin-bottom: 4px;
+            .destination-info {
+                padding: 16px;
+                transition: background-color 0.3s ease;
+
+                .destination-name {
+                    margin: 0 0 12px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: var(--el-text-color-primary);
+                    line-height: 1.4;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .destination-rating {
+                    margin-bottom: 12px;
+
+                    :deep(.el-rate) {
+                        display: inline-flex;
+                        align-items: center;
+
+                        .el-rate__text {
+                            color: var(--el-color-warning);
+                            font-size: 14px;
+                            margin-left: 8px;
+                        }
+                    }
+                }
+
+                .destination-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    min-height: 46px;
+
+                    .tag {
+                        margin: 0;
+                        border-radius: 4px;
+                        background-color: var(--el-color-primary-light-9);
+                        border-color: var(--el-color-primary-light-8);
+                        color: var(--el-color-primary);
+                        transition: all 0.3s ease;
+
+                        &:hover {
+                            background-color: var(--el-color-primary-light-8);
+                            transform: translateY(-2px);
+                        }
+                    }
                 }
             }
         }
     }
 
     .pagination {
-        margin-top: 20px;
         display: flex;
         justify-content: center;
+        padding: 24px 0 0;
+        border-top: 1px solid var(--el-border-color-lighter);
+
+        :deep(.el-pagination) {
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            font-weight: normal;
+
+            .el-pagination__total,
+            .el-pagination__sizes {
+                margin-right: 16px;
+            }
+
+            .el-pagination__jump {
+                margin-left: 16px;
+            }
+
+            button {
+                background-color: transparent;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background-color: var(--el-color-primary-light-9);
+                }
+
+                &:disabled {
+                    background-color: transparent;
+                }
+            }
+
+            .el-pager li {
+                background-color: transparent;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background-color: var(--el-color-primary-light-9);
+                }
+
+                &.is-active {
+                    background-color: var(--el-color-primary);
+                }
+            }
+        }
     }
 }
 
 .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--el-border-color-lighter);
+    background-color: var(--el-bg-color);
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
 }
 </style>
