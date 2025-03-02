@@ -55,7 +55,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location, Food, Van, House, More } from '@element-plus/icons-vue'
+import { Location } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 /**
@@ -137,7 +137,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'submit', 'update:loading'])
+const emit = defineEmits(['update:modelValue', 'submit'])
 
 // 表单引用
 const formRef = ref(null)
@@ -292,7 +292,6 @@ const handleSubmit = async () => {
     if (!formRef.value) return
 
     try {
-        emit('update:loading', true)
         await formRef.value.validate()
 
         const [startTime, endTime] = form.value.timeRange
@@ -314,7 +313,7 @@ const handleSubmit = async () => {
         // 删除timeRange字段
         delete scheduleData.timeRange
 
-        // 清理数据
+        // 如果描述为空，则设置为null
         if (!scheduleData.description) {
             scheduleData.description = null
         }
@@ -339,23 +338,13 @@ const handleSubmit = async () => {
                 duration: 2000
             })
         }
-    } finally {
-        emit('update:loading', false)
     }
 }
 
-// 监听loading状态
+// 监听loading状态，禁用/启用表单
 watch(() => props.loading, (newValue) => {
-    if (newValue) {
-        // 禁用表单操作
-        if (formRef.value) {
-            formRef.value.disabled = true
-        }
-    } else {
-        // 启用表单操作
-        if (formRef.value) {
-            formRef.value.disabled = false
-        }
+    if (formRef.value) {
+        formRef.value.disabled = newValue
     }
 })
 </script>

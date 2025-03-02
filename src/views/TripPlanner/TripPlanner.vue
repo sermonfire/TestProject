@@ -38,8 +38,7 @@
 
         <!-- 日程安排对话框 -->
         <TripScheduleDialog v-model="scheduleDialogVisible" :trip="selectedTrip" :schedules="selectedTripSchedules"
-            :loading="loading" @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule"
-            @update:loading="loading = $event" />
+            :loading="loading" @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule" />
 
         <!-- 位置信息悬浮展示 -->
         <LocationDisplay />
@@ -232,7 +231,7 @@ const viewSchedule = async (trip) => {
 // 添加日程
 const handleAddSchedule = async (data) => {
     try {
-        // loading状态由子组件控制，这里不需要设置
+        loading.value = true
         // 创建日程
         await tripStore.createSchedule(selectedTrip.value.id, data)
         ElMessage.success('添加日程成功')
@@ -242,13 +241,15 @@ const handleAddSchedule = async (data) => {
     } catch (error) {
         console.error('添加日程失败:', error)
         ElMessage.error(error.message || '添加日程失败')
+    } finally {
+        loading.value = false
     }
 }
 
 // 编辑日程
 const handleEditSchedule = async (schedule) => {
     try {
-        // loading状态由子组件控制，这里不需要设置
+        loading.value = true
         // 更新日程
         await tripStore.updateSchedule(selectedTrip.value.id, schedule.id, schedule)
         ElMessage.success('更新日程成功')
@@ -258,13 +259,15 @@ const handleEditSchedule = async (schedule) => {
     } catch (error) {
         console.error('更新日程失败:', error)
         ElMessage.error(error.message || '更新日程失败')
+    } finally {
+        loading.value = false
     }
 }
 
 // 删除日程
 const handleDeleteSchedule = async (schedule) => {
     try {
-        // loading状态由子组件控制，这里不需要设置
+        loading.value = true
         // 删除日程
         await tripStore.deleteSchedule(selectedTrip.value.id, schedule.id)
         ElMessage.success('删除日程成功')
@@ -274,6 +277,8 @@ const handleDeleteSchedule = async (schedule) => {
     } catch (error) {
         console.error('删除日程失败:', error)
         ElMessage.error(error.message || '删除日程失败')
+    } finally {
+        loading.value = false
     }
 }
 
@@ -300,6 +305,15 @@ onMounted(async () => {
     user-select: none;
     height: 100vh;
     background-color: #fff;
+    position: relative;
+
+    :deep(.el-dialog) {
+        margin: 0vh auto !important;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
 
     .planner-header {
         display: flex;

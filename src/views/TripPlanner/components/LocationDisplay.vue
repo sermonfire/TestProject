@@ -70,8 +70,8 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .location-display-wrapper {
     position: fixed;
-    right: 32px;
-    bottom: 32px;
+    right: 60px;
+    bottom: 28px;
     z-index: 2000;
     display: flex;
     align-items: flex-end;

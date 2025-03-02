@@ -192,7 +192,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete', 'update:loading'])
+const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete'])
 
 // 对话框可见性
 const dialogVisible = computed({
@@ -218,7 +218,7 @@ const totalDays = computed(() => {
  * @returns {string} 格式化后的日期
  */
 const getDayDate = (day) => {
-    return dayjs(props.trip.startDate).add(day - 1, 'day').format('YYYY-MM-DD')
+    return dayjs(props.trip.startDate).add(day - 1, 'day').format('YYYY-MM-DD')// 获取指定天数的日期
 }
 
 /**
@@ -241,11 +241,12 @@ const formatTime = (time) => {
 
 /**
  * 获取当前日的日程安排
+ * @returns {Schedule[]} 当前天的日程安排
  */
 const currentDaySchedules = computed(() => {
     return props.schedules
-        .filter(schedule => schedule.dayIndex === currentDay.value)
-        .sort((a, b) => dayjs(a.startTime).diff(dayjs(b.startTime)))
+        .filter(schedule => schedule.dayIndex === currentDay.value)//过滤出当前天的日程
+        .sort((a, b) => dayjs(a.startTime).diff(dayjs(b.startTime)))//按照开始时间排序
 })
 
 /**
@@ -270,7 +271,7 @@ const scheduleFormVisible = ref(false)
 const currentSchedule = ref(null)
 
 /**
- * 添加日程
+ * 打开添加日程对话框
  */
 const handleAddSchedule = () => {
     currentSchedule.value = null
@@ -361,25 +362,47 @@ const handleLoadingChange = (value) => {
 .schedule-dialog {
     :deep(.el-dialog__body) {
         padding: 0;
-        height: 70vh;
+        height: 80vh;
         overflow: hidden;
+    }
+
+    :deep(.el-dialog) {
+        margin: 0vh auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    :deep(.el-dialog__header) {
+        margin-right: 0;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+
+    :deep(.el-dialog__headerbtn) {
+        top: 22px;
+        right: 20px;
     }
 }
 
 .schedule-container {
     display: flex;
-    height: 100%;
+    height: 80vh;
     background-color: var(--el-bg-color);
 
     // 左侧日期导航样式
     .date-nav {
-        width: 200px;
+        width: 180px;
         border-right: 1px solid var(--el-border-color-light);
         overflow-y: auto;
         background-color: var(--el-bg-color-page);
 
         .date-item {
-            padding: 16px;
+            padding: 12px 16px;
             cursor: pointer;
             border-bottom: 1px solid var(--el-border-color-lighter);
             transition: all 0.3s ease;
@@ -411,18 +434,22 @@ const handleLoadingChange = (value) => {
     // 右侧日程内容样式
     .schedule-content {
         flex: 1;
-        padding: 20px;
+        padding: 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 24px;
 
         .schedule-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 16px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--el-border-color-lighter);
+            position: sticky;
+            top: 0;
+            background-color: var(--el-bg-color);
+            z-index: 1;
 
             h3 {
                 margin: 0;
@@ -430,16 +457,30 @@ const handleLoadingChange = (value) => {
                 display: flex;
                 align-items: center;
                 gap: 12px;
+                font-size: 18px;
 
                 .total-cost {
                     font-size: 14px;
                     color: var(--el-text-color-secondary);
                     font-weight: normal;
+                    background-color: var(--el-color-primary-light-9);
+                    padding: 4px 8px;
+                    border-radius: 4px;
                 }
             }
         }
 
         .schedule-card {
+            margin: 8px 0;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px 0 rgba(0, 0, 0, .1);
+            }
+
             &.is-overnight {
                 border-left: 3px solid var(--el-color-info);
             }
@@ -448,10 +489,12 @@ const handleLoadingChange = (value) => {
                 display: flex;
                 align-items: center;
                 gap: 12px;
+                padding: 16px;
 
                 h4 {
                     margin: 0;
                     flex: 1;
+                    font-size: 16px;
                 }
 
                 .schedule-actions {
@@ -467,7 +510,7 @@ const handleLoadingChange = (value) => {
             }
 
             .schedule-card-content {
-                padding-top: 12px;
+                padding: 0 16px 16px;
 
                 .location,
                 .estimated-cost {
@@ -475,12 +518,12 @@ const handleLoadingChange = (value) => {
                     align-items: center;
                     gap: 8px;
                     color: var(--el-text-color-secondary);
-                    margin-top: 8px;
+                    margin-top: 12px;
                     font-size: 14px;
                 }
 
                 .description {
-                    margin: 12px 0;
+                    margin: 16px 0;
                     color: var(--el-text-color-regular);
                     font-size: 14px;
                     line-height: 1.6;
@@ -518,10 +561,18 @@ const handleLoadingChange = (value) => {
         .date-nav {
             width: 100%;
             height: auto;
-            max-height: 200px;
+            max-height: 160px;
             border-right: none;
             border-bottom: 1px solid var(--el-border-color-light);
         }
+
+        .schedule-content {
+            padding: 16px;
+        }
+    }
+
+    :deep(.el-dialog__body) {
+        height: 85vh;
     }
 }
 </style>
