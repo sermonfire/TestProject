@@ -14,7 +14,7 @@
 
             <!-- 当日程类型为景点游览时，展示这个表单项 -->
             <el-form-item label="前往目的地" v-if="form.scheduleType === 1">
-                <!-- 引入目的地选择组件，让用户选择已收藏的目的地 -->
+                <el-input placeholder="请输入目的地" @focus="showDestinationSelector = true" />
             </el-form-item>
 
             <el-form-item label="日程标题" prop="title">
@@ -55,6 +55,8 @@
             </span>
         </template>
     </el-dialog>
+    <!-- 目的地选择器组件 -->
+    <DestinationSelector v-if="showDestinationSelector" />
 </template>
 
 <script setup>
@@ -62,6 +64,9 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Location } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import DestinationSelector from './DestinationSelector.vue'
+
+const showDestinationSelector = ref(false)
 
 /**
  * @typedef {Object} ScheduleType
@@ -354,34 +359,34 @@ watch(() => props.loading, (newValue) => {
 })
 </script>
 
-<style lang="scss" scoped>
-.schedule-form {
-    margin: 20px;
+<style lang=" scss" scoped>
+        .schedule-form {
+        margin: 20px;
 
-    :deep(.el-select) {
+        :deep(.el-select) {
         width: 100%;
-    }
+        }
 
-    :deep(.el-time-picker) {
+        :deep(.el-time-picker) {
         width: 100%;
-    }
+        }
 
-    :deep(.el-input-number) {
+        :deep(.el-input-number) {
         width: 180px;
-    }
+        }
 
-    .el-icon {
+        .el-icon {
         margin-right: 8px;
         vertical-align: middle;
-    }
-}
+        }
+        }
 
-.dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 20px;
-    border-top: 1px solid var(--el-border-color-lighter);
-    margin-top: 20px;
-}
-</style>
+        .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 20px;
+        border-top: 1px solid var(--el-border-color-lighter);
+        margin-top: 20px;
+        }
+        </style>
