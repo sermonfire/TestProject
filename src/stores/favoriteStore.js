@@ -64,7 +64,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         })
     })
 
-    // 修改当前分类收藏数量的计算属性
+    // 当前分类收藏数量的计算属性
     const currentCategoryCount = computed(() => {
         const currentCategory = categories.value.find(c => c.id === selectedCategory.value)
         if (!currentCategory) return 0
@@ -76,7 +76,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         ).length
     })
 
-    // 添加序列化和反序列化方法
+    // 序列化和反序列化方法
     const serializeFavoriteStatus = computed(() => {
         return Array.from(favoriteStatus.value.entries())
     })
@@ -87,8 +87,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 方法
-    // 添加刷新方法
+    // 刷新方法
     const refreshFavoriteData = async () => {
         try {
             loading.value = true
@@ -118,7 +117,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 添加操作状态的更新方法
+    // 操作状态的更新方法
     const updateOperationStatus = (type, status, message = '') => {
         operationStatus.value = {
             type,
@@ -161,7 +160,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     };
 
-    // 修改添加收藏方法
+    // 添加收藏方法
     const addFavorite = async (destinationId, category = '', notes = '') => {
         updateOperationStatus('add', 'pending')
         try {
@@ -203,7 +202,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 修改取消收藏方法
+    // 取消收藏方法
     const removeFavorite = async (id) => {
         if (!id || isNaN(Number(id))) {
             throw new Error('无效的收藏ID');
@@ -370,7 +369,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 修改移动收藏方法
+    // 移动收藏方法
     const batchUpdateCategory = async (favoriteIds, category) => {
         try {
             loading.value = true
@@ -390,7 +389,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 修改批量取消收藏方法
+    // 批量取消收藏方法
     const batchDeleteFavorites = async (ids) => {
         if (!Array.isArray(ids) || !ids.length) {
             throw new Error('无效的收藏ID列表');
@@ -418,7 +417,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
         }
     }
 
-    // 优化批量检查方法
+    // 批量检查方法
     const batchCheckFavoriteStatus = async (itemIds) => {
         if (!Array.isArray(itemIds) || !itemIds.length) return;
 

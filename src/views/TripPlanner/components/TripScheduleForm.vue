@@ -12,6 +12,11 @@
                 </el-select>
             </el-form-item>
 
+            <!-- 当日程类型为景点游览时，展示这个表单项 -->
+            <el-form-item label="前往目的地" v-if="form.scheduleType === 1">
+                <!-- 引入目的地选择组件，让用户选择已收藏的目的地 -->
+            </el-form-item>
+
             <el-form-item label="日程标题" prop="title">
                 <el-input v-model="form.title" placeholder="请输入日程标题" />
             </el-form-item>

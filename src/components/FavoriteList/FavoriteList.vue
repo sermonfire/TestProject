@@ -173,12 +173,6 @@ const localViewMode = ref(props.viewMode)
 
 // 计算属性
 const categories = computed(() => favoriteStore.categories)
-const tableData = computed(() => {
-    return props.favorites.map(item => ({
-        ...item,
-        disabled: false // 可以根据需要设置是否禁用选择
-    }))
-})
 
 const processedFavorites = computed(() => {
     return props.favorites.map(item => {
@@ -205,20 +199,6 @@ const processedFavorites = computed(() => {
 watch(() => props.viewMode, (newValue) => {
     localViewMode.value = newValue
 })
-
-// 方法
-const handleSelectionChange = (selection) => {
-    selectedItems.value = selection
-}
-
-const handleSearch = async () => {
-    emit('refresh')
-}
-
-const handleMove = (row) => {
-    selectedItems.value = [row]
-    moveDialogVisible.value = true
-}
 
 const handleBatchMove = () => {
     if (!selectedItems.value.length) {
@@ -252,15 +232,6 @@ const confirmMove = async () => {
     } finally {
         loading.value = false
     }
-}
-
-const handleDelete = (item) => {
-    if (!item || !item.id) {
-        ElMessage.warning('无效的收藏项')
-        return
-    }
-    itemToDelete.value = { ...item } // 创建副本
-    deleteDialogVisible.value = true
 }
 
 const handleBatchDelete = () => {
@@ -326,21 +297,6 @@ const confirmDelete = async () => {
     }
 };
 
-const handleNotesUpdate = async (row) => {
-    try {
-        loading.value = true
-        await favoriteStore.updateFavorite(row.id, {
-            notes: row.notes
-        })
-        ElMessage.success('更新备注成功')
-    } catch (error) {
-        console.error('Update notes failed:', error)
-        ElMessage.error('更新备注失败，请重试')
-    } finally {
-        loading.value = false
-    }
-}
-
 const handlePageChange = (page) => {
     emit('update:current-page', page)
     emit('page-change', page)
@@ -349,61 +305,6 @@ const handlePageChange = (page) => {
 const handleSizeChange = (size) => {
     emit('update:page-size', size)
     emit('size-change', size)
-}
-
-const formatDate = (date) => {
-    return dayjs(date).format('YYYY-MM-DD HH:mm')
-}
-
-const handleRowSelect = (row, selected) => {
-    if (selected) {
-        selectedItems.value.push(row)
-    } else {
-        selectedItems.value = selectedItems.value.filter(item => item.id !== row.id)
-    }
-}
-
-const clearSelection = () => {
-    if (tableRef.value) {
-        tableRef.value.clearSelection()
-    }
-}
-
-// 修改刷新方法
-const refreshData = async (silent = false) => {
-    try {
-        loading.value = true
-        await Promise.all([
-            loadFavoriteList(),
-            favoriteStore.getFavoriteStats()
-        ])
-    } catch (error) {
-        console.error('刷新数据失败:', error)
-        if (!silent) {
-            ElMessage.error('刷新数据失败，请重试')
-        }
-    } finally {
-        loading.value = false
-    }
-}
-
-// 修改 emit 方法
-const handleRefresh = (silent = false) => {
-    emit('refresh', silent)
-}
-
-// 获取当前季节
-const getCurrentSeason = () => {
-    const month = new Date().getMonth() + 1
-    if (month >= 3 && month <= 5) return 'spring'
-    if (month >= 6 && month <= 8) return 'summer'
-    if (month >= 9 && month <= 11) return 'autumn'
-    return 'winter'
-}
-
-const handleCardClick = (destination) => {
-    // 处理卡片点击事件
-    // 可以跳转到详情页等
 }
 
 const favoriteList = ref([])
