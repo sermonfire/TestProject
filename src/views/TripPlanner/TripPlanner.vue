@@ -32,12 +32,12 @@
 
         <!-- 新建/编辑行程对话框 -->
         <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑行程' : '新建行程'" width="50%" destroy-on-close>
-            <TripForm v-if="dialogVisible" :trip="currentTrip" @submit="handleTripSubmit"
+            <TripForm v-if="dialogVisible" :trip="formTrip" @submit="handleTripSubmit"
                 @cancel="dialogVisible = false" />
         </el-dialog>
 
         <!-- 日程安排对话框 -->
-        <TripScheduleDialog v-model="scheduleDialogVisible" :trip="currentTrip" :schedules="currentTripSchedules"
+        <TripScheduleDialog v-model="scheduleDialogVisible" :trip="scheduleTrip" :schedules="currentTripSchedules"
             @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule" />
 
         <!-- 位置信息悬浮展示 -->
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import TripForm from './components/TripForm.vue'
 import { useTripStore } from '@/stores/tripStore'
@@ -60,7 +60,8 @@ const trips = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const currentTrip = ref(null)
+const formTrip = ref(null)
+const scheduleTrip = ref(null)
 
 // 添加分页相关的响应式数据
 const currentPage = ref(1)
@@ -72,7 +73,7 @@ const currentTripSchedules = ref([])
 // 创建新行程
 const createNewTrip = () => {
     isEdit.value = false
-    currentTrip.value = {
+    formTrip.value = {
         name: '',
         startDate: '',
         endDate: '',
@@ -85,7 +86,7 @@ const createNewTrip = () => {
 // 编辑行程
 const editTrip = (trip) => {
     isEdit.value = true
-    currentTrip.value = {
+    formTrip.value = {
         id: trip.id,
         name: trip.name,
         startDate: trip.startDate,
@@ -184,10 +185,11 @@ const currentOngoingTrip = computed(() => {
 const viewSchedule = async (trip) => {
     try {
         loading.value = true
-        // 先获取行程的日程安排
+        // 获取指定行程的所有日程安排
         const result = await tripStore.getTripSchedules(trip.id)
-        // 设置数据
-        currentTrip.value = trip
+        // 设置行程数据
+        scheduleTrip.value = trip
+        // 设置日程数据
         currentTripSchedules.value = result
         // 最后显示对话框
         scheduleDialogVisible.value = true
@@ -199,20 +201,65 @@ const viewSchedule = async (trip) => {
     }
 }
 
-// 处理日程相关操作
-const handleAddSchedule = (data) => {
-    // TODO: 实现添加日程的逻辑
-    console.log('添加日程:', data)
+// 添加日程
+const handleAddSchedule = async (data) => {
+    try {
+        loading.value = true
+        // 创建日程
+        await tripStore.createSchedule(scheduleTrip.value.id, data)
+        ElMessage.success('添加日程成功')
+        // 重新加载日程数据
+        const result = await tripStore.getTripSchedules(scheduleTrip.value.id, true)
+        currentTripSchedules.value = result
+    } catch (error) {
+        console.error('添加日程失败:', error)
+        ElMessage.error(error.message || '添加日程失败')
+    } finally {
+        loading.value = false
+    }
 }
 
-const handleEditSchedule = (schedule) => {
-    // TODO: 实现编辑日程的逻辑
-    console.log('编辑日程:', schedule)
+// 编辑日程
+const handleEditSchedule = async (schedule) => {
+    try {
+        loading.value = true
+        // 更新日程
+        await tripStore.updateSchedule(scheduleTrip.value.id, schedule.id, schedule)
+        ElMessage.success('更新日程成功')
+        // 重新加载日程数据
+        const result = await tripStore.getTripSchedules(scheduleTrip.value.id, true)
+        currentTripSchedules.value = result
+    } catch (error) {
+        console.error('更新日程失败:', error)
+        ElMessage.error(error.message || '更新日程失败')
+    } finally {
+        loading.value = false
+    }
 }
 
+// 删除日程
 const handleDeleteSchedule = async (schedule) => {
-    // TODO: 实现删除日程的逻辑
-    console.log('删除日程:', schedule)
+    try {
+        await ElMessageBox.confirm('确定要删除该日程吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        })
+        loading.value = true
+        // 删除日程
+        await tripStore.deleteSchedule(scheduleTrip.value.id, schedule.id)
+        ElMessage.success('删除日程成功')
+        // 重新加载日程数据
+        const result = await tripStore.getTripSchedules(scheduleTrip.value.id, true)
+        currentTripSchedules.value = result
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error('删除日程失败:', error)
+            ElMessage.error(error.message || '删除日程失败')
+        }
+    } finally {
+        loading.value = false
+    }
 }
 
 onMounted(async () => {

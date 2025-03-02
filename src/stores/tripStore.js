@@ -8,7 +8,13 @@ import {
     getTripDetailAPI,
     updateTripStatusAPI
 } from '@/api/tripApi'
-import { getScheduleListAPI } from '@/api/scheduleApi'
+import {
+    getScheduleListAPI,
+    createScheduleAPI,
+    updateScheduleAPI,
+    deleteScheduleAPI,
+    getDaySchedulesAPI
+} from '@/api/scheduleApi'
 import dayjs from 'dayjs'
 
 export const useTripStore = defineStore('trip', () => {
@@ -175,6 +181,48 @@ export const useTripStore = defineStore('trip', () => {
         throw new Error(res.message || '更新状态失败')
     }
 
+    // 创建日程
+    const createSchedule = async (tripId, scheduleData) => {
+        const res = await createScheduleAPI(tripId, scheduleData)
+        if (res.code === 0 && res.data) {
+            // 清除缓存，强制下次获取最新数据
+            clearTripScheduleCache(tripId)
+            return res.data
+        }
+        throw new Error(res.message || '创建日程失败')
+    }
+
+    // 更新日程
+    const updateSchedule = async (tripId, scheduleId, scheduleData) => {
+        const res = await updateScheduleAPI(tripId, scheduleId, scheduleData)
+        if (res.code === 0) {
+            // 清除缓存，强制下次获取最新数据
+            clearTripScheduleCache(tripId)
+            return true
+        }
+        throw new Error(res.message || '更新日程失败')
+    }
+
+    // 删除日程
+    const deleteSchedule = async (tripId, scheduleId) => {
+        const res = await deleteScheduleAPI(tripId, scheduleId)
+        if (res.code === 0) {
+            // 清除缓存，强制下次获取最新数据
+            clearTripScheduleCache(tripId)
+            return true
+        }
+        throw new Error(res.message || '删除日程失败')
+    }
+
+    // 获取某天的日程安排
+    const getDaySchedules = async (tripId, dayIndex) => {
+        const res = await getDaySchedulesAPI(tripId, dayIndex)
+        if (res.code === 0) {
+            return res.data || []
+        }
+        throw new Error(res.message || '获取当天日程失败')
+    }
+
     return {
         trips,
         loading,
@@ -187,6 +235,10 @@ export const useTripStore = defineStore('trip', () => {
         updateTripStatus,
         getTripSchedules,
         clearTripScheduleCache,
-        clearAllScheduleCache
+        clearAllScheduleCache,
+        createSchedule,
+        updateSchedule,
+        deleteSchedule,
+        getDaySchedules
     }
 }) 
