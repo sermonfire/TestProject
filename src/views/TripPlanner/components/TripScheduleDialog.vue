@@ -136,7 +136,7 @@ const SCHEDULE_TYPES = {
     1: {
         label: '景点游览',
         type: 'primary',
-        tagType: '',
+        tagType: 'primary',
         icon: 'Location'
     },
     2: {
@@ -160,7 +160,7 @@ const SCHEDULE_TYPES = {
     5: {
         label: '其他',
         type: 'default',
-        tagType: 'default',
+        tagType: 'info',
         icon: 'More'
     }
 }

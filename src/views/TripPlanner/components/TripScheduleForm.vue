@@ -13,8 +13,20 @@
             </el-form-item>
 
             <!-- 当日程类型为景点游览时，展示这个表单项 -->
-            <el-form-item label="前往目的地" v-if="form.scheduleType === 1">
-                <el-input placeholder="请输入目的地" @focus="showDestinationSelector = true" />
+            <el-form-item label="前往目的地" v-if="form.scheduleType === 1" prop="destinationId">
+                <el-input v-model="form.destinationName" placeholder="请选择目的地" readonly
+                    @click="handleShowDestinationSelector">
+                    <template #prefix>
+                        <el-icon>
+                            <Location />
+                        </el-icon>
+                    </template>
+                    <template #suffix v-if="form.destinationId">
+                        <el-icon class="clear-icon" @click.stop="clearDestination">
+                            <CircleClose />
+                        </el-icon>
+                    </template>
+                </el-input>
             </el-form-item>
 
             <el-form-item label="日程标题" prop="title">
@@ -56,13 +68,13 @@
         </template>
     </el-dialog>
     <!-- 目的地选择器组件 -->
-    <DestinationSelector v-if="showDestinationSelector" />
+    <DestinationSelector v-model="showDestinationSelector" @select="handleDestinationSelect" />
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location } from '@element-plus/icons-vue'
+import { Location, CircleClose } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import DestinationSelector from './DestinationSelector.vue'
 
@@ -85,7 +97,7 @@ const SCHEDULE_TYPES = {
     1: {
         label: '景点游览',
         type: 'primary',
-        tagType: '',
+        tagType: 'primary',
         icon: 'Location',
         defaultStartTime: '09:00',
         defaultEndTime: '11:00'
@@ -117,7 +129,7 @@ const SCHEDULE_TYPES = {
     5: {
         label: '其他',
         type: 'default',
-        tagType: 'default',
+        tagType: 'info',
         icon: 'More',
         defaultStartTime: '14:00',
         defaultEndTime: '16:00'
@@ -168,7 +180,9 @@ const form = ref({
     timeRange: null,
     location: '',
     estimatedCost: null,
-    description: ''
+    description: '',
+    destinationId: null,  // 新增：目的地ID
+    destinationName: ''   // 新增：目的地名称
 })
 
 /**
@@ -188,19 +202,65 @@ watch(() => form.value.scheduleType, (newType) => {
     }
 })
 
+/**
+ * 处理目的地选择
+ * @param {{ id: number, name: string }} destination - 选中的目的地
+ */
+const handleDestinationSelect = (destination) => {
+    form.value.destinationId = destination.id
+    form.value.destinationName = destination.name
+    form.value.title = `游览${destination.name}`  // 自动填充标题
+    form.value.location = destination.name        // 自动填充地点
+    showDestinationSelector.value = false
+}
+
+/**
+ * 显示目的地选择器
+ */
+const handleShowDestinationSelector = (event) => {
+    if (!props.loading) {
+        event.preventDefault()  // 阻止默认行为
+        showDestinationSelector.value = true
+    }
+}
+
+/**
+ * 清除已选择的目的地
+ */
+const clearDestination = () => {
+    form.value.destinationId = null
+    form.value.destinationName = ''
+    // 如果标题是自动生成的，也清除
+    if (form.value.title.startsWith('游览')) {
+        form.value.title = ''
+    }
+    // 如果地点是自动填充的，也清除
+    if (form.value.location === form.value.destinationName) {
+        form.value.location = ''
+    }
+}
+
+// 监听日程类型变化，重置目的地相关字段
+watch(() => form.value.scheduleType, (newType) => {
+    if (newType !== 1) {
+        form.value.destinationId = null
+        form.value.destinationName = ''
+    }
+})
+
 // 表单校验规则
 const rules = {
     scheduleType: [
-        { required: true, message: '请选择日程类型', trigger: 'change' },
-        { type: 'number', message: '日程类型必须为数字' }
+        { required: true, message: '请选择日程类型', trigger: 'submit' },
+        { type: 'number', message: '日程类型必须为数字', trigger: 'submit' }
     ],
     title: [
-        { required: true, message: '请输入日程标题', trigger: 'blur' },
-        { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' },
-        { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9\s-]+$/, message: '标题只能包含中文、英文、数字、空格和连字符', trigger: 'blur' }
+        { required: true, message: '请输入日程标题', trigger: 'submit' },
+        { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'submit' },
+        { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9\s-]+$/, message: '标题只能包含中文、英文、数字、空格和连字符', trigger: 'submit' }
     ],
     timeRange: [
-        { required: true, message: '请选择时间范围', trigger: 'change' },
+        { required: true, message: '请选择时间范围', trigger: 'submit' },
         {
             validator: (rule, value, callback) => {
                 if (!value) {
@@ -220,15 +280,15 @@ const rules = {
                 }
                 callback()
             },
-            trigger: 'change'
+            trigger: 'submit'
         }
     ],
     location: [
-        { required: true, message: '请输入地点', trigger: 'blur' },
-        { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'blur' }
+        { required: true, message: '请输入地点', trigger: 'submit' },
+        { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'submit' }
     ],
     estimatedCost: [
-        { required: true, message: '请输入预计花费', trigger: 'blur' },
+        { required: true, message: '请输入预计花费', trigger: 'submit' },
         {
             validator: (rule, value, callback) => {
                 if (value === null || value === undefined) {
@@ -246,11 +306,23 @@ const rules = {
                 }
                 callback()
             },
-            trigger: ['blur', 'change']
+            trigger: 'submit'
         }
     ],
     description: [
-        { max: 500, message: '描述不能超过 500 个字符', trigger: 'blur' }
+        { max: 500, message: '描述不能超过 500 个字符', trigger: 'submit' }
+    ],
+    destinationId: [
+        {
+            validator: (rule, value, callback) => {
+                if (form.value.scheduleType === 1 && !value) {
+                    callback(new Error('请选择目的地'))
+                    return
+                }
+                callback()
+            },
+            trigger: 'submit'
+        }
     ]
 }
 
@@ -268,7 +340,9 @@ watch(
                 ],
                 location: schedule.location || '',
                 estimatedCost: schedule.estimatedCost !== null ? Number(schedule.estimatedCost) : null,
-                description: schedule.description || ''
+                description: schedule.description || '',
+                destinationId: schedule.destinationId,
+                destinationName: schedule.destinationName || ''
             }
         } else {
             const defaultType = 1
@@ -278,7 +352,9 @@ watch(
                 timeRange: getDefaultTimeRange(defaultType),
                 location: '',
                 estimatedCost: null,
-                description: ''
+                description: '',
+                destinationId: null,
+                destinationName: ''
             }
         }
     },
@@ -359,34 +435,34 @@ watch(() => props.loading, (newValue) => {
 })
 </script>
 
-<style lang=" scss" scoped>
-        .schedule-form {
-        margin: 20px;
+<style lang="scss" scoped>
+.schedule-form {
+    margin: 20px;
 
-        :deep(.el-select) {
+    :deep(.el-select) {
         width: 100%;
-        }
+    }
 
-        :deep(.el-time-picker) {
+    :deep(.el-time-picker) {
         width: 100%;
-        }
+    }
 
-        :deep(.el-input-number) {
+    :deep(.el-input-number) {
         width: 180px;
-        }
+    }
 
-        .el-icon {
+    .el-icon {
         margin-right: 8px;
         vertical-align: middle;
-        }
-        }
+    }
+}
 
-        .dialog-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        padding: 20px;
-        border-top: 1px solid var(--el-border-color-lighter);
-        margin-top: 20px;
-        }
-        </style>
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+    margin-top: 20px;
+}
+</style>
