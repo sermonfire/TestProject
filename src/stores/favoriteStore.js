@@ -345,13 +345,19 @@ export const useFavoriteStore = defineStore('favorite', () => {
             loading.value = true
             const res = await searchFavoritesAPI(keyword, page, size, categoryId)
             if (res.code === 0) {
-                // 更新分类统计
-                await getFavoriteStats()
+                // 处理分类统计数据
+                const categoryStats = {}
+                if (res.data.categoryStats) {
+                    // 确保所有分类都有统计数据
+                    categories.value.forEach(category => {
+                        categoryStats[category.id] = res.data.categoryStats[category.id] || 0
+                    })
+                }
 
                 return {
                     list: res.data.list || [],
                     total: res.data.total || 0,
-                    categoryStats: res.data.categoryStats || {} // 添加分类统计
+                    categoryStats
                 }
             }
             throw new Error(res.message || '搜索失败')

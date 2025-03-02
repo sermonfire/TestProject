@@ -24,7 +24,8 @@
 
                 <!-- 分类列表区域 -->
                 <div class="category-list-wrapper">
-                    <FavoriteCategory @select="handleCategorySelect" />
+                    <FavoriteCategory @select="handleCategorySelect" :is-searching="!!searchQuery.trim()"
+                        :search-category-stats="searchCategoryStats" :current-total="total" :favorites="favorites" />
                 </div>
             </div>
 
@@ -88,6 +89,9 @@ const currentCategory = computed(() => {
 })
 
 const favoriteStats = computed(() => favoriteStore.favoriteStats)
+
+// 添加搜索分类统计状态
+const searchCategoryStats = ref({})
 
 // 加载收藏列表方法
 const loadFavorites = async () => {
@@ -265,12 +269,10 @@ const handleSearch = async () => {
             if (res) {
                 favorites.value = res.list || []
                 total.value = res.total || 0
+                searchCategoryStats.value = res.categoryStats || {}
 
                 // 更新分类统计
-                if (res.categoryStats) {
-                    // 触发分类统计更新
-                    await favoriteStore.getFavoriteStats()
-                }
+                await favoriteStore.getFavoriteStats()
 
                 // 如果当前分类下没有搜索结果，但其他分类有
                 if (total.value === 0 && Object.values(res.categoryStats).some(count => count > 0)) {
@@ -289,11 +291,13 @@ const handleSearch = async () => {
                     if (allRes) {
                         favorites.value = allRes.list || []
                         total.value = allRes.total || 0
+                        searchCategoryStats.value = allRes.categoryStats || {}
                     }
                 }
             }
         } else {
-            // 如果搜索框为空，加载正常列表
+            // 如果搜索框为空，重置搜索状态并加载正常列表
+            searchCategoryStats.value = {}
             await loadFavorites()
         }
     } catch (error) {

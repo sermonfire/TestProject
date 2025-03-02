@@ -31,8 +31,9 @@
                                     <component :is="element.isDefault ? 'Star' : 'Folder'" />
                                 </el-icon>
                                 <span class="category-name">{{ element.name }}</span>
-                                <span class="category-count">
-                                    ({{ isSearching ? searchCategoryStats[element.id] || 0 : element.count || 0 }})
+                                <span v-if="shouldShowCount(element)" class="category-count"
+                                    :class="{ 'is-current': selectedCategory === element.id }">
+                                    ({{ getCategoryCount(element) }})
                                 </span>
                                 <el-tag v-if="isSearching && hasSearchResults(element)" size="small" type="success"
                                     class="search-tag">
@@ -147,11 +148,55 @@ const props = defineProps({
     isSearching: {
         type: Boolean,
         default: false
+    },
+    currentTotal: {
+        type: Number,
+        default: 0
+    },
+    favorites: {
+        type: Array,
+        default: () => []
+    }
+})
+
+const getCategoryCount = computed(() => (category) => {
+    if (props.isSearching) {
+        // 搜索状态下显示搜索结果数量
+        return props.searchCategoryStats[category.id] || 0
+    } else {
+        // 非搜索状态下，如果是当前选中的分类，显示currentTotal
+        if (category.id === selectedCategory.value) {
+            return props.currentTotal
+        }
+        // 其他分类显示实际收藏数量
+        return props.favorites.filter(item =>
+            category.isDefault ?
+                !item.category || item.category === category.id :
+                item.category === category.id
+        ).length
+    }
+})
+
+const shouldShowCount = computed(() => (category) => {
+    if (props.isSearching) {
+        // 搜索状态下，只要有搜索结果就显示
+        return props.searchCategoryStats[category.id] > 0
+    } else {
+        // 非搜索状态下
+        const count = getCategoryCount.value(category)
+        // 当前选中分类总是显示计数
+        if (category.id === selectedCategory.value) {
+            return true
+        }
+        // 其他分类只在有收藏时显示
+        return count > 0
     }
 })
 
 const hasSearchResults = (category) => {
-    return props.isSearching && props.searchCategoryStats[category.id] > 0
+    if (!props.isSearching) return false
+    const count = props.searchCategoryStats[category.id] || 0
+    return count > 0
 }
 
 // 方法
@@ -274,6 +319,20 @@ const handleDialogOpened = () => {
         }
     })
 }
+
+// 添加监听搜索状态变化
+watch(() => props.isSearching, (newVal, oldVal) => {
+    if (!newVal && oldVal) {
+        // 从搜索状态退出时，刷新分类列表
+        favoriteStore.getCategories()
+    }
+})
+
+// 添加监听收藏数据变化
+watch(() => props.favorites, () => {
+    // 当收藏数据变化时，强制更新计算属性
+    getCategoryCount.value
+}, { deep: true })
 </script>
 
 <style lang="scss" scoped>
@@ -428,6 +487,12 @@ const handleDialogOpened = () => {
                 .category-count {
                     font-size: 12px;
                     color: var(--el-text-color-secondary);
+                    transition: all 0.3s ease;
+
+                    &.is-current {
+                        color: var(--el-color-primary);
+                        font-weight: 500;
+                    }
                 }
 
                 .search-tag {
