@@ -49,70 +49,82 @@
                             </el-button>
                         </div>
 
-                        <!-- 时间轴展示日程 -->
-                        <el-timeline v-if="currentDaySchedules.length">
-                            <el-timeline-item v-for="schedule in currentDaySchedules" :key="schedule.id"
-                                :timestamp="formatTime(schedule.startTime) + ' - ' + formatTime(schedule.endTime)"
-                                :type="getScheduleType(schedule.scheduleType).type">
-                                <el-card class="schedule-card"
-                                    :class="{ 'is-overnight': isOvernightSchedule(schedule) }">
-                                    <template #header>
-                                        <div class="schedule-card-header">
-                                            <el-tag :type="getScheduleType(schedule.scheduleType).tagType">
-                                                <el-icon>
-                                                    <component :is="getScheduleType(schedule.scheduleType).icon" />
-                                                </el-icon>
-                                                {{ getScheduleType(schedule.scheduleType).label }}
-                                            </el-tag>
-                                            <h4>{{ schedule.title }}</h4>
-                                            <div class="schedule-actions">
-                                                <el-button-group>
-                                                    <el-tooltip content="编辑日程" placement="top">
-                                                        <el-button type="primary" link
-                                                            @click="handleEditSchedule(schedule)">
-                                                            <el-icon>
-                                                                <Edit />
-                                                            </el-icon>
-                                                        </el-button>
-                                                    </el-tooltip>
-                                                    <el-tooltip content="删除日程" placement="top">
-                                                        <el-button type="danger" link
-                                                            @click="handleDeleteSchedule(schedule)">
-                                                            <el-icon>
-                                                                <Delete />
-                                                            </el-icon>
-                                                        </el-button>
-                                                    </el-tooltip>
-                                                </el-button-group>
+                        <div class="schedule-selfcustom">
+                            <div class="schedule-selfcustom-left">
+                                <!-- 时间轴展示日程 -->
+                                <el-timeline v-if="currentDaySchedules.length">
+                                    <el-timeline-item v-for="schedule in currentDaySchedules" :key="schedule.id"
+                                        :timestamp="formatTime(schedule.startTime) + ' - ' + formatTime(schedule.endTime)"
+                                        :type="getScheduleType(schedule.scheduleType).type">
+                                        <el-card class="schedule-card"
+                                            :class="{ 'is-overnight': isOvernightSchedule(schedule) }">
+                                            <template #header>
+                                                <div class="schedule-card-header">
+                                                    <el-tag :type="getScheduleType(schedule.scheduleType).tagType">
+                                                        <el-icon>
+                                                            <component
+                                                                :is="getScheduleType(schedule.scheduleType).icon" />
+                                                        </el-icon>
+                                                        {{ getScheduleType(schedule.scheduleType).label }}
+                                                    </el-tag>
+                                                    <h4>{{ schedule.title }}</h4>
+                                                    <div class="schedule-actions">
+                                                        <el-button-group>
+                                                            <el-tooltip content="编辑日程" placement="top">
+                                                                <el-button type="primary" link
+                                                                    @click="handleEditSchedule(schedule)">
+                                                                    <el-icon>
+                                                                        <Edit />
+                                                                    </el-icon>
+                                                                </el-button>
+                                                            </el-tooltip>
+                                                            <el-tooltip content="删除日程" placement="top">
+                                                                <el-button type="danger" link
+                                                                    @click="handleDeleteSchedule(schedule)">
+                                                                    <el-icon>
+                                                                        <Delete />
+                                                                    </el-icon>
+                                                                </el-button>
+                                                            </el-tooltip>
+                                                        </el-button-group>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div class="schedule-card-content">
+                                                <div class="location" v-if="schedule.location">
+                                                    <el-icon>
+                                                        <Location />
+                                                    </el-icon>
+                                                    {{ schedule.location }}
+                                                </div>
+                                                <div class="description" v-if="schedule.description">{{
+                                                    schedule.description
+                                                    }}
+                                                </div>
+                                                <div class="estimated-cost" v-if="schedule.estimatedCost">
+                                                    <el-icon>
+                                                        <Money />
+                                                    </el-icon>
+                                                    预计花费: ¥{{ schedule.estimatedCost }}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </template>
-                                    <div class="schedule-card-content">
-                                        <div class="location" v-if="schedule.location">
-                                            <el-icon>
-                                                <Location />
-                                            </el-icon>
-                                            {{ schedule.location }}
-                                        </div>
-                                        <div class="description" v-if="schedule.description">{{ schedule.description }}
-                                        </div>
-                                        <div class="estimated-cost" v-if="schedule.estimatedCost">
-                                            <el-icon>
-                                                <Money />
-                                            </el-icon>
-                                            预计花费: ¥{{ schedule.estimatedCost }}
-                                        </div>
-                                    </div>
-                                </el-card>
-                            </el-timeline-item>
-                        </el-timeline>
+                                        </el-card>
+                                    </el-timeline-item>
+                                </el-timeline>
 
-                        <!-- 空状态 -->
-                        <el-empty v-else description="暂无日程安排">
-                            <el-button type="primary" @click="handleAddSchedule">
-                                立即添加
-                            </el-button>
-                        </el-empty>
+                                <!-- 空状态 -->
+                                <el-empty v-else description="暂无日程安排">
+                                    <el-button type="primary" @click="handleAddSchedule">
+                                        立即添加
+                                    </el-button>
+                                </el-empty>
+
+                            </div>
+                            <div class="schedule-selfcustom-right">
+                                <!-- TODO: 右侧内容 -->
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -578,6 +590,24 @@ const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
                     align-items: center;
                     gap: 6px;
                 }
+            }
+        }
+
+        .schedule-selfcustom {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+
+            .schedule-selfcustom-left {
+                flex: 1;
+                height: 100%;
+            }
+
+            .schedule-selfcustom-right {
+                flex: 1;
+                height: 100%;
             }
         }
 

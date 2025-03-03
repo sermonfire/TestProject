@@ -64,7 +64,7 @@
 
             <el-form-item label="预计花费" prop="estimatedCost">
                 <el-input-number v-model="form.estimatedCost" :min="0" :max="999999" :precision="2" :step="10"
-                    :controls="true" placeholder="请输入预计花费">
+                    :controls="true" placeholder="预计花费">
                     <template #prefix>¥</template>
                 </el-input-number>
             </el-form-item>
