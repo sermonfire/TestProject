@@ -1,94 +1,120 @@
 <template>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="80%" class="schedule-dialog" destroy-on-close>
-        <div class="schedule-container" v-loading="loading">
-            <!-- 左侧日期导航 -->
-            <div class="date-nav">
-                <div v-for="day in totalDays" :key="day" class="date-item" :class="{ active: currentDay === day }"
-                    @click="handleDayChange(day)">
-                    <span class="day-number">第{{ day }}天</span>
-                    <span class="day-date">{{ formatDate(getDayDate(day)) }}</span>
+    <div v-if="modelValue" class="custom-dialog-overlay" @click.self="handleClose">
+        <div class="custom-dialog" :class="{ 'is-fullscreen': isFullscreen }">
+            <!-- 自定义对话框头部 -->
+            <div class="custom-dialog-header">
+                <h2 class="dialog-title">{{ dialogTitle }}</h2>
+                <div class="dialog-actions">
+                    <el-button class="fullscreen-btn" circle @click="toggleFullscreen">
+                        <el-icon>
+                            <component :is="fullscreenIcon" />
+                        </el-icon>
+                    </el-button>
+                    <el-button class="close-btn" circle @click="handleClose">
+                        <el-icon>
+                            <Close />
+                        </el-icon>
+                    </el-button>
                 </div>
             </div>
 
-            <!-- 右侧日程内容 -->
-            <div class="schedule-content">
-                <div class="schedule-header">
-                    <h3>
-                        第{{ currentDay }}天日程安排
-                        <span class="total-cost" v-if="currentDayTotalCost > 0">
-                            <el-icon>
-                                <Money />
-                            </el-icon>
-                            总花费: ¥{{ currentDayTotalCost }}
-                        </span>
-                    </h3>
-                    <el-button type="primary" @click="handleAddSchedule">
-                        <el-icon>
-                            <Plus />
-                        </el-icon>添加日程
-                    </el-button>
-                </div>
+            <!-- 对话框内容区域 -->
+            <div class="custom-dialog-body">
+                <div class="schedule-container" v-loading="loading">
+                    <!-- 左侧日期导航 -->
+                    <div class="date-nav">
+                        <div v-for="day in totalDays" :key="day" class="date-item"
+                            :class="{ active: currentDay === day }" @click="handleDayChange(day)">
+                            <span class="day-number">第{{ day }}天</span>
+                            <span class="day-date">{{ formatDate(getDayDate(day)) }}</span>
+                        </div>
+                    </div>
 
-                <!-- 时间轴展示日程 -->
-                <el-timeline v-if="currentDaySchedules.length">
-                    <el-timeline-item v-for="schedule in currentDaySchedules" :key="schedule.id"
-                        :timestamp="formatTime(schedule.startTime) + ' - ' + formatTime(schedule.endTime)"
-                        :type="getScheduleType(schedule.scheduleType).type">
-                        <el-card class="schedule-card" :class="{ 'is-overnight': isOvernightSchedule(schedule) }">
-                            <template #header>
-                                <div class="schedule-card-header">
-                                    <el-tag :type="getScheduleType(schedule.scheduleType).tagType">
-                                        <el-icon>
-                                            <component :is="getScheduleType(schedule.scheduleType).icon" />
-                                        </el-icon>
-                                        {{ getScheduleType(schedule.scheduleType).label }}
-                                    </el-tag>
-                                    <h4>{{ schedule.title }}</h4>
-                                    <div class="schedule-actions">
-                                        <el-button-group>
-                                            <el-tooltip content="编辑日程" placement="top">
-                                                <el-button type="primary" link @click="handleEditSchedule(schedule)">
-                                                    <el-icon>
-                                                        <Edit />
-                                                    </el-icon>
-                                                </el-button>
-                                            </el-tooltip>
-                                            <el-tooltip content="删除日程" placement="top">
-                                                <el-button type="danger" link @click="handleDeleteSchedule(schedule)">
-                                                    <el-icon>
-                                                        <Delete />
-                                                    </el-icon>
-                                                </el-button>
-                                            </el-tooltip>
-                                        </el-button-group>
-                                    </div>
-                                </div>
-                            </template>
-                            <div class="schedule-card-content">
-                                <div class="location" v-if="schedule.location">
-                                    <el-icon>
-                                        <Location />
-                                    </el-icon>
-                                    {{ schedule.location }}
-                                </div>
-                                <div class="description" v-if="schedule.description">{{ schedule.description }}</div>
-                                <div class="estimated-cost" v-if="schedule.estimatedCost">
+                    <!-- 右侧日程内容 -->
+                    <div class="schedule-content">
+                        <div class="schedule-header">
+                            <h3>
+                                第{{ currentDay }}天日程安排
+                                <span class="total-cost" v-if="currentDayTotalCost > 0">
                                     <el-icon>
                                         <Money />
                                     </el-icon>
-                                    预计花费: ¥{{ schedule.estimatedCost }}
-                                </div>
-                            </div>
-                        </el-card>
-                    </el-timeline-item>
-                </el-timeline>
+                                    总花费: ¥{{ currentDayTotalCost }}
+                                </span>
+                            </h3>
+                            <el-button type="primary" @click="handleAddSchedule" class="add-schedule-button">
+                                <el-icon>
+                                    <Plus />
+                                </el-icon>添加日程
+                            </el-button>
+                        </div>
 
-                <!-- 空状态 -->
-                <el-empty v-else description="暂无日程安排">
-                    <el-button type="primary" @click="handleAddSchedule">
-                        立即添加
-                    </el-button>
-                </el-empty>
+                        <!-- 时间轴展示日程 -->
+                        <el-timeline v-if="currentDaySchedules.length">
+                            <el-timeline-item v-for="schedule in currentDaySchedules" :key="schedule.id"
+                                :timestamp="formatTime(schedule.startTime) + ' - ' + formatTime(schedule.endTime)"
+                                :type="getScheduleType(schedule.scheduleType).type">
+                                <el-card class="schedule-card"
+                                    :class="{ 'is-overnight': isOvernightSchedule(schedule) }">
+                                    <template #header>
+                                        <div class="schedule-card-header">
+                                            <el-tag :type="getScheduleType(schedule.scheduleType).tagType">
+                                                <el-icon>
+                                                    <component :is="getScheduleType(schedule.scheduleType).icon" />
+                                                </el-icon>
+                                                {{ getScheduleType(schedule.scheduleType).label }}
+                                            </el-tag>
+                                            <h4>{{ schedule.title }}</h4>
+                                            <div class="schedule-actions">
+                                                <el-button-group>
+                                                    <el-tooltip content="编辑日程" placement="top">
+                                                        <el-button type="primary" link
+                                                            @click="handleEditSchedule(schedule)">
+                                                            <el-icon>
+                                                                <Edit />
+                                                            </el-icon>
+                                                        </el-button>
+                                                    </el-tooltip>
+                                                    <el-tooltip content="删除日程" placement="top">
+                                                        <el-button type="danger" link
+                                                            @click="handleDeleteSchedule(schedule)">
+                                                            <el-icon>
+                                                                <Delete />
+                                                            </el-icon>
+                                                        </el-button>
+                                                    </el-tooltip>
+                                                </el-button-group>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="schedule-card-content">
+                                        <div class="location" v-if="schedule.location">
+                                            <el-icon>
+                                                <Location />
+                                            </el-icon>
+                                            {{ schedule.location }}
+                                        </div>
+                                        <div class="description" v-if="schedule.description">{{ schedule.description }}
+                                        </div>
+                                        <div class="estimated-cost" v-if="schedule.estimatedCost">
+                                            <el-icon>
+                                                <Money />
+                                            </el-icon>
+                                            预计花费: ¥{{ schedule.estimatedCost }}
+                                        </div>
+                                    </div>
+                                </el-card>
+                            </el-timeline-item>
+                        </el-timeline>
+
+                        <!-- 空状态 -->
+                        <el-empty v-else description="暂无日程安排">
+                            <el-button type="primary" @click="handleAddSchedule">
+                                立即添加
+                            </el-button>
+                        </el-empty>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -96,15 +122,24 @@
         <TripScheduleForm v-model="scheduleFormVisible" :schedule="currentSchedule" :date="getDayDate(currentDay)"
             :day-index="currentDay" :loading="loading" @submit="handleScheduleSubmit"
             @update:loading="handleLoadingChange" />
-    </el-dialog>
+    </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Delete, Location, Money, Plus } from '@element-plus/icons-vue'
+import { Edit, Delete, Location, Money, Plus, Close, FullScreen, Remove } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 import TripScheduleForm from './TripScheduleForm.vue'
+
+// 扩展 dayjs 以支持时区处理
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+// 设置默认时区为本地时区
+const localTimezone = dayjs.tz.guess()
 
 /**
  * @typedef {Object} Trip
@@ -232,21 +267,25 @@ const formatDate = (date) => {
 
 /**
  * 格式化时间
- * @param {string} time - 时间字符串
- * @returns {string} 格式化后的时间
+ * @param {string} time - 时间字符串 (格式: HH:mm:ss)
+ * @returns {string} 格式化后的时间 (格式: HH:mm)
  */
 const formatTime = (time) => {
-    return dayjs(time).format('HH:mm')
+    if (!time) return ''
+    // 直接处理 HH:mm:ss 格式
+    return time.substring(0, 5) // 只取 HH:mm 部分
 }
 
 /**
- * 获取当前日的日程安排
- * @returns {Schedule[]} 当前天的日程安排
+ * 获取当前日的日程安排,并按时间排序
  */
 const currentDaySchedules = computed(() => {
     return props.schedules
-        .filter(schedule => schedule.dayIndex === currentDay.value)//过滤出当前天的日程
-        .sort((a, b) => dayjs(a.startTime).diff(dayjs(b.startTime)))//按照开始时间排序
+        .filter(schedule => schedule.dayIndex === currentDay.value)
+        .sort((a, b) => {
+            // 直接比较时间字符串
+            return a.startTime.localeCompare(b.startTime)
+        })
 })
 
 /**
@@ -292,7 +331,9 @@ const handleEditSchedule = (schedule) => {
  * @param {Schedule} scheduleData - 日程数据
  */
 const handleScheduleSubmit = (scheduleData) => {
-    emit(scheduleData.id ? 'edit' : 'add', scheduleData)
+    // 根据是否有 id 判断是编辑还是新增
+    const isEdit = !!scheduleData.id
+    emit(isEdit ? 'edit' : 'add', scheduleData)
 }
 
 /**
@@ -340,13 +381,16 @@ const currentDayTotalCost = computed(() => {
 })
 
 /**
- * 判断是否为跨天日程（主要是住宿类型）
- * @param {Schedule} schedule - 日程数据
- * @returns {boolean} 是否跨天
+ * 判断是否为跨天日程
  */
 const isOvernightSchedule = (schedule) => {
-    return schedule.scheduleType === 4 &&
-        dayjs(schedule.endTime).format('YYYY-MM-DD') !== dayjs(schedule.startTime).format('YYYY-MM-DD')
+    if (!schedule || schedule.scheduleType !== 4) return false
+
+    const startHour = parseInt(schedule.startTime.split(':')[0])
+    const endHour = parseInt(schedule.endTime.split(':')[0])
+
+    // 如果结束时间小于开始时间，说明跨天
+    return endHour < startHour
 }
 
 /**
@@ -356,244 +400,270 @@ const isOvernightSchedule = (schedule) => {
 const handleLoadingChange = (value) => {
     emit('update:loading', value)
 }
+
+// 添加全屏状态控制
+const isFullscreen = ref(false)
+
+// 切换全屏状态
+const toggleFullscreen = () => {
+    isFullscreen.value = !isFullscreen.value
+}
+
+// 处理关闭
+const handleClose = () => {
+    emit('update:modelValue', false)
+}
+
+// 修改图标组件名称
+const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
 </script>
 
 <style lang="scss" scoped>
-.schedule-dialog {
-    :deep(.el-dialog) {
-        margin: 0 !important;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1200px !important; // 固定宽度
-        height: 800px; // 固定高度
-        max-width: 90vw; // 响应式最大宽度
-        max-height: 90vh; // 响应式最大高度
-        display: flex;
-        flex-direction: column;
-        border-radius: 8px;
-        overflow: hidden;
+.custom-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fade-in 0.3s ease-out;
+}
 
-        .el-dialog__header {
-            padding: 20px 24px;
-            margin: 0;
-            border-bottom: 1px solid var(--el-border-color-lighter);
-            background-color: var(--el-bg-color);
+.custom-dialog {
+    width: 80%;
+    height: 80vh;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: dialog-zoom-in 0.3s ease-out;
+
+    &.is-fullscreen {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+}
+
+.custom-dialog-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .dialog-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+    }
+
+    .dialog-actions {
+        display: flex;
+        gap: 8px;
+
+        .fullscreen-btn,
+        .close-btn {
+            padding: 8px;
+            font-size: 18px;
+            color: var(--el-text-color-secondary);
+            transition: all 0.3s ease;
+
+            &:hover {
+                color: var(--el-text-color-primary);
+                transform: scale(1.1);
+            }
         }
 
-        .el-dialog__body {
-            flex: 1;
-            overflow: hidden;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
+        .close-btn:hover {
+            color: var(--el-color-danger);
         }
     }
 }
 
+.custom-dialog-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
 .schedule-container {
-    height: 80vh;
+    height: 100%;
     display: flex;
-    background-color: var(--el-bg-color);
+    background: var(--el-bg-color-page);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.05);
 
-    // 左侧日期导航样式
     .date-nav {
-        width: 180px;
-        border-right: 1px solid var(--el-border-color-light);
+        width: 240px;
+        background: var(--el-bg-color);
+        border-right: 1px solid var(--el-border-color-lighter);
+        padding: 16px 0;
         overflow-y: auto;
-        background-color: var(--el-bg-color-page);
-
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            border-radius: 3px;
-            background-color: var(--el-border-color-darker);
-        }
-
-        &::-webkit-scrollbar-track {
-            border-radius: 3px;
-            background-color: var(--el-border-color-light);
-        }
+        scrollbar-width: thin;
+        scrollbar-color: var(--el-border-color) transparent;
 
         .date-item {
             padding: 12px 16px;
+            margin: 0 8px 8px;
+            border-radius: 8px;
             cursor: pointer;
-            border-bottom: 1px solid var(--el-border-color-lighter);
-            transition: all 0.3s ease;
-
-            &:hover {
-                background-color: var(--el-color-primary-light-9);
-            }
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            background: var(--el-bg-color);
+            border: 1px solid var(--el-border-color-light);
 
             &.active {
-                background-color: var(--el-color-primary-light-8);
-                color: var(--el-color-primary);
+                background: var(--el-color-primary-light-9);
+                border-color: var(--el-color-primary-light-7);
+                box-shadow: 0 2px 8px var(--el-color-primary-light-8);
             }
 
             .day-number {
-                display: block;
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 4px;
+                font-size: 15px;
+                font-weight: 500;
+                color: var(--el-text-color-primary);
             }
 
             .day-date {
-                display: block;
-                font-size: 14px;
+                font-size: 13px;
                 color: var(--el-text-color-secondary);
+                margin-top: 4px;
             }
         }
     }
 
-    // 右侧日程内容样式
     .schedule-content {
-        flex: 1;
-        padding: 24px;
+        flex: 1 1 0;
+        padding: 0 24px;
+        position: relative;
         overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            border-radius: 3px;
-            background-color: var(--el-border-color-darker);
-        }
-
-        &::-webkit-scrollbar-track {
-            border-radius: 3px;
-            background-color: var(--el-border-color-light);
-        }
+        background: var(--el-bg-color-page);
+        z-index: 0;
 
         .schedule-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--el-bg-color-page);
+            margin-bottom: -1px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--el-border-color-lighter);
-            position: sticky;
-            top: 0;
-            background-color: var(--el-bg-color);
-            z-index: 1;
+            margin: 0px;
+            padding: 10px 0px 10px 0px;
 
             h3 {
-                margin: 0;
-                color: var(--el-text-color-primary);
+                font-size: 20px;
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                font-size: 18px;
+                margin: 5px 0px;
 
                 .total-cost {
-                    font-size: 14px;
-                    color: var(--el-text-color-secondary);
-                    font-weight: normal;
-                    background-color: var(--el-color-primary-light-9);
-                    padding: 4px 8px;
-                    border-radius: 4px;
+                    font-size: 15px;
+                    padding: 0 12px;
+                    border-radius: 20px;
+                    background: var(--el-color-primary-light-9);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
                 }
             }
         }
 
         .schedule-card {
-            margin: 8px 0;
-            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .05);
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            margin: 0 0 16px;
+            border: 1px solid var(--el-border-color-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
 
             &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 16px 0 rgba(0, 0, 0, .1);
+                transform: translateY(-3px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             }
 
             &.is-overnight {
-                border-left: 3px solid var(--el-color-info);
+                border-left: 4px solid var(--el-color-info);
+            }
+
+            :deep(.el-card__header) {
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--el-border-color-lighter);
             }
 
             .schedule-card-header {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 16px;
+                gap: 8px;
+                align-items: flex-start;
 
                 h4 {
-                    margin: 0;
-                    flex: 1;
-                    font-size: 16px;
+                    font-size: 15px;
+                    line-height: 1.4;
+                    margin: 2px 0 0;
                 }
 
                 .schedule-actions {
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-            }
-
-            &:hover {
-                .schedule-card-header .schedule-actions {
-                    opacity: 1;
+                    opacity: 0.5;
+                    transition: opacity 0.2s ease;
                 }
             }
 
             .schedule-card-content {
-                padding: 0 16px 16px;
+                padding: 12px 16px;
 
                 .location,
                 .estimated-cost {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    color: var(--el-text-color-secondary);
-                    margin-top: 12px;
-                    font-size: 14px;
+                    margin: 8px 0;
+                    font-size: 13px;
                 }
 
                 .description {
-                    margin: 16px 0;
-                    color: var(--el-text-color-regular);
-                    font-size: 14px;
-                    line-height: 1.6;
-                    white-space: pre-wrap;
+                    margin: 12px 0;
+                    font-size: 13px;
+                    color: var(--el-text-color-secondary);
                 }
             }
         }
     }
 }
 
-// 时间轴节点样式
-:deep(.el-timeline-item__node) {
-    &.el-timeline-item__node--primary {
-        background-color: var(--el-color-primary);
-    }
+// 时间轴样式优化
+:deep(.el-timeline) {
+    position: static;
+    z-index: 1;
+    // padding-left: 8px;
 
-    &.el-timeline-item__node--success {
-        background-color: var(--el-color-success);
-    }
+    .el-timeline-item {
+        padding-bottom: 16px;
 
-    &.el-timeline-item__node--warning {
-        background-color: var(--el-color-warning);
-    }
+        &__node {
+            width: 14px;
+            height: 14px;
+            left: -1px;
+        }
 
-    &.el-timeline-item__node--info {
-        background-color: var(--el-color-info);
+        &__timestamp {
+            font-size: 13px;
+            color: var(--el-text-color-secondary);
+            margin-bottom: 8px;
+        }
     }
 }
 
-// 响应式布局
+// 响应式设计
 @media screen and (max-width: 768px) {
-    .schedule-dialog {
-        :deep(.el-dialog) {
-            width: 100% !important;
-            height: 100vh;
-            max-width: 100vw;
-            max-height: 100vh;
-            border-radius: 0;
-        }
+    .custom-dialog {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
     }
 
     .schedule-container {
@@ -602,14 +672,40 @@ const handleLoadingChange = (value) => {
         .date-nav {
             width: 100%;
             height: auto;
-            max-height: 160px;
-            border-right: none;
-            border-bottom: 1px solid var(--el-border-color-light);
-        }
+            max-height: 120px;
+            overflow-x: auto;
+            display: flex;
+            padding: 8px;
 
-        .schedule-content {
-            padding: 16px;
+            .date-item {
+                flex: 0 0 auto;
+                width: 120px;
+                margin: 0 4px;
+            }
         }
+    }
+}
+
+// 添加动画
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dialog-zoom-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 </style>

@@ -35,8 +35,21 @@
             </el-form-item>
 
             <el-form-item label="时间范围" prop="timeRange">
-                <el-time-picker v-model="form.timeRange" is-range range-separator="至" start-placeholder="开始时间"
-                    end-placeholder="结束时间" format="HH:mm" value-format="HH:mm" />
+                <div class="time-range-wrapper">
+                    <!-- 快捷时间选择 -->
+                    <div class="time-quick-select" v-if="DEFAULT_TIME_RANGES[form.scheduleType]?.variants">
+                        <el-radio-group v-model="selectedTimeVariant" @change="handleTimeVariantChange">
+                            <el-radio-button v-for="(variant, index) in DEFAULT_TIME_RANGES[form.scheduleType].variants"
+                                :key="index" :value="index">
+                                {{ variant.label }}
+                            </el-radio-button>
+                        </el-radio-group>
+                    </div>
+
+                    <!-- 时间选择器 -->
+                    <el-time-picker v-model="form.timeRange" is-range range-separator="至" start-placeholder="开始时间"
+                        end-placeholder="结束时间" format="HH:mm" value-format="HH:mm" :disabled="loading" />
+                </div>
             </el-form-item>
 
             <el-form-item label="地点" prop="location">
@@ -79,7 +92,16 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Location, CircleClose } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 import DestinationSelector from './DestinationSelector.vue'
+
+// 扩展 dayjs 以支持时区处理
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+// 设置默认时区为本地时区
+const localTimezone = dayjs.tz.guess()
 
 const showDestinationSelector = ref(false)
 
@@ -176,32 +198,137 @@ const dialogVisible = computed({
 // 是否为编辑模式
 const isEdit = computed(() => !!props.schedule)
 
-// 表单数据
-const form = ref({
-    scheduleType: 1,
+// 1. 首先定义默认时间范围配置
+const DEFAULT_TIME_RANGES = {
+    1: { // 景点游览
+        variants: [
+            { value: ['09:00', '11:00'], label: '上午' },
+            { value: ['14:00', '16:00'], label: '下午' },
+            { value: null, label: '其他时间' }
+        ]
+    },
+    2: { // 用餐
+        variants: [
+            { value: ['07:30', '08:30'], label: '早餐' },
+            { value: ['12:00', '13:00'], label: '午餐' },
+            { value: ['18:00', '19:00'], label: '晚餐' },
+            { value: null, label: '其他时间' }
+        ]
+    },
+    3: { // 交通
+        variants: [
+            { value: ['08:00', '09:00'], label: '上午出发' },
+            { value: ['14:00', '15:00'], label: '下午出发' },
+            { value: ['20:00', '21:00'], label: '晚上出发' },
+            { value: null, label: '其他时间' }
+        ]
+    },
+    4: { // 住宿
+        variants: [
+            { value: ['20:00', '08:00'], label: '标准住宿' },
+            { value: ['22:00', '09:00'], label: '晚休' },
+            { value: null, label: '其他时间' }
+        ]
+    },
+    5: { // 其他
+        variants: [
+            { value: ['10:00', '11:00'], label: '上午' },
+            { value: ['14:00', '15:00'], label: '下午' },
+            { value: ['19:00', '20:00'], label: '晚上' },
+            { value: null, label: '其他时间' }
+        ]
+    }
+}
+
+// 2. 定义获取推荐时间范围的函数
+const getRecommendedTimeRange = (type) => {
+    const variants = DEFAULT_TIME_RANGES[type]?.variants
+    if (!variants?.length) return ['09:00', '10:00']
+
+    const currentHour = dayjs().hour()
+
+    if (type === 2) { // 用餐时间智能推荐
+        if (currentHour < 10) return variants[0].value // 早餐
+        if (currentHour < 15) return variants[1].value // 午餐
+        return variants[2].value // 晚餐
+    }
+
+    if (type === 1) { // 景点游览时间智能推荐
+        if (currentHour < 12) return variants[0].value // 上午
+        return variants[1].value // 下午
+    }
+
+    return variants[0].value || ['09:00', '10:00']
+}
+
+// 3. 然后再定义初始化表单数据的函数
+const initFormData = (type = 1) => ({
+    scheduleType: type,
     title: '',
-    timeRange: null,
+    timeRange: getRecommendedTimeRange(type),
     location: '',
     estimatedCost: null,
     description: '',
-    destinationId: null,  // 新增：目的地ID
-    destinationName: ''   // 新增：目的地名称
+    destinationId: null,
+    destinationName: ''
 })
 
-/**
- * 根据日程类型获取默认时间范围
- * @param {number} type - 日程类型ID
- * @returns {[string, string]} 默认时间范围
- */
-const getDefaultTimeRange = (type) => {
-    const scheduleType = SCHEDULE_TYPES[type]
-    return [scheduleType.defaultStartTime, scheduleType.defaultEndTime]
+// 4. 最后再初始化表单数据
+const form = ref(initFormData())
+
+// 修改时间选择处理函数
+const handleTimeVariantChange = (index) => {
+    const variants = DEFAULT_TIME_RANGES[form.value.scheduleType]?.variants
+    if (!variants || !variants[index]) return
+
+    // 如果选择了"其他时间"，保持当前时间不变
+    if (!variants[index].value) {
+        return
+    }
+
+    // 设置选中的预设时间
+    form.value.timeRange = variants[index].value
 }
 
-// 监听日程类型变化，自动设置默认时间范围
+// 监听时间范围变化
+watch(() => form.value.timeRange, (newTimeRange, oldTimeRange) => {
+    if (!newTimeRange || !oldTimeRange) return
+
+    // 检查是否是手动修改时间
+    const isManualChange = JSON.stringify(newTimeRange) !== JSON.stringify(oldTimeRange)
+    if (isManualChange) {
+        const variants = DEFAULT_TIME_RANGES[form.value.scheduleType]?.variants
+        if (!variants) return
+
+        // 检查当前时间是否匹配任何预设选项
+        const matchedVariantIndex = variants.findIndex(variant =>
+            variant.value &&
+            variant.value[0] === newTimeRange[0] &&
+            variant.value[1] === newTimeRange[1]
+        )
+
+        // 如果没有匹配的预设选项，选中"其他时间"
+        selectedTimeVariant.value = matchedVariantIndex === -1 ?
+            variants.length - 1 : matchedVariantIndex
+    }
+}, { deep: true })
+
+// 添加相关响应式变量和方法
+const selectedTimeVariant = ref(null)
+
+// 监听日程类型变化
 watch(() => form.value.scheduleType, (newType) => {
-    if (!form.value.timeRange) {
-        form.value.timeRange = getDefaultTimeRange(newType)
+    // 只在没有选择时间或创建新日程时设置默认时间
+    if (!isEdit.value || !form.value.timeRange || !form.value.timeRange[0]) {
+        const recommendedRange = getRecommendedTimeRange(newType)
+        form.value.timeRange = recommendedRange
+        selectedTimeVariant.value = 0 // 默认选中第一个时间选项
+    }
+
+    // 切换类型时清空目的地信息（仅当不是景点类型时）
+    if (newType !== 1) {
+        form.value.destinationId = null
+        form.value.destinationName = ''
     }
 })
 
@@ -243,14 +370,6 @@ const clearDestination = () => {
     }
 }
 
-// 监听日程类型变化，重置目的地相关字段
-watch(() => form.value.scheduleType, (newType) => {
-    if (newType !== 1) {
-        form.value.destinationId = null
-        form.value.destinationName = ''
-    }
-})
-
 // 表单校验规则
 const rules = {
     scheduleType: [
@@ -266,15 +385,21 @@ const rules = {
         { required: true, message: '请选择时间范围', trigger: 'submit' },
         {
             validator: (rule, value, callback) => {
-                if (!value) {
-                    callback()
+                if (!value || !Array.isArray(value)) {
+                    callback(new Error('请选择时间范围'))
                     return
                 }
                 const [start, end] = value
-                if (start >= end && form.value.scheduleType !== 4) { // 住宿类型允许跨天
+                if (!start || !end) {
+                    callback(new Error('请选择完整的时间范围'))
+                    return
+                }
+
+                if (start >= end && form.value.scheduleType !== 4) {
                     callback(new Error('结束时间必须大于开始时间'))
                     return
                 }
+
                 // 检查时间格式
                 const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/
                 if (!timePattern.test(start) || !timePattern.test(end)) {
@@ -329,17 +454,29 @@ const rules = {
     ]
 }
 
+// 监听对话框可见性变化
+watch(dialogVisible, (visible) => {
+    if (!visible) {
+        // 关闭对话框时重置表单
+        form.value = initFormData()
+        selectedTimeVariant.value = null
+        if (formRef.value) {
+            formRef.value.resetFields()
+        }
+    }
+})
+
 // 监听编辑数据变化
 watch(
     () => props.schedule,
     (schedule) => {
-        if (schedule) {
+        if (schedule && dialogVisible.value) {  // 只在对话框打开时处理编辑数据
             form.value = {
                 scheduleType: schedule.scheduleType,
                 title: schedule.title,
                 timeRange: [
-                    dayjs(schedule.startTime).format('HH:mm'),
-                    dayjs(schedule.endTime).format('HH:mm')
+                    schedule.startTime.substring(0, 5),
+                    schedule.endTime.substring(0, 5)
                 ],
                 location: schedule.location || '',
                 estimatedCost: schedule.estimatedCost !== null ? Number(schedule.estimatedCost) : null,
@@ -347,32 +484,25 @@ watch(
                 destinationId: schedule.destinationId,
                 destinationName: schedule.destinationName || ''
             }
-        } else {
-            const defaultType = 1
-            form.value = {
-                scheduleType: defaultType,
-                title: '',
-                timeRange: getDefaultTimeRange(defaultType),
-                location: '',
-                estimatedCost: null,
-                description: '',
-                destinationId: null,
-                destinationName: ''
+
+            // 检查是否匹配预设时间
+            const variants = DEFAULT_TIME_RANGES[schedule.scheduleType]?.variants
+            if (variants) {
+                const matchedVariantIndex = variants.findIndex(variant =>
+                    variant.value &&
+                    variant.value[0] === form.value.timeRange[0] &&
+                    variant.value[1] === form.value.timeRange[1]
+                )
+                selectedTimeVariant.value = matchedVariantIndex === -1 ?
+                    variants.length - 1 : matchedVariantIndex
             }
+        } else if (!schedule && dialogVisible.value) {  // 新建日程时使用默认值
+            form.value = initFormData()
+            selectedTimeVariant.value = 0  // 默认选中第一个时间选项
         }
     },
     { immediate: true }
 )
-
-/**
- * 格式化日期时间为ISO 8601格式
- * @param {string} date - 日期
- * @param {string} time - 时间
- * @returns {string} 格式化后的日期时间
- */
-const formatDateTime = (date, time) => {
-    return dayjs(`${date} ${time}`).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
-}
 
 /**
  * 提交表单
@@ -382,30 +512,22 @@ const handleSubmit = async () => {
 
     try {
         await formRef.value.validate()
-
         const [startTime, endTime] = form.value.timeRange
+
         const scheduleData = {
             ...form.value,
-            startTime: formatDateTime(props.date, startTime),
-            endTime: form.value.scheduleType === 4
-                ? formatDateTime(dayjs(props.date).add(1, 'day').format('YYYY-MM-DD'), endTime)
-                : formatDateTime(props.date, endTime),
+            // 如果是编辑模式，保留原有ID
+            id: props.schedule?.id,
+            // 直接使用 HH:mm:00 格式
+            startTime: `${startTime}:00`,
+            endTime: `${endTime}:00`,
             dayIndex: props.dayIndex,
-            estimatedCost: form.value.estimatedCost !== null ? Number(form.value.estimatedCost.toFixed(2)) : 0
+            estimatedCost: form.value.estimatedCost !== null ?
+                Number(form.value.estimatedCost.toFixed(2)) : 0
         }
 
-        // 如果是编辑模式，保留原有ID
-        if (isEdit.value) {
-            scheduleData.id = props.schedule.id
-        }
-
-        // 删除timeRange字段
+        // 删除 timeRange 字段
         delete scheduleData.timeRange
-
-        // 如果描述为空，则设置为null
-        if (!scheduleData.description) {
-            scheduleData.description = null
-        }
 
         await emit('submit', scheduleData)
         dialogVisible.value = false
@@ -416,17 +538,7 @@ const handleSubmit = async () => {
         })
     } catch (error) {
         console.error('表单验证失败:', error)
-        if (error.estimatedCost) {
-            ElMessage.error({
-                message: error.estimatedCost[0].message || '预计花费验证失败',
-                duration: 2000
-            })
-        } else {
-            ElMessage.error({
-                message: error.message || '请检查表单填写是否正确',
-                duration: 2000
-            })
-        }
+        ElMessage.error(error.message || '请检查表单填写是否正确')
     }
 }
 
@@ -505,5 +617,41 @@ watch(() => props.loading, (newValue) => {
     padding: 20px;
     border-top: 1px solid var(--el-border-color-lighter);
     margin-top: 20px;
+}
+
+.time-range-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .time-quick-select {
+        margin-bottom: 4px;
+
+        :deep(.el-radio-group) {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        :deep(.el-radio-button__inner) {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            height: auto;
+            line-height: 1.5;
+        }
+
+        :deep(.el-radio-button:first-child .el-radio-button__inner) {
+            border-radius: 4px;
+        }
+
+        :deep(.el-radio-button:last-child .el-radio-button__inner) {
+            border-radius: 4px;
+        }
+    }
+
+    :deep(.el-time-picker) {
+        width: 100%;
+    }
 }
 </style>

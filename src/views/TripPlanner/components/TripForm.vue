@@ -99,45 +99,45 @@ const rules = {
     ]
 }
 
+// 禁用日期
+const disabledDate = (time) => {
+    // 只允许选择今天及以后的日期
+    return time.getTime() < Date.now() - 8.64e7 // 8.64e7 是一天的毫秒数
+}
+
 // 日期快捷选项
 const dateShortcuts = [
     {
-        text: '最近一周',
+        text: '下周',
         value: () => {
-            const end = new Date()
             const start = new Date()
-            start.setTime(start.getTime() + 3600 * 1000 * 24 * 7)
-            end.setTime(end.getTime() + 3600 * 1000 * 24 * 14)
+            const end = new Date()
+            start.setTime(start.getTime() + 3600 * 1000 * 24 * 7)  // 7天后
+            end.setTime(end.getTime() + 3600 * 1000 * 24 * 14)    // 14天后
             return [start, end]
         },
     },
     {
-        text: '最近一个月',
+        text: '下个月',
         value: () => {
-            const end = new Date()
             const start = new Date()
-            start.setTime(start.getTime() + 3600 * 1000 * 24 * 30)
-            end.setTime(end.getTime() + 3600 * 1000 * 24 * 37)
+            const end = new Date()
+            start.setTime(start.getTime() + 3600 * 1000 * 24 * 30)  // 30天后
+            end.setTime(end.getTime() + 3600 * 1000 * 24 * 37)     // 37天后
             return [start, end]
         },
     },
     {
-        text: '最近三个月',
+        text: '三个月后',
         value: () => {
-            const end = new Date()
             const start = new Date()
-            start.setTime(start.getTime() + 3600 * 1000 * 24 * 90)
-            end.setTime(end.getTime() + 3600 * 1000 * 24 * 97)
+            const end = new Date()
+            start.setTime(start.getTime() + 3600 * 1000 * 24 * 90)  // 90天后
+            end.setTime(end.getTime() + 3600 * 1000 * 24 * 97)     // 97天后
             return [start, end]
         },
     },
 ]
-
-// 禁用日期
-const disabledDate = (time) => {
-    // 禁用今天之前的日期
-    return time.getTime() < Date.now() - 8.64e7
-}
 
 // 处理日期变化
 const handleDateChange = (val) => {
