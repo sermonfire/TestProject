@@ -15,7 +15,7 @@
 
             <!-- 当日程类型为景点游览时，展示这个表单项 -->
             <el-form-item label="前往目的地" v-if="form.scheduleType === 1" prop="destinationId">
-                <el-input v-model="form.destinationName" placeholder="请选择目的地" readonly
+                <el-input v-model="form.destinationName" placeholder="请选择收藏目的地" readonly
                     @click="handleShowDestinationSelector">
                     <template #prefix>
                         <el-icon>

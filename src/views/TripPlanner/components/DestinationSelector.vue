@@ -3,7 +3,7 @@
         <div class="custom-dialog">
             <!-- 标题栏 -->
             <div class="custom-dialog-header">
-                <h2 class="custom-dialog-title">选择目的地</h2>
+                <h2 class="custom-dialog-title">选择收藏的目的地</h2>
                 <el-button class="close-btn" @click="visible = false" type="default" text>
                     <el-icon>
                         <Close />
@@ -241,6 +241,7 @@ onMounted(() => {
 .custom-dialog {
     width: 70%;
     max-width: 1200px;
+    height: 90vh;
     background: var(--el-bg-color);
     border-radius: 8px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -258,6 +259,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 
     .custom-dialog-title {
         margin: 0;
@@ -282,14 +284,15 @@ onMounted(() => {
 .destination-selector {
     padding: 24px;
     flex: 1;
-    overflow: hidden;
+    min-height: 0; // 重要：确保flex布局正常工作
     display: flex;
     flex-direction: column;
 
     .destination-list {
         flex: 1;
         overflow-y: auto;
-        margin-bottom: 24px;
+        margin-bottom: 0; // 移除底部边距
+        padding-bottom: 24px; // 改用内边距
 
         &::-webkit-scrollbar {
             width: 6px;
@@ -409,10 +412,12 @@ onMounted(() => {
     }
 
     .pagination {
-        padding: 24px 0 0;
+        padding: 16px 0;
         border-top: 1px solid var(--el-border-color-lighter);
         display: flex;
         justify-content: center;
+        background-color: var(--el-bg-color);
+        flex-shrink: 0;
 
         :deep(.el-pagination) {
             justify-content: center;
@@ -436,6 +441,7 @@ onMounted(() => {
 
                 &:hover {
                     background-color: var(--el-color-primary-light-9);
+                    color: var(--el-color-primary);
                 }
             }
 
@@ -445,6 +451,8 @@ onMounted(() => {
 
             .el-pager li.is-active {
                 background-color: var(--el-color-primary);
+                color: #fff;
+                font-weight: bold;
             }
         }
     }
@@ -457,6 +465,7 @@ onMounted(() => {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+    flex-shrink: 0; // 防止底部按钮被压缩
 }
 
 @keyframes dialog-fade-in {
