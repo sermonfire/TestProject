@@ -69,7 +69,9 @@
         </template>
     </el-dialog>
     <!-- 目的地选择器组件 -->
-    <DestinationSelector v-model="showDestinationSelector" @select="handleDestinationSelect" :append-to-body="true" />
+    <Teleport to="body">
+        <DestinationSelector v-model="showDestinationSelector" @select="handleDestinationSelect" />
+    </Teleport>
 </template>
 
 <script setup>

@@ -1,63 +1,74 @@
 <template>
-    <el-dialog v-model="visible" title="选择目的地" width="70%" :close-on-click-modal="true" destroy-on-close
-        :append-to-body="true" class="destination-selector-dialog">
-        <div class="destination-selector">
-            <!-- 目的地列表 -->
-            <div class="destination-list" v-loading="loading">
-                <el-empty v-if="destinations.length === 0" description="暂无收藏的目的地" />
-                <el-row :gutter="20">
-                    <el-col v-for="item in destinations" :key="item.id" :xs="24" :sm="12" :md="8" :lg="6">
-                        <el-card class="destination-card"
-                            :class="{ 'is-selected': selectedDestination?.id === item.destination.id }"
-                            @click="handleSelect(item.destination)" shadow="hover">
-                            <el-image :src="item.destination.imageUrl" fit="cover" class="destination-image">
-                                <template #error>
-                                    <div class="image-placeholder">
-                                        <el-icon>
-                                            <Picture />
-                                        </el-icon>
+    <div v-if="visible" class="custom-dialog-overlay" @click.self="visible = false">
+        <div class="custom-dialog">
+            <!-- 标题栏 -->
+            <div class="custom-dialog-header">
+                <h2 class="custom-dialog-title">选择目的地</h2>
+                <el-button class="close-btn" @click="visible = false" type="default" text>
+                    <el-icon>
+                        <Close />
+                    </el-icon>
+                </el-button>
+            </div>
+
+            <div class="destination-selector">
+                <!-- 目的地列表 -->
+                <div class="destination-list" v-loading="loading">
+                    <el-empty v-if="destinations.length === 0" description="暂无收藏的目的地" />
+                    <el-row :gutter="20">
+                        <el-col v-for="item in destinations" :key="item.id" :xs="24" :sm="12" :md="8" :lg="6">
+                            <el-card class="destination-card"
+                                :class="{ 'is-selected': selectedDestination?.id === item.destination.id }"
+                                @click="handleSelect(item.destination)" shadow="hover">
+                                <el-image :src="item.destination.imageUrl" fit="cover" class="destination-image">
+                                    <template #error>
+                                        <div class="image-placeholder">
+                                            <el-icon>
+                                                <Picture />
+                                            </el-icon>
+                                        </div>
+                                    </template>
+                                </el-image>
+                                <div class="destination-info">
+                                    <h3 class="destination-name">{{ item.destination.name }}</h3>
+                                    <div class="destination-rating">
+                                        <el-rate v-model="item.destination.rating" disabled text-color="#ff9900" />
                                     </div>
-                                </template>
-                            </el-image>
-                            <div class="destination-info">
-                                <h3 class="destination-name">{{ item.destination.name }}</h3>
-                                <div class="destination-rating">
-                                    <el-rate v-model="item.destination.rating" disabled text-color="#ff9900" />
+                                    <div class="destination-tags">
+                                        <el-tag v-for="tag in item.destination.tags" :key="tag" size="small"
+                                            class="tag">
+                                            {{ tag }}
+                                        </el-tag>
+                                    </div>
                                 </div>
-                                <div class="destination-tags">
-                                    <el-tag v-for="tag in item.destination.tags" :key="tag" size="small" class="tag">
-                                        {{ tag }}
-                                    </el-tag>
-                                </div>
-                            </div>
-                        </el-card>
-                    </el-col>
-                </el-row>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                </div>
+
+                <!-- 分页器 -->
+                <div class="pagination">
+                    <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+                        :page-sizes="[8, 16, 24, 32]" layout="total, sizes, prev, pager, next"
+                        @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+                </div>
             </div>
 
-            <!-- 分页器 -->
-            <div class="pagination">
-                <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
-                    :page-sizes="[8, 16, 24, 32]" layout="total, sizes, prev, pager, next"
-                    @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-            </div>
-        </div>
-
-        <template #footer>
-            <span class="dialog-footer">
+            <!-- 底部按钮 -->
+            <div class="custom-dialog-footer">
                 <el-button @click="visible = false">取消</el-button>
                 <el-button type="primary" @click="handleConfirm" :disabled="!selectedDestination">
                     确定
                 </el-button>
-            </span>
-        </template>
-    </el-dialog>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { getFavoriteListAPI } from '@/api/favoriteApi'
-import { Search, Picture } from '@element-plus/icons-vue'
+import { Search, Picture, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 /**
@@ -214,99 +225,85 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-// 文本溢出省略号混入
-@mixin text-overflow-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.custom-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2999;
 }
 
-.destination-selector-dialog {
-    :deep(.el-dialog) {
-        margin: 0 !important;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        max-height: 80vh;
-        border-radius: 8px;
-        overflow: hidden;
+.custom-dialog {
+    width: 70%;
+    max-width: 1200px;
+    background: var(--el-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    animation: dialog-fade-in 0.3s ease-out;
+    position: relative;
+    z-index: 3000;
+}
 
-        .el-dialog__header {
-            padding: 20px 24px;
-            margin: 0;
-            border-bottom: 1px solid var(--el-border-color-lighter);
-            background-color: var(--el-bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
+.custom-dialog-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-        .el-dialog__body {
-            padding: 0;
-            overflow: hidden;
-            max-height: calc(80vh - 120px);
-        }
+    .custom-dialog-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+    }
 
-        .el-dialog__footer {
-            padding: 0;
-            margin: 0;
-            background-color: var(--el-bg-color);
-            position: sticky;
-            bottom: 0;
-            z-index: 1;
+    .close-btn {
+        padding: 8px;
+        font-size: 20px;
+        color: var(--el-text-color-secondary);
+        transition: all 0.3s ease;
+
+        &:hover {
+            color: var(--el-text-color-primary);
+            transform: rotate(90deg);
         }
     }
 }
 
 .destination-selector {
     padding: 24px;
-
-    .search-bar {
-        margin-bottom: 24px;
-
-        :deep(.el-input) {
-            .el-input__wrapper {
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-                border-radius: 12px;
-                padding: 8px 16px;
-                transition: all 0.3s ease;
-
-                &:hover {
-                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-                }
-
-                &.is-focus {
-                    box-shadow: 0 4px 16px rgba(var(--el-color-primary-rgb), 0.1);
-                }
-            }
-
-            .el-input__prefix {
-                font-size: 18px;
-                color: var(--el-color-primary);
-            }
-        }
-    }
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     .destination-list {
-        height: calc(80vh - 250px);
-        min-height: 300px;
-        margin-bottom: 24px;
+        flex: 1;
         overflow-y: auto;
+        margin-bottom: 24px;
 
         &::-webkit-scrollbar {
             width: 6px;
             height: 6px;
-        }
 
-        &::-webkit-scrollbar-thumb {
-            border-radius: 3px;
-            background-color: var(--el-border-color-darker);
-        }
+            &-thumb {
+                border-radius: 3px;
+                background-color: var(--el-border-color-darker);
+            }
 
-        &::-webkit-scrollbar-track {
-            border-radius: 3px;
-            background-color: var(--el-border-color-light);
+            &-track {
+                border-radius: 3px;
+                background-color: var(--el-border-color-light);
+            }
         }
 
         .el-empty {
@@ -412,16 +409,15 @@ onMounted(() => {
     }
 
     .pagination {
-        display: flex;
-        justify-content: center;
         padding: 24px 0 0;
         border-top: 1px solid var(--el-border-color-lighter);
+        display: flex;
+        justify-content: center;
 
         :deep(.el-pagination) {
             justify-content: center;
             padding: 0;
             margin: 0;
-            font-weight: normal;
 
             .el-pagination__total,
             .el-pagination__sizes {
@@ -432,20 +428,7 @@ onMounted(() => {
                 margin-left: 16px;
             }
 
-            button {
-                background-color: transparent;
-                border-radius: 4px;
-                transition: all 0.3s ease;
-
-                &:hover {
-                    background-color: var(--el-color-primary-light-9);
-                }
-
-                &:disabled {
-                    background-color: transparent;
-                }
-            }
-
+            button,
             .el-pager li {
                 background-color: transparent;
                 border-radius: 4px;
@@ -454,21 +437,37 @@ onMounted(() => {
                 &:hover {
                     background-color: var(--el-color-primary-light-9);
                 }
+            }
 
-                &.is-active {
-                    background-color: var(--el-color-primary);
-                }
+            button:disabled {
+                background-color: transparent;
+            }
+
+            .el-pager li.is-active {
+                background-color: var(--el-color-primary);
             }
         }
     }
 }
 
-.dialog-footer {
+.custom-dialog-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--el-border-color-lighter);
     background-color: var(--el-bg-color);
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+@keyframes dialog-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
