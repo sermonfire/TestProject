@@ -435,7 +435,7 @@ const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
 
 .custom-dialog {
     width: 80%;
-    height: 80vh;
+    height: 90vh;
     background: var(--el-bg-color);
     border-radius: 8px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -584,81 +584,188 @@ const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
         .schedule-card {
             margin: 0 0 16px;
             border: 1px solid var(--el-border-color-light);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
 
             &:hover {
                 transform: translateY(-3px);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+
+                .schedule-card-header .schedule-actions {
+                    opacity: 1;
+                }
             }
 
             &.is-overnight {
                 border-left: 4px solid var(--el-color-info);
+                background: linear-gradient(to right, var(--el-color-info-light-9) 0%, transparent 10%);
             }
 
             :deep(.el-card__header) {
                 padding: 12px 16px;
                 border-bottom: 1px solid var(--el-border-color-lighter);
+                background-color: var(--el-bg-color-page);
             }
 
             .schedule-card-header {
-                gap: 8px;
-                align-items: flex-start;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                position: relative;
+
+                .el-tag {
+                    flex-shrink: 0;
+                    height: 28px;
+                    padding: 0 12px;
+                    font-size: 13px;
+                    border-radius: 6px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+
+                    .el-icon {
+                        font-size: 16px;
+                    }
+                }
 
                 h4 {
+                    flex: 1;
                     font-size: 15px;
                     line-height: 1.4;
-                    margin: 2px 0 0;
+                    margin: 0;
+                    color: var(--el-text-color-primary);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }
 
                 .schedule-actions {
-                    opacity: 0.5;
-                    transition: opacity 0.2s ease;
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                    background: linear-gradient(to left, var(--el-bg-color-page) 70%, transparent);
+                    padding-left: 20px;
+
+                    .el-button {
+                        padding: 4px 8px;
+
+                        &:hover {
+                            transform: scale(1.1);
+                        }
+
+                        .el-icon {
+                            font-size: 16px;
+                        }
+                    }
                 }
             }
 
             .schedule-card-content {
-                padding: 12px 16px;
+                padding: 16px;
+                background-color: var(--el-bg-color);
 
                 .location,
                 .estimated-cost {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
                     margin: 8px 0;
                     font-size: 13px;
+                    color: var(--el-text-color-regular);
+
+                    .el-icon {
+                        font-size: 16px;
+                        color: var(--el-text-color-secondary);
+                    }
                 }
 
                 .description {
                     margin: 12px 0;
+                    padding: 8px 12px;
                     font-size: 13px;
+                    line-height: 1.6;
                     color: var(--el-text-color-secondary);
+                    background-color: var(--el-fill-color-lighter);
+                    border-radius: 4px;
+                    position: relative;
+
+                    &::before {
+                        content: '"';
+                        position: absolute;
+                        left: 6px;
+                        top: 4px;
+                        color: var(--el-text-color-placeholder);
+                        font-size: 16px;
+                    }
+
+                    &::after {
+                        content: '"';
+                        position: absolute;
+                        right: 6px;
+                        bottom: 4px;
+                        color: var(--el-text-color-placeholder);
+                        font-size: 16px;
+                    }
+                }
+
+                .estimated-cost {
+                    color: #f39d64;
+                    font-weight: 500;
                 }
             }
         }
     }
 }
 
-// 时间轴样式优化
+// 优化时间轴样式
 :deep(.el-timeline) {
-    position: static;
-    z-index: 1;
-    // padding-left: 8px;
+    padding-left: 16px;
+    margin-top: 20px;
 
     .el-timeline-item {
-        padding-bottom: 16px;
+        padding-bottom: 24px;
+
+        &__tail {
+            border-left: 2px solid var(--el-border-color-lighter);
+        }
 
         &__node {
-            width: 14px;
-            height: 14px;
-            left: -1px;
+            width: 16px;
+            height: 16px;
+            left: -2px;
+            border-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        &:hover {
+            .el-timeline-item__node {
+                transform: scale(1.2);
+            }
         }
 
         &__timestamp {
             font-size: 13px;
             color: var(--el-text-color-secondary);
             margin-bottom: 8px;
+            padding: 0 12px;
+            height: 24px;
+            line-height: 24px;
+            background-color: var(--el-fill-color-lighter);
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        &__content {
+            padding-left: 20px;
         }
     }
 }
 
-// 响应式设计
+// 响应式优化
 @media screen and (max-width: 768px) {
     .custom-dialog {
         width: 100%;
@@ -681,6 +788,36 @@ const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
                 flex: 0 0 auto;
                 width: 120px;
                 margin: 0 4px;
+            }
+        }
+
+        .schedule-content {
+            .schedule-card {
+                .schedule-card-header {
+                    flex-wrap: wrap;
+
+                    .el-tag {
+                        height: 24px;
+                        padding: 0 8px;
+                    }
+
+                    h4 {
+                        width: 100%;
+                        margin-top: 8px;
+                    }
+
+                    .schedule-actions {
+                        position: static;
+                        transform: none;
+                        opacity: 1;
+                        background: none;
+                        padding: 0;
+                        margin-top: 8px;
+                        width: 100%;
+                        display: flex;
+                        justify-content: flex-end;
+                    }
+                }
             }
         }
     }
