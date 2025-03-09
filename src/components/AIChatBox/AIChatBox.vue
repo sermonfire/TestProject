@@ -106,19 +106,22 @@ onUnmounted(() => {
 
 <template>
     <div>
-        <Flex justify="center" align="center" vertical class="chat-box">
+        <Flex justify="center" align="center" vertical class="chat-box" :class="{ 'chat-active': isChat }">
             <Welcome v-if="!isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
 
             <div v-else class="chat-message-display">
                 <!-- 对话内容显示区域 -->
+                <div class="message-container">
+
+                </div>
                 <div class="chat-controls">
                     <a @click="resetChat">重新开始对话</a>
                 </div>
             </div>
 
-            <Sender class="sender-ref" ref="senderRef" submitType="shiftEnter" :loading="loading"
+            <Sender :class="{ 'sender-ref': isChat }" ref="senderRef" submitType="shiftEnter" :loading="loading"
                 v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus"
                 style="width: 50%;margin-top: 20px;" :actions="(_, info) => {
                     const { SendButton, LoadingButton, ClearButton } = info.components;
@@ -138,18 +141,40 @@ onUnmounted(() => {
 <style scoped>
 .chat-box {
     margin: 0 auto;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    min-height: 400px;
+}
+
+.chat-active {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: calc(100vh - 150px);
 }
 
 .chat-message-display {
     width: 100%;
-    min-height: 200px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    overflow-y: auto;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .chat-controls {
-    margin-top: 20px;
     text-align: center;
 }
 
@@ -160,5 +185,14 @@ onUnmounted(() => {
 
 .chat-controls a:hover {
     text-decoration: underline;
+}
+
+.sender-ref {
+    position: sticky;
+    bottom: 20px;
+    margin-top: 20px;
+    width: 100% !important;
+    max-width: 800px;
+    z-index: 10;
 }
 </style>

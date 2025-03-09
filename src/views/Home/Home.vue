@@ -1,7 +1,7 @@
 <template>
     <div class="home-container">
         <!-- 内容包装器 -->
-        <div class="content-wrapper">
+        <div class="content-wrapper" :class="{ 'chat-mode': isChat }">
             <!-- 轮播图区域 -->
             <div class="swiper-wrapper" :class="{ 'hidden': isInChat }">
                 <Swiper></Swiper>
@@ -74,6 +74,7 @@ const handleChatStateChange = (chatState) => {
     width: 100%;
     background-color: #f5f7fa;
     min-height: calc(100vh - 96px);
+    transition: all 0.3s ease-in-out;
 
     @media screen and (max-width: 1400px) {
         max-width: 1000px;
@@ -81,6 +82,10 @@ const handleChatStateChange = (chatState) => {
 
     @media screen and (max-width: 1200px) {
         max-width: 800px;
+    }
+
+    &.chat-mode {
+        padding-bottom: 20px;
     }
 }
 
