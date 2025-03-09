@@ -111,16 +111,16 @@ onUnmounted(() => {
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
 
-            <div v-else class="chat-message-display" style="margin-top: 10rem;">
+            <div v-else class="chat-message-display">
                 <!-- 对话内容显示区域 -->
                 <div class="chat-controls">
                     <a @click="resetChat">重新开始对话</a>
                 </div>
             </div>
 
-            <Sender ref="senderRef" submitType="shiftEnter" :loading="loading" v-model:value="messageText"
-                @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus" style="width: 50%;margin-top: 20px;"
-                :actions="(_, info) => {
+            <Sender class="sender-ref" ref="senderRef" submitType="shiftEnter" :loading="loading"
+                v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus"
+                style="width: 50%;margin-top: 20px;" :actions="(_, info) => {
                     const { SendButton, LoadingButton, ClearButton } = info.components;
 
                     return h(Space, { size: 'small' }, () => [
