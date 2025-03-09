@@ -3,12 +3,13 @@
         <!-- 内容包装器 -->
         <div class="content-wrapper">
             <!-- 轮播图区域 -->
-            <div class="swiper-wrapper" :class="{ 'hidden': isFocus }">
+            <div class="swiper-wrapper" :class="{ 'hidden': isInChat }">
                 <Swiper></Swiper>
             </div>
 
             <!-- 主要对话区域 -->
-            <AIChatBox :isFocus="isFocus" @focus-change="handleFocusChange" />
+            <AIChatBox :isFocus="isFocus" :isChat="isChat" @focus-change="handleFocusChange"
+                @chat-state-change="handleChatStateChange" />
         </div>
     </div>
 </template>
@@ -16,7 +17,7 @@
 <script setup>
 import Swiper from '@/components/Swiper/Swiper.vue';
 import AIChatBox from '@/components/AIChatBox/AIChatBox.vue';
-import { ref, watch } from 'vue';
+import { ref, computed } from 'vue';
 
 /**
  * 聊天框是否聚焦
@@ -25,12 +26,33 @@ import { ref, watch } from 'vue';
 const isFocus = ref(false);
 
 /**
+ * 是否处于对话状态
+ * @type {import('vue').Ref<boolean>}
+ */
+const isChat = ref(false);
+
+/**
+ * 计算属性：是否应该隐藏轮播图
+ * 当处于对话状态或聊天框聚焦时隐藏轮播图
+ */
+const isInChat = computed(() => {
+    return isChat.value || isFocus.value;
+});
+
+/**
  * 处理聊天框聚焦状态变化
  * @param {boolean} focusState - 聚焦状态
  */
 const handleFocusChange = (focusState) => {
     isFocus.value = focusState;
-    console.log('聊天框聚焦状态变更为:', isFocus.value);
+};
+
+/**
+ * 处理对话状态变化
+ * @param {boolean} chatState - 对话状态
+ */
+const handleChatStateChange = (chatState) => {
+    isChat.value = chatState;
 };
 </script>
 

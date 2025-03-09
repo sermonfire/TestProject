@@ -5,7 +5,6 @@ import { h, ref, watch, onMounted, onUnmounted } from 'vue';
 
 const messageText = ref('');
 const loading = ref(false);
-const isSend = ref(false);
 const senderRef = ref(null);
 
 /**
@@ -21,23 +20,32 @@ const props = defineProps({
     isFocus: {
         type: Boolean,
         default: false
+    },
+    /**
+     * 是否处于对话状态
+     * @type {Boolean}
+     * @default false
+     */
+    isChat: {
+        type: Boolean,
+        default: false
     }
 });
 
 /**
  * 定义事件
  */
-const emit = defineEmits(['focus-change']);
+const emit = defineEmits(['focus-change', 'chat-state-change']);
 
 // 监听loading状态变化
 watch(loading, () => {
     if (loading.value) {
         messageText.value = '';
-        isSend.value = true;
+        emit('chat-state-change', true);
+
         const timer = setTimeout(() => {
             loading.value = false;
             message.success('消息发送成功!');
-            isSend.value = false;
             clearTimeout(timer);
         }, 2000);
     }
@@ -64,7 +72,6 @@ const handleCancel = () => {
  */
 const handleFocus = () => {
     emit('focus-change', true);
-    console.log('聊天框获得焦点');
 };
 
 /**
@@ -76,8 +83,14 @@ const handleClickOutside = (event) => {
 
     if (senderElement && !senderElement.contains(event.target) && props.isFocus) {
         emit('focus-change', false);
-        console.log('点击外部区域，取消聚焦状态');
     }
+};
+
+/**
+ * 重置对话状态
+ */
+const resetChat = () => {
+    emit('chat-state-change', false);
 };
 
 // 组件挂载时添加点击事件监听
@@ -94,12 +107,15 @@ onUnmounted(() => {
 <template>
     <div>
         <Flex justify="center" align="center" vertical class="chat-box">
-            <Welcome v-if="!isSend" variant="borderless"
+            <Welcome v-if="!isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
 
             <div v-else class="chat-message-display" style="margin-top: 10rem;">
-
+                <!-- 对话内容显示区域 -->
+                <div class="chat-controls">
+                    <a @click="resetChat">重新开始对话</a>
+                </div>
             </div>
 
             <Sender ref="senderRef" submitType="shiftEnter" :loading="loading" v-model:value="messageText"
@@ -118,8 +134,31 @@ onUnmounted(() => {
         </Flex>
     </div>
 </template>
+
 <style scoped>
 .chat-box {
     margin: 0 auto;
+}
+
+.chat-message-display {
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chat-controls {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.chat-controls a {
+    color: #1890ff;
+    cursor: pointer;
+}
+
+.chat-controls a:hover {
+    text-decoration: underline;
 }
 </style>
