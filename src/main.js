@@ -18,11 +18,16 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { Button as TButton, Input as TInput } from 'tdesign-vue-next';
 import 'tdesign-vue-next/es/style/index.css';
 
+// Ant Design
+import Antd from 'ant-design-vue';
+import 'ant-design-vue/dist/reset.css';
+
 const app = createApp(App)
 
 app.use(createPinia().use(createPersistedState()))
 app.use(router)
 app.use(ElementPlus)
+app.use(Antd);
 
 // 按需注册 TDesign 组件
 app.component('t-button', TButton)
@@ -30,19 +35,19 @@ app.component('t-input', TInput)
 
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, markRaw(component))
+    app.component(key, markRaw(component))
 }
 
 // 添加性能监控
 if (process.env.NODE_ENV === 'production') {
-  // 监控页面性能
-  window.addEventListener('load', () => {
-    const timing = performance.getEntriesByType('navigation')[0];
-    console.log('页面加载时间:', timing.loadEventEnd - timing.navigationStart);
-  });
-  
-  // 监控组件渲染性能
-  app.config.performance = true;
+    // 监控页面性能
+    window.addEventListener('load', () => {
+        const timing = performance.getEntriesByType('navigation')[0];
+        console.log('页面加载时间:', timing.loadEventEnd - timing.navigationStart);
+    });
+
+    // 监控组件渲染性能
+    app.config.performance = true;
 }
 
 app.mount('#app')

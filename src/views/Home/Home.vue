@@ -3,64 +3,35 @@
         <!-- 内容包装器 -->
         <div class="content-wrapper">
             <!-- 轮播图区域 -->
-            <div class="swiper-wrapper" :class="{ 'hidden': hasActiveChat }">
+            <div class="swiper-wrapper" :class="{ 'hidden': isFocus }">
                 <Swiper></Swiper>
             </div>
 
             <!-- 主要对话区域 -->
-            <AIChatBox 
-                :initialMessages="messages"
-                @update:messages="updateMessages"
-                @clear-messages="clearMessages"
-            />
+            <AIChatBox :isFocus="isFocus" @focus-change="handleFocusChange" />
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Swiper from '@/components/Swiper/Swiper.vue';
 import AIChatBox from '@/components/AIChatBox/AIChatBox.vue';
+import { ref, watch } from 'vue';
 
-// 消息列表
-const messages = ref([]);
+/**
+ * 聊天框是否聚焦
+ * @type {import('vue').Ref<boolean>}
+ */
+const isFocus = ref(false);
 
-// 是否有活跃对话
-const hasActiveChat = computed(() => {
-    return messages.value.length > 1 || (messages.value.length === 1 && !messages.value[0].isSystemMessage);
-});
-
-// 更新消息
-const updateMessages = (newMessages) => {
-    messages.value = newMessages;
-    try {
-        localStorage.setItem('chatMessages', JSON.stringify(newMessages));
-    } catch (e) {
-        console.error('保存聊天记录失败:', e);
-    }
+/**
+ * 处理聊天框聚焦状态变化
+ * @param {boolean} focusState - 聚焦状态
+ */
+const handleFocusChange = (focusState) => {
+    isFocus.value = focusState;
+    console.log('聊天框聚焦状态变更为:', isFocus.value);
 };
-
-// 清除消息
-const clearMessages = () => {
-    messages.value = [];
-    try {
-        localStorage.removeItem('chatMessages');
-    } catch (e) {
-        console.error('清除本地存储失败:', e);
-    }
-};
-
-// 组件挂载时尝试恢复聊天记录
-onMounted(() => {
-    try {
-        const savedMessages = localStorage.getItem('chatMessages');
-        if (savedMessages) {
-            messages.value = JSON.parse(savedMessages);
-        }
-    } catch (e) {
-        console.error('恢复聊天记录失败:', e);
-    }
-});
 </script>
 
 <style lang="scss" scoped>
@@ -72,6 +43,9 @@ onMounted(() => {
 }
 
 .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     flex: 1;
     max-width: 1600px;
     margin: 0 auto;
