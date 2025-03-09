@@ -139,7 +139,6 @@ const conversationItems = ref([
     {
         key: 'conversation4',
         label: '历史遗迹探索',
-        disabled: true,
     }
 ]);
 
@@ -218,11 +217,12 @@ const showConversations = computed(() => {
     position: absolute;
     top: 0px;
     right: 0px;
-    width: 250px;
     z-index: 10;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(8px);
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .chat-active {
