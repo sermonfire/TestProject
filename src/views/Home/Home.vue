@@ -68,13 +68,14 @@ const handleChatStateChange = (chatState) => {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-self: center;
     flex: 1;
-    max-width: 1600px;
-    margin: 0 auto;
+    margin: 0;
     width: 100%;
     background-color: #f5f7fa;
     min-height: calc(100vh - 96px);
     transition: all 0.3s ease-in-out;
+    position: relative;
 
     @media screen and (max-width: 1400px) {
         max-width: 1000px;
