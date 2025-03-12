@@ -28,7 +28,6 @@ export function sendStreamChat(data) {
         url: `/dev-api/ai/chat/stream/deepseek?conversationId=${data.conversationId}`,
         method: 'post',
         data: data.content,
-        responseType: 'stream'
     })
 }
 

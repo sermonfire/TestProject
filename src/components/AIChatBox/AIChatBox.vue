@@ -9,7 +9,7 @@ import {
     UserOutlined,
     RobotOutlined,
 } from '@ant-design/icons-vue';
-
+import { sendStreamChat } from '@/api/AIchatAPI';
 defineOptions({ name: 'AXBubbleHeaderAndFooterSetup' });
 
 const { token } = theme.useToken();
@@ -18,7 +18,12 @@ const { token } = theme.useToken();
 const messageText = ref('');
 const loading = ref(false);
 const senderRef = ref(null);
-const activeConversationKey = ref('conversation1');
+const activeConversationKey = ref('');
+/**
+ * 对话列表数据
+ * @type {Array}
+ */
+const conversationItems = ref([]);
 
 /**
  * 聊天框组件
@@ -67,12 +72,26 @@ watch(loading, () => {
     }
 });
 
+
+const newMessage = ref('');
 /**
  * 处理提交消息
  */
-const handleSubmit = () => {
+const handleSubmit = async () => {
     loading.value = true;
-    message.info('发送消息!');
+    newMessage.value = messageText.value;
+    messageText.value = '';
+
+    //将用户消息添加到当前对话中用于渲染
+    conversationItems
+
+    // 发送消息
+    const res = await sendStreamChat({
+        content: newMessage.value,
+        conversationId: activeConversationKey.value
+    });
+
+
 };
 
 /**
@@ -134,11 +153,7 @@ const handleConversationCreate = (conversationId) => {
     message.success('新建对话成功！');
 };
 
-/**
- * 对话列表数据
- * @type {Array}
- */
-const conversationItems = ref([]);
+
 
 /**
  * 处理对话切换
@@ -248,7 +263,7 @@ const roleConfig = {
 
                     <!-- 动态消息展示 -->
                     <div class="message-list"
-                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;">
+                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;margin-top: 15vh;">
                         <Bubble v-for="(msg, index) in currentMessages" :key="index" :content="msg.content"
                             :placement="roleConfig[msg.role]?.placement || 'start'"
                             :avatar="roleConfig[msg.role]?.avatar" :header="msg.role === 'assistant' ? '旅游助手' : '你'">
@@ -276,6 +291,9 @@ const roleConfig = {
                                 </Space>
                             </template>
                         </Bubble>
+
+                        <!-- 这里用于展示新的对话消息 -->
+
                     </div>
                 </div>
 
@@ -286,7 +304,7 @@ const roleConfig = {
 
             <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter" :loading="loading"
                 v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus"
-                style="width: 50%;margin-top: 20px;" :actions="(_, info) => {
+                style="width: 50%;margin-bottom: 20vh;" :actions="(_, info) => {
                     const { SendButton, LoadingButton, ClearButton } = info.components;
 
                     return h(Space, { size: 'small' }, () => [
@@ -368,6 +386,7 @@ const roleConfig = {
 .sender-ref {
     position: sticky;
     bottom: 20px;
+    margin-bottom: 20px;
     margin-top: 20px;
     width: 100% !important;
     max-width: 800px;
