@@ -1,8 +1,19 @@
 <script setup>
-import { Welcome, Sender } from 'ant-design-x-vue';
-import { Flex, Space, Typography, Spin, message, theme } from 'ant-design-vue';
+import { Welcome, Sender, Bubble } from 'ant-design-x-vue';
+import { Flex, Space, Typography, Spin, message, theme, Button } from 'ant-design-vue';
 import { h, ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import ConversationManager from './ConversationManager.vue';
+import {
+    CopyOutlined,
+    SyncOutlined,
+    UserOutlined,
+    RobotOutlined,
+} from '@ant-design/icons-vue';
+
+defineOptions({ name: 'AXBubbleHeaderAndFooterSetup' });
+
+const { token } = theme.useToken();
+
 
 const messageText = ref('');
 const loading = ref(false);
@@ -90,6 +101,9 @@ const handleClickOutside = (event) => {
 
     if (!isClickInSender && !isClickInConversationManager && props.isFocus) {
         emit('focus-change', false);
+        if (props.isChat) {
+            emit('chat-state-change', false);
+        }
     }
 };
 
@@ -171,6 +185,46 @@ const showConversations = computed(() => {
     return !props.isChat && props.isFocus;
 });
 
+// 在script部分添加计算属性
+const hasHistoryMessages = computed(() => {
+    const currentConversation = conversationItems.value.find(
+        item => item.key === activeConversationKey.value
+    );
+    return currentConversation?.content?.length > 0;
+});
+
+const currentMessages = computed(() => {
+    const currentConversation = conversationItems.value.find(
+        item => item.key === activeConversationKey.value
+    );
+    if (!currentConversation?.content) return [];
+
+    try {
+        //去掉content中的system消息
+        const content = JSON.parse(currentConversation.content);
+        return content.filter(item => item.role !== 'system');
+    } catch (error) {
+        console.error('消息解析失败:', error);
+        return [];
+    }
+});
+
+// 角色映射配置
+const roleConfig = {
+    user: {
+        avatar: { icon: h(UserOutlined) },
+        placement: 'end',
+        color: '#fff',
+        backgroundColor: '#fde3cf',
+    },
+    assistant: {
+        avatar: { icon: h(RobotOutlined) },
+        placement: 'start',
+        color: '#f56a00',
+        backgroundColor: '#87d068',
+    }
+};
+
 </script>
 
 <template>
@@ -182,16 +236,49 @@ const showConversations = computed(() => {
                 @create="handleConversationCreate" @conversationHistoryList="handleConversationHistoryList"
                 class="conversation-manager" />
 
-            <Welcome v-if="!props.isChat" variant="borderless"
+            <Welcome v-if="(!hasHistoryMessages || !props.isFocus) && !props.isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
 
-            <div v-else class="chat-message-display">
-                <!-- 对话内容显示区域 -->
+            <div v-else-if="props.isFocus" class="chat-message-display">
                 <div class="message-container">
-                    <div class="conversation-title">{{conversationItems.find(item => item.key ===
-                        activeConversationKey)?.label}}</div>
+                    <div class="conversation-title">
+                        {{conversationItems.find(item => item.key === activeConversationKey)?.label}}
+                    </div>
+
+                    <!-- 动态消息展示 -->
+                    <div class="message-list"
+                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;">
+                        <Bubble v-for="(msg, index) in currentMessages" :key="index" :content="msg.content"
+                            :placement="roleConfig[msg.role]?.placement || 'start'"
+                            :avatar="roleConfig[msg.role]?.avatar" :header="msg.role === 'assistant' ? '旅游助手' : '你'">
+                            <template #footer v-if="msg.role === 'assistant'">
+                                <Space :size="token.paddingXXS">
+                                    <Button type="text" size="small">
+                                        <template #icon>
+                                            <CopyOutlined />
+                                        </template>
+                                    </Button>
+                                    <Button type="text" size="small">
+                                        <template #icon>
+                                            <SyncOutlined />
+                                        </template>
+                                    </Button>
+                                </Space>
+                            </template>
+                            <template #footer v-if="msg.role === 'user'">
+                                <Space :size="token.paddingXXS">
+                                    <Button type="text" size="small">
+                                        <template #icon>
+                                            <CopyOutlined />
+                                        </template>
+                                    </Button>
+                                </Space>
+                            </template>
+                        </Bubble>
+                    </div>
                 </div>
+
                 <div class="chat-controls">
                     <a @click="resetChat">重新开始对话</a>
                 </div>
@@ -288,21 +375,14 @@ const showConversations = computed(() => {
 }
 
 .conversation-title {
+    position: absolute;
+    top: 5px;
+    left: 0;
     font-size: 18px;
     font-weight: bold;
     color: #1890ff;
     margin-bottom: 10px;
     width: 100%;
     text-align: center;
-}
-
-/* 覆盖ant-design-x-vue包中Typography组件的ellipsis样式 */
-:deep(.ant-typography) {
-    &.ant-typography-ellipsis-single-line {
-        display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
 }
 </style>

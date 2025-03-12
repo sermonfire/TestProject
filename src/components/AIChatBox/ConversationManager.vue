@@ -85,7 +85,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['change', 'collapse-change', 'create', 'conversationHistoryList'])
+const emit = defineEmits(['change', 'collapse-change', 'create', 'conversationHistoryList', 'chat-state-change'])
 
 // 对话列表数据
 const conversations = ref([])
@@ -139,6 +139,12 @@ const fetchConversations = async () => {
                 disabled: false
             })).sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
             emit('conversationHistoryList', conversations.value)
+            if (conversations.value.length > 0) {
+                emit('change', conversations.value[0].conversationId)
+                if (conversations.value[0].content) {
+                    emit('chat-state-change', true)
+                }
+            }
         } else {
             conversations.value = []
             if (response.code !== 0) {
@@ -202,6 +208,11 @@ const deleteConversation = async (conversation) => {
 const handleItemClick = (conversation) => {
     if (conversation.disabled || conversation.conversationId === props.activeKey) return
     emit('change', conversation.conversationId)
+
+    // 新增：如果有历史内容则触发聊天状态
+    if (conversation.content) {
+        emit('chat-state-change', true)
+    }
 }
 
 /**

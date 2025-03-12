@@ -53,6 +53,9 @@ const handleFocusChange = (focusState) => {
  */
 const handleChatStateChange = (chatState) => {
     isChat.value = chatState;
+    if (!chatState && isFocus.value) {
+        isFocus.value = true;
+    }
 };
 </script>
 
