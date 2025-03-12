@@ -175,14 +175,14 @@ const showConversations = computed(() => {
 
 <template>
     <div>
-        <Flex justify="center" align="center" vertical class="chat-box" :class="{ 'chat-active': isChat }">
+        <Flex justify="center" align="center" vertical class="chat-box" :class="{ 'chat-active': props.isChat }">
             <!-- 对话管理组件 -->
             <ConversationManager v-if="showConversations" :items="conversationItems" :active-key="activeConversationKey"
                 :visible="showConversations" @change="handleConversationChange" @collapse-change="handleCollapseChange"
                 @create="handleConversationCreate" @conversationHistoryList="handleConversationHistoryList"
                 class="conversation-manager" />
 
-            <Welcome v-if="!isChat" variant="borderless"
+            <Welcome v-if="!props.isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
 
@@ -197,7 +197,7 @@ const showConversations = computed(() => {
                 </div>
             </div>
 
-            <Sender :class="{ 'sender-ref': isChat }" ref="senderRef" submitType="shiftEnter" :loading="loading"
+            <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter" :loading="loading"
                 v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus"
                 style="width: 50%;margin-top: 20px;" :actions="(_, info) => {
                     const { SendButton, LoadingButton, ClearButton } = info.components;
