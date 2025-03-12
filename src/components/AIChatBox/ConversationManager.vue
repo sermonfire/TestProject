@@ -8,46 +8,69 @@
                 </el-icon>
             </div>
         </div>
+
+        <!-- 新建对话按钮 -->
+        <div class="new-conversation" v-if="!isCollapsed">
+            <el-button type="primary" @click="createNewConversation" :loading="loading">
+                <el-icon>
+                    <Plus />
+                </el-icon>
+                新建对话
+            </el-button>
+        </div>
+        <div v-else class="new-conversation-icon" @click="createNewConversation">
+            <el-icon>
+                <Plus />
+            </el-icon>
+        </div>
+
+        <!-- 对话列表 -->
         <div class="conversation-list">
-            <div v-for="item in items" :key="item.key" class="conversation-item" :class="{
-                'active': activeKey === item.key,
-                'disabled': item.disabled
-            }" @click="handleItemClick(item)" :title="item.label">
+            <div v-for="conversation in conversations" :key="conversation.conversationId" class="conversation-item"
+                :class="{
+                    'active': activeKey === conversation.conversationId,
+                    'disabled': conversation.disabled
+                }" @click="handleItemClick(conversation)" :title="conversation.title">
                 <div class="conversation-content">
                     <el-icon class="item-icon">
                         <ChatLineRound />
                     </el-icon>
-                    <span :class="['label', { 'hide': isCollapsed, 'fade-in': isExpanding }]">{{ item.label }}</span>
+                    <span :class="['label', { 'hide': isCollapsed, 'fade-in': isExpanding }]">
+                        {{ conversation.title || '新对话' }}
+                    </span>
+                    <!-- 删除按钮 -->
+                    <el-icon v-if="!isCollapsed && activeKey === conversation.conversationId" class="delete-icon"
+                        @click.stop="deleteConversation(conversation)">
+                        <Delete />
+                    </el-icon>
                 </div>
             </div>
         </div>
+
+        <!-- 无数据提示 -->
+        <el-empty v-if="conversations.length === 0" :description="isCollapsed ? '' : '暂无对话'" :image-size="40" />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ChatLineRound, ArrowRight } from '@element-plus/icons-vue'
+import { ref, watch, onMounted } from 'vue'
+import { ChatLineRound, ArrowRight, Plus, Delete } from '@element-plus/icons-vue'
+import { getChatHistory } from '@/api/AIchatAPI'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { v4 as uuidv4 } from 'uuid'
 
 /**
- * @typedef {Object} ConversationItem
- * @property {string} key - 对话的唯一标识
- * @property {string} label - 对话的显示名称
+ * @typedef {Object} Conversation
+ * @property {string} conversationId - 对话ID
+ * @property {string} title - 对话标题
+ * @property {string} [content] - 最后一条消息内容
+ * @property {Date} createTime - 创建时间
  * @property {boolean} [disabled] - 是否禁用
  */
 
 const props = defineProps({
     /**
-     * 对话列表数据
-     * @type {ConversationItem[]}
-     */
-    items: {
-        type: Array,
-        required: true,
-        default: () => []
-    },
-    /**
-     * 当前激活的对话key
-     * @type {string}
+     * 当前激活的对话ID
      */
     activeKey: {
         type: String,
@@ -55,7 +78,6 @@ const props = defineProps({
     },
     /**
      * 是否显示
-     * @type {boolean}
      */
     visible: {
         type: Boolean,
@@ -63,28 +85,124 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['change', 'collapse-change'])
+const emit = defineEmits(['change', 'collapse-change', 'create'])
 
-/**
- * 是否折叠
- * @type {import('vue').Ref<boolean>}
- */
+// 对话列表数据
+const conversations = ref([])
+// 加载状态
+const loading = ref(false)
+// 折叠状态
 const isCollapsed = ref(false)
-
-/**
- * 是否正在展开
- * @type {import('vue').Ref<boolean>}
- */
+// 展开状态
 const isExpanding = ref(false)
 
 /**
- * 监听visible变化，当组件隐藏时自动展开
+ * 解析对话内容
+ * @param {string} contentStr - JSON字符串格式的对话内容
+ * @returns {string} 返回处理后的对话标题
  */
-watch(() => props.visible, (newVisible) => {
-    if (newVisible) {
-        isCollapsed.value = false
+const parseContent = (contentStr) => {
+    try {
+        const messages = JSON.parse(contentStr)
+        // 找到第一条用户消息作为标题
+        const userMessage = messages.find(msg => msg.role === 'user')
+        if (userMessage) {
+            // 截取用户消息的前20个字符作为标题
+            return userMessage.content.length > 20
+                ? userMessage.content.slice(0, 20) + '...'
+                : userMessage.content
+        }
+        return '新对话'
+    } catch (error) {
+        console.warn('解析对话内容失败:', error)
+        return '新对话'
     }
-})
+}
+
+/**
+ * 获取对话历史
+ */
+const fetchConversations = async () => {
+    try {
+        loading.value = true
+        const response = await getChatHistory()
+
+        // 直接判断 response 的 code 和 data
+        if (response.code === 0 && Array.isArray(response.data)) {
+            conversations.value = response.data.map(item => ({
+                conversationId: item.conversationId,
+                title: parseContent(item.content),
+                content: item.content,
+                createTime: new Date(item.createTime),
+                messageId: item.messageId,
+                model: item.model,
+                userId: item.userId,
+                disabled: false
+            })).sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+        } else {
+            conversations.value = []
+            if (response.code !== 0) {
+                ElMessage.error(response.message || '获取对话历史失败')
+            }
+        }
+    } catch (error) {
+        ElMessage.error('获取对话历史失败')
+        console.error('获取对话历史失败:', error)
+        conversations.value = []
+    } finally {
+        loading.value = false
+    }
+}
+
+/**
+ * 创建新对话
+ */
+const createNewConversation = () => {
+    const newConversation = {
+        conversationId: uuidv4(),
+        title: '新对话',
+        createTime: new Date(),
+        disabled: false
+    }
+    conversations.value.unshift(newConversation)
+    emit('create', newConversation.conversationId)
+    emit('change', newConversation.conversationId)
+}
+
+/**
+ * 删除对话
+ */
+const deleteConversation = async (conversation) => {
+    try {
+        await ElMessageBox.confirm('确定要删除这个对话吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        })
+
+        const index = conversations.value.findIndex(item => item.conversationId === conversation.conversationId)
+        if (index > -1) {
+            conversations.value.splice(index, 1)
+            // 如果删除的是当前对话，则切换到第一个对话
+            if (conversation.conversationId === props.activeKey && conversations.value.length > 0) {
+                emit('change', conversations.value[0].conversationId)
+            }
+        }
+    } catch (error) {
+        if (error !== 'cancel') {
+            ElMessage.error('删除对话失败')
+            console.error('删除对话失败:', error)
+        }
+    }
+}
+
+/**
+ * 处理对话项点击
+ */
+const handleItemClick = (conversation) => {
+    if (conversation.disabled || conversation.conversationId === props.activeKey) return
+    emit('change', conversation.conversationId)
+}
 
 /**
  * 切换折叠状态
@@ -103,14 +221,17 @@ const toggleCollapse = () => {
     emit('collapse-change', isCollapsed.value)
 }
 
-/**
- * 处理对话项点击
- * @param {ConversationItem} item - 被点击的对话项
- */
-const handleItemClick = (item) => {
-    if (item.disabled || item.key === props.activeKey) return
-    emit('change', item.key)
-}
+// 监听visible变化
+watch(() => props.visible, (newVisible) => {
+    if (newVisible) {
+        isCollapsed.value = false
+    }
+})
+
+// 组件挂载时获取对话历史
+onMounted(() => {
+    fetchConversations()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -396,5 +517,55 @@ const handleItemClick = (item) => {
     to {
         opacity: 1;
     }
+}
+
+/* 添加新样式 */
+.new-conversation {
+    padding: 12px;
+    border-bottom: 1px solid var(--el-border-color-light);
+
+    .el-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+}
+
+.new-conversation-icon {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0;
+    cursor: pointer;
+    color: var(--el-color-primary);
+    border-bottom: 1px solid var(--el-border-color-light);
+
+    &:hover {
+        background-color: var(--el-color-primary-light-9);
+    }
+}
+
+.delete-icon {
+    position: absolute;
+    right: 8px;
+    color: var(--el-color-danger);
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+.conversation-item:hover .delete-icon {
+    opacity: 1;
+}
+
+.el-empty {
+    padding: 20px;
+    color: var(--el-text-color-secondary);
 }
 </style>

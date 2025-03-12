@@ -1,18 +1,37 @@
-import OpenAI from "openai"
+/**
+ * @file AIchatAPI.js
+ * @description AI聊天相关的API接口封装
+ */
 
-const client = OpenAI({
-    apiKey: 'sk-1e067aeec49b4f10ad421a65d0835df8',
-    baseURL: 'https://api.deepseek.com'
-})
+import request from '@/utils/request'
 
-const messages = [{ "role": "user", "content": "What's the highest mountain in the world?" }]
+/**
+ * 获取对话历史列表
+ * @returns {Promise} 返回对话历史数据
+ */
+export function getChatHistory() {
+    return request({
+        url: 'dev-api/ai/chat/history',
+        method: 'get'
+    })
+}
 
-const response = await client.chat.completions.create({
-    model: "deepseek-chat",
-    messages: messages
-})
+/**
+ * 发送流式对话请求
+ * @param {Object} data 请求参数
+ * @param {string} data.content - 用户发送的消息内容
+ * @param {string} data.conversationId - 会话ID
+ * @returns {Promise} 返回流式响应
+ */
+export function sendStreamChat(data) {
+    return request({
+        url: `/dev-api/ai/chat/stream/deepseek?conversationId=${data.conversationId}`,
+        method: 'post',
+        data: data.content,
+        responseType: 'stream'
+    })
+}
 
-console.log(response.choices[0].message)
 
 
 

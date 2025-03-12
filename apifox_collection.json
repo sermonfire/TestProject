@@ -1,0 +1,4390 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "旅游推荐系统API",
+        "description": "旅游推荐系统的所有API接口文档",
+        "version": "1.1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8081",
+            "description": "本地开发环境"
+        }
+    ],
+    "paths": {
+        "/ClientUser/register": {
+            "post": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "用户注册",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            },
+                            "example": {
+                                "phone": "13800138000",
+                                "password": "Test123456",
+                                "username": "testuser"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "注册成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ClientUser/login": {
+            "post": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "用户登录",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            },
+                            "example": {
+                                "phone": "13800138000",
+                                "password": "Test123456"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ClientUser/userInfo": {
+            "get": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserInfoResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ClientUser/userInfoUpdate": {
+            "put": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新用户信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ClientUser/updatePassword": {
+            "put": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新密码",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordChangeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ClientUser/checkLoginStatus": {
+            "get": {
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "检查登录状态",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "检查成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginStatusResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/preferences": {
+            "post": {
+                "tags": [
+                    "用户偏好"
+                ],
+                "summary": "保存用户偏好",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserPreference"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "保存成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "用户偏好"
+                ],
+                "summary": "获取用户偏好",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserPreferenceResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/personalized": {
+            "get": {
+                "tags": [
+                    "目的地推荐"
+                ],
+                "summary": "获取推荐目的地",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "description": "页码",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "每页数量",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationPageResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/related": {
+            "get": {
+                "tags": [
+                    "目的地推荐"
+                ],
+                "summary": "获取相关推荐",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tags",
+                        "in": "query",
+                        "description": "标签列表，多个标签用逗号分隔",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "style": "form",
+                        "explode": false
+                    },
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "description": "页码",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "每页数量",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationPageResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/personalized/preview": {
+            "post": {
+                "tags": [
+                    "目的地推荐"
+                ],
+                "summary": "预览推荐结果",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserPreference"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "预览成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationPageResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/upload": {
+            "post": {
+                "tags": [
+                    "文件管理"
+                ],
+                "summary": "通用文件上传",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "图片文件"
+                                    },
+                                    "directory": {
+                                        "type": "string",
+                                        "description": "目录名称(carousel/destination/avatar)",
+                                        "enum": [
+                                            "carousel",
+                                            "destination",
+                                            "avatar"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "上传成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FileUploadResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/{destinationId}": {
+            "post": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "添加收藏",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "目的地ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "description": "收藏分类",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "notes",
+                        "in": "query",
+                        "required": false,
+                        "description": "收藏备注",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "添加成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "取消收藏",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "目的地ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "取消成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/all": {
+            "delete": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "取消所有收藏",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "取消成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/list": {
+            "get": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "获取收藏列表",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "query",
+                        "required": false,
+                        "description": "分类ID（不传表示获取所有收藏，0表示默认分类）",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "description": "页码",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "每页数量",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoriteListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/search": {
+            "get": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "搜索收藏",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true,
+                        "description": "搜索关键词",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoriteListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/{favoriteId}/sort": {
+            "put": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "更新收藏排序",
+                "parameters": [
+                    {
+                        "name": "favoriteId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sortOrder",
+                        "in": "query",
+                        "required": true,
+                        "description": "排序值（越小越靠前）",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/stats": {
+            "get": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "获取收藏统计信息",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoriteStatsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/check/{destinationId}": {
+            "get": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "检查是否已收藏",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "检查成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoriteCheckResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/category": {
+            "post": {
+                "tags": [
+                    "收藏分类管理"
+                ],
+                "summary": "创建收藏分类",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryRequest"
+                            },
+                            "example": {
+                                "name": "想去的地方",
+                                "description": "计划要去的景点"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/category/{categoryId}": {
+            "delete": {
+                "tags": [
+                    "收藏分类管理"
+                ],
+                "summary": "删除收藏分类",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "description": "分类ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "收藏分类管理"
+                ],
+                "summary": "更新分类信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "description": "分类ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/category/{categoryId}/sort": {
+            "put": {
+                "tags": [
+                    "收藏分类管理"
+                ],
+                "summary": "更新分类排序",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "description": "分类ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sortOrder",
+                        "in": "query",
+                        "required": true,
+                        "description": "排序值（越小越靠前）",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/category/list": {
+            "get": {
+                "tags": [
+                    "收藏分类管理"
+                ],
+                "summary": "获取用户的所有收藏分类",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/batch/category": {
+            "put": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "批量更新收藏分类",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "favoriteIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "description": "收藏ID列表"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": "目标分类名称"
+                                    }
+                                },
+                                "required": [
+                                    "favoriteIds",
+                                    "category"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/favorite/batch": {
+            "delete": {
+                "tags": [
+                    "收藏管理"
+                ],
+                "summary": "批量删除收藏",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "favoriteIds",
+                        "in": "query",
+                        "required": true,
+                        "description": "收藏ID列表，多个ID用逗号分隔",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "style": "form",
+                        "explode": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/destination/{destinationId}": {
+            "get": {
+                "tags": [
+                    "目的地详情"
+                ],
+                "summary": "获取目的地详情",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "目的地ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "目的地详情"
+                ],
+                "summary": "更新目的地详情",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "目的地ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DestinationDetailUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/destinations/batch": {
+            "get": {
+                "tags": [
+                    "目的地详情"
+                ],
+                "summary": "批量获取目的地详情",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "description": "目的地ID列表，如\"1,2,3\"，最多支持20个ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationDetailListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/destination/{destinationId}/related": {
+            "get": {
+                "tags": [
+                    "目的地详情"
+                ],
+                "summary": "获取相关目的地推荐",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "目的地ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "返回数量，默认5，最大20",
+                        "schema": {
+                            "type": "integer",
+                            "default": 5,
+                            "maximum": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DestinationListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip": {
+            "post": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "创建新行程",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TripDTO"
+                            },
+                            "example": {
+                                "name": "东京五日游",
+                                "startDate": "2024-04-01",
+                                "endDate": "2024-04-05",
+                                "description": "黄金周东京休闲游",
+                                "totalBudget": 8000.00
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}": {
+            "put": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "更新行程信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TripDTO"
+                            },
+                            "example": {
+                                "name": "东京六日游",
+                                "startDate": "2024-04-01",
+                                "endDate": "2024-04-06",
+                                "description": "黄金周东京深度游",
+                                "totalBudget": 10000.00
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "删除行程",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "获取行程详情",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/list": {
+            "get": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "获取用户的所有行程",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "required": false,
+                        "description": "页码(默认1)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "description": "每页数量(默认10)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripPageResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/status": {
+            "put": {
+                "tags": [
+                    "行程管理"
+                ],
+                "summary": "更新行程状态",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": true,
+                        "description": "行程状态(0:规划中,1:已完成,2:已归档)",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1,
+                                2
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/schedule": {
+            "post": {
+                "tags": [
+                    "行程日程安排"
+                ],
+                "summary": "创建日程安排",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TripScheduleDTO"
+                            },
+                            "example": {
+                                "dayIndex": 1,
+                                "scheduleType": 1,
+                                "startTime": "09:00:00",
+                                "endTime": "11:00:00",
+                                "title": "游览景点",
+                                "location": "东京塔",
+                                "description": "游览东京标志性建筑",
+                                "estimatedCost": 200.00
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripScheduleResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/schedule/{scheduleId}": {
+            "put": {
+                "tags": [
+                    "行程日程安排"
+                ],
+                "summary": "更新日程安排",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "scheduleId",
+                        "in": "path",
+                        "required": true,
+                        "description": "日程安排ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TripScheduleDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "行程日程安排"
+                ],
+                "summary": "删除日程安排",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "scheduleId",
+                        "in": "path",
+                        "required": true,
+                        "description": "日程安排ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommonResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/schedule/day/{dayIndex}": {
+            "get": {
+                "tags": [
+                    "行程日程安排"
+                ],
+                "summary": "获取行程某一天的日程安排",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "dayIndex",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程第几天",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TripScheduleListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/destination": {},
+        "/trip/{tripId}/destination/{destinationId}": {},
+        "/trip/{tripId}/destination/list": {},
+        "/trip/{tripId}/destination/day/{dayIndex}": {},
+        "/trip/{tripId}/destination/{destinationId}/order": {},
+        "/trip/{tripId}/destination/day/{dayIndex}/recommend": {},
+        "/weather/current": {
+            "get": {
+                "tags": [
+                    "天气服务"
+                ],
+                "summary": "获取实时天气",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "required": true,
+                        "description": "城市名称",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WeatherResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/weather/forecast": {
+            "get": {
+                "tags": [
+                    "天气服务"
+                ],
+                "summary": "获取天气预报",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "required": true,
+                        "description": "城市名称",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "description": "预报天数(3-7天)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 3,
+                            "minimum": 3,
+                            "maximum": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WeatherForecastResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/weather/info": {
+            "get": {
+                "tags": [
+                    "天气服务"
+                ],
+                "summary": "获取完整天气信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "required": true,
+                        "description": "城市名称",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WeatherInfoResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/location/ip": {
+            "get": {
+                "tags": [
+                    "位置服务"
+                ],
+                "summary": "获取IP定位信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ip",
+                        "in": "query",
+                        "required": false,
+                        "description": "IP地址(不传则使用当前请求的IP)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "province": {
+                                                    "type": "string",
+                                                    "description": "省份"
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "description": "城市"
+                                                },
+                                                "adcode": {
+                                                    "type": "string",
+                                                    "description": "区域编码"
+                                                },
+                                                "rectangle": {
+                                                    "type": "string",
+                                                    "description": "经纬度范围"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/location/coordinates": {
+            "get": {
+                "tags": [
+                    "位置服务"
+                ],
+                "summary": "获取经纬度定位信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true,
+                        "description": "经度，范围-180~180，东经为正，西经为负，如：116.397428",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-9]{1,2}|1[0-7][0-9]|180)\\.\\d{1,6}$",
+                            "example": "116.397428"
+                        }
+                    },
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true,
+                        "description": "纬度，范围-90~90，北纬为正，南纬为负，如：39.909187",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-8]?[0-9]|90)\\.\\d{1,6}$",
+                            "example": "39.909187"
+                        }
+                    }
+                ]
+            }
+        },
+        "/location/route": {
+            "get": {
+                "tags": [
+                    "位置服务"
+                ],
+                "summary": "获取路线规划",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "startLon",
+                        "in": "query",
+                        "required": true,
+                        "description": "起点经度，范围-180~180，东经为正，西经为负，如：116.397428",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-9]{1,2}|1[0-7][0-9]|180)\\.\\d{1,6}$",
+                            "example": "116.397428"
+                        }
+                    },
+                    {
+                        "name": "startLat",
+                        "in": "query",
+                        "required": true,
+                        "description": "起点纬度，范围-90~90，北纬为正，南纬为负，如：39.909187",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-8]?[0-9]|90)\\.\\d{1,6}$",
+                            "example": "39.909187"
+                        }
+                    },
+                    {
+                        "name": "endLon",
+                        "in": "query",
+                        "required": true,
+                        "description": "终点经度，范围-180~180，东经为正，西经为负，如：116.397428",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-9]{1,2}|1[0-7][0-9]|180)\\.\\d{1,6}$",
+                            "example": "116.397428"
+                        }
+                    },
+                    {
+                        "name": "endLat",
+                        "in": "query",
+                        "required": true,
+                        "description": "终点纬度，范围-90~90，北纬为正，南纬为负，如：39.909187",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-8]?[0-9]|90)\\.\\d{1,6}$",
+                            "example": "39.909187"
+                        }
+                    }
+                ]
+            }
+        },
+        "/location/current": {
+            "get": {
+                "tags": [
+                    "位置服务"
+                ],
+                "summary": "获取当前位置信息",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true,
+                        "description": "经度，范围-180~180，东经为正，西经为负，如：116.397428",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-9]{1,2}|1[0-7][0-9]|180)\\.\\d{1,6}$",
+                            "example": "116.397428"
+                        }
+                    },
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true,
+                        "description": "纬度，范围-90~90，北纬为正，南纬为负，如：39.909187",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^-?([0-8]?[0-9]|90)\\.\\d{1,6}$",
+                            "example": "39.909187"
+                        }
+                    }
+                ]
+            }
+        },
+        "/location/geocode": {
+            "get": {
+                "tags": [
+                    "位置服务"
+                ],
+                "summary": "地址解析(地理编码)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "query",
+                        "required": true,
+                        "description": "详细地址，如：北京市朝阳区阜通东大街6号",
+                        "schema": {
+                            "type": "string",
+                            "example": "北京市朝阳区阜通东大街6号"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "longitude": {
+                                                    "type": "string",
+                                                    "description": "经度"
+                                                },
+                                                "latitude": {
+                                                    "type": "string",
+                                                    "description": "纬度"
+                                                },
+                                                "formatted_address": {
+                                                    "type": "string",
+                                                    "description": "格式化地址"
+                                                },
+                                                "province": {
+                                                    "type": "string",
+                                                    "description": "省份"
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "description": "城市"
+                                                },
+                                                "district": {
+                                                    "type": "string",
+                                                    "description": "区县"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/images/list": {
+            "get": {
+                "tags": [
+                    "图片管理"
+                ],
+                "summary": "获取图片列表(分页)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "query",
+                        "description": "目录前缀，例如：images/carousel/ 获取轮播图，images/destination/ 获取目的地图片",
+                        "schema": {
+                            "type": "string",
+                            "default": "images/",
+                            "examples": [
+                                "images/",
+                                "images/carousel/",
+                                "images/destination/",
+                                "images/avatar/"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "description": "页码",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "每页大小",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImageListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/images/all": {
+            "get": {
+                "tags": [
+                    "图片管理"
+                ],
+                "summary": "获取所有图片列表(不分页)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "query",
+                        "description": "目录前缀",
+                        "schema": {
+                            "type": "string",
+                            "default": "images/"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImageAllResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/trip/{tripId}/day/{dayIndex}/smart-route": {
+            "post": {
+                "tags": [
+                    "智能路线规划"
+                ],
+                "summary": "生成智能路线规划",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "tripId",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "dayIndex",
+                        "in": "path",
+                        "required": true,
+                        "description": "行程第几天",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SmartRouteRequest"
+                            },
+                            "example": {
+                                "currentLocation": {
+                                    "longitude": "104.065873",
+                                    "latitude": "30.574687"
+                                },
+                                "destinations": [
+                                    1,
+                                    2,
+                                    3
+                                ],
+                                "transportType": 1,
+                                "startTime": "09:00",
+                                "endTime": "18:00"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "规划成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SmartRouteResponse"
+                                },
+                                "example": {
+                                    "code": 0,
+                                    "message": "success",
+                                    "data": {
+                                        "feasible": true,
+                                        "totalTime": 480,
+                                        "totalDistance": 15000,
+                                        "destinations": [
+                                            {
+                                                "destinationId": 1,
+                                                "name": "锦里古街",
+                                                "visitOrder": 1,
+                                                "startTime": "09:00",
+                                                "endTime": "11:00",
+                                                "recommendedDuration": 120,
+                                                "nextDestinationDistance": 2000,
+                                                "nextDestinationTransportInfo": {
+                                                    "type": 1,
+                                                    "time": 30,
+                                                    "distance": 2000,
+                                                    "cost": 0,
+                                                    "route": {
+                                                        "steps": [
+                                                            {
+                                                                "instruction": "向东步行500米到达武侯祠",
+                                                                "distance": "500",
+                                                                "duration": "6"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "destinationId": 2,
+                                                "name": "武侯祠",
+                                                "visitOrder": 2,
+                                                "startTime": "11:00",
+                                                "endTime": "13:00",
+                                                "recommendedDuration": 120,
+                                                "nextDestinationDistance": 3000,
+                                                "nextDestinationTransportInfo": {
+                                                    "type": 2,
+                                                    "time": 45,
+                                                    "distance": 3000,
+                                                    "cost": 2,
+                                                    "route": {
+                                                        "steps": [
+                                                            {
+                                                                "instruction": "乘坐1路公交到春熙路",
+                                                                "distance": "3000",
+                                                                "duration": "45"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "destinationId": 3,
+                                                "name": "春熙路",
+                                                "visitOrder": 3,
+                                                "startTime": "13:00",
+                                                "endTime": "17:00",
+                                                "recommendedDuration": 240,
+                                                "nextDestinationDistance": 0,
+                                                "nextDestinationTransportInfo": null
+                                            }
+                                        ],
+                                        "warnings": [
+                                            "春熙路人流量较大，建议避开周末高峰时段"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/{destinationId}": {
+            "post": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "发表评价",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RatingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "发表成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RatingResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/{ratingId}": {
+            "put": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "更新评价",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ratingId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RatingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "删除评价",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ratingId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/destination/{destinationId}": {
+            "get": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "获取目的地评价列表",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PageInfo"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/user": {
+            "get": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "获取用户评价列表",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "pageNum",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PageInfo"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/stats/{destinationId}": {
+            "get": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "获取评分统计",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RatingStatsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/{ratingId}/like": {
+            "post": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "点赞/取消点赞评价",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ratingId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "isLike",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "操作成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/check/{destinationId}": {
+            "get": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "检查是否已评价",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "destinationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "检查成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/destination/rating/{ratingId}/like/check": {
+            "get": {
+                "tags": [
+                    "目的地评价"
+                ],
+                "summary": "检查是否已点赞",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "ratingId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "检查成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/chat/stream/deepseek": {
+            "post": {
+                "tags": [
+                    "AI聊天"
+                ],
+                "summary": "与AI进行流式对话",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "string"
+                            },
+                            "example": "你好，我想去北京旅游，有什么建议吗？"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "conversationId",
+                        "in": "query",
+                        "description": "会话ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回SSE流式响应",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/chat/history": {
+            "get": {
+                "tags": [
+                    "AI聊天"
+                ],
+                "summary": "获取用户所有对话记录",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回对话历史",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ChatHistory"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RegisterRequest": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^1[3-9]\\d{9}$",
+                        "description": "手机号"
+                    },
+                    "password": {
+                        "type": "string",
+                        "pattern": "^(?=.*[0-9])(?=.*[a-zA-Z]).{8,16}$",
+                        "description": "密码"
+                    },
+                    "username": {
+                        "type": "string",
+                        "description": "用户名"
+                    }
+                }
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "description": "手机号"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "密码"
+                    }
+                }
+            },
+            "UserPreference": {
+                "type": "object",
+                "properties": {
+                    "travelStyles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "自然风光",
+                                "文化遗产",
+                                "美食",
+                                "购物",
+                                "历史",
+                                "艺术",
+                                "冒险"
+                            ]
+                        },
+                        "description": "旅行风格"
+                    },
+                    "destinationTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "山岳",
+                                "海滨",
+                                "古镇",
+                                "城市",
+                                "乡村",
+                                "海岛",
+                                "沙漠"
+                            ]
+                        },
+                        "description": "目的地类型"
+                    },
+                    "seasonalPreferences": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "春季",
+                                "夏季",
+                                "秋季",
+                                "冬季"
+                            ]
+                        },
+                        "description": "季节偏好"
+                    },
+                    "budget": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 2000,
+                        "description": "预算(单位:元)"
+                    },
+                    "duration": {
+                        "type": "string",
+                        "enum": [
+                            "short",
+                            "medium",
+                            "long"
+                        ],
+                        "description": "期望行程时长(short:1-3天,medium:4-7天,long:7天以上)"
+                    }
+                },
+                "required": [
+                    "travelStyles",
+                    "destinationTypes",
+                    "seasonalPreferences",
+                    "budget",
+                    "duration"
+                ]
+            },
+            "Destination": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "目的地ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "目的地名称"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "描述"
+                    },
+                    "imageUrl": {
+                        "type": "string",
+                        "description": "图片URL"
+                    },
+                    "rating": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "评分"
+                    },
+                    "recommendedDuration": {
+                        "type": "string",
+                        "description": "推荐游玩时长"
+                    },
+                    "averageBudget": {
+                        "type": "number",
+                        "description": "平均预算"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "标签列表 (使用StringListTypeHandler处理)"
+                    },
+                    "bestSeasons": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "最佳季节列表 (使用StringListTypeHandler处理)"
+                    },
+                    "seasonalFeatures": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        },
+                        "description": "季节特色 (使用MapTypeHandler处理)"
+                    },
+                    "popularity": {
+                        "type": "integer",
+                        "description": "热度"
+                    },
+                    "seasonalScore": {
+                        "type": "integer",
+                        "description": "季节性评分(0-100)",
+                        "minimum": 0,
+                        "maximum": 100
+                    }
+                }
+            },
+            "CommonResult": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "description": "状态码"
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "消息"
+                    }
+                }
+            },
+            "DestinationPageResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "list": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Destination"
+                                }
+                            },
+                            "pageNum": {
+                                "type": "integer"
+                            },
+                            "pageSize": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "pages": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "UserInfoResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "description": "用户ID"
+                            },
+                            "username": {
+                                "type": "string",
+                                "description": "用户名"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "description": "手机号"
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "邮箱"
+                            },
+                            "gender": {
+                                "type": "string",
+                                "description": "性别"
+                            },
+                            "userPic": {
+                                "type": "string",
+                                "description": "头像url"
+                            },
+                            "createTime": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "创建时间"
+                            },
+                            "updateTime": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "更新时间"
+                            }
+                        }
+                    }
+                }
+            },
+            "UserUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "用户ID"
+                    },
+                    "username": {
+                        "type": "string",
+                        "description": "用户名"
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "邮箱"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "description": "性别"
+                    },
+                    "userPic": {
+                        "type": "string",
+                        "description": "头像url"
+                    }
+                }
+            },
+            "PasswordChangeRequest": {
+                "type": "object",
+                "properties": {
+                    "oldPassword": {
+                        "type": "string",
+                        "description": "旧密码"
+                    },
+                    "newPassword": {
+                        "type": "string",
+                        "description": "新密码"
+                    },
+                    "confirmPassword": {
+                        "type": "string",
+                        "description": "确认新密码"
+                    }
+                }
+            },
+            "LoginStatusResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "isValid": {
+                                "type": "boolean",
+                                "description": "登录状态是否有效"
+                            },
+                            "newToken": {
+                                "type": "string",
+                                "description": "新token(当原token即将过期时返回)"
+                            }
+                        }
+                    }
+                }
+            },
+            "FileUploadResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "string",
+                        "description": "文件访问url"
+                    }
+                }
+            },
+            "LoginResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "token": {
+                                "type": "string",
+                                "description": "jwt令牌"
+                            },
+                            "userInfo": {
+                                "type": "object",
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "description": "手机号"
+                                    },
+                                    "avatar": {
+                                        "type": "string",
+                                        "description": "头像url"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "description": "用户名"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "UserFavorite": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "收藏ID"
+                    },
+                    "userId": {
+                        "type": "integer",
+                        "description": "用户ID"
+                    },
+                    "destinationId": {
+                        "type": "integer",
+                        "description": "目的地ID"
+                    },
+                    "createTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "收藏时间"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "description": "收藏状态"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "收藏分类"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "收藏备注"
+                    },
+                    "updateTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "更新时间"
+                    },
+                    "destination": {
+                        "$ref": "#/components/schemas/Destination"
+                    }
+                }
+            },
+            "FavoriteListResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "list": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/UserFavorite"
+                                }
+                            },
+                            "pageNum": {
+                                "type": "integer"
+                            },
+                            "pageSize": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "pages": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "FavoriteCheckResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "boolean",
+                        "description": "是否已收藏"
+                    }
+                }
+            },
+            "CategoryRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "分类名称",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "分类描述",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "FavoriteCategory": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "分类ID"
+                    },
+                    "userId": {
+                        "type": "integer",
+                        "description": "用户ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "分类名称",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "分类描述",
+                        "maxLength": 255
+                    },
+                    "isDefault": {
+                        "type": "boolean",
+                        "description": "是否默认分类"
+                    },
+                    "sortOrder": {
+                        "type": "integer",
+                        "description": "排序顺序(越小越靠前)"
+                    },
+                    "createTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "创建时间"
+                    },
+                    "updateTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "更新时间"
+                    }
+                }
+            },
+            "CategoryListResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FavoriteCategory"
+                        }
+                    }
+                }
+            },
+            "FavoriteStatsResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "totalCount": {
+                                "type": "integer",
+                                "description": "总收藏数"
+                            },
+                            "defaultCategoryCount": {
+                                "type": "integer",
+                                "description": "默认分类的收藏数"
+                            },
+                            "categoryStats": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "integer"
+                                },
+                                "description": "各分类的收藏数量统计"
+                            }
+                        }
+                    }
+                }
+            },
+            "DestinationDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "详情ID"
+                    },
+                    "destinationId": {
+                        "type": "integer",
+                        "description": "目的地ID"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "详细介绍"
+                    },
+                    "trafficInfo": {
+                        "type": "string",
+                        "description": "交通信息"
+                    },
+                    "accommodationInfo": {
+                        "type": "string",
+                        "description": "住宿信息"
+                    },
+                    "foodInfo": {
+                        "type": "string",
+                        "description": "美食信息"
+                    },
+                    "attractions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "images": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "description": "景点列表 (使用ListMapTypeHandler处理)"
+                    },
+                    "travelTips": {
+                        "type": "string",
+                        "description": "旅行建议"
+                    },
+                    "bestTravelTime": {
+                        "type": "string",
+                        "description": "最佳旅行时间"
+                    },
+                    "climateInfo": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "description": "气候信息 (使用MapTypeHandler处理)"
+                    },
+                    "localCustoms": {
+                        "type": "string",
+                        "description": "风土人情"
+                    },
+                    "shoppingInfo": {
+                        "type": "string",
+                        "description": "购物信息"
+                    },
+                    "destination": {
+                        "$ref": "#/components/schemas/Destination"
+                    }
+                }
+            },
+            "DestinationDetailResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/DestinationDetail"
+                    }
+                }
+            },
+            "DestinationDetailListResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DestinationDetail"
+                        }
+                    }
+                }
+            },
+            "DestinationDetailUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "详细介绍"
+                    },
+                    "trafficInfo": {
+                        "type": "string",
+                        "description": "交通信息"
+                    },
+                    "accommodationInfo": {
+                        "type": "string",
+                        "description": "住宿信息"
+                    },
+                    "foodInfo": {
+                        "type": "string",
+                        "description": "美食信息"
+                    },
+                    "attractions": {
+                        "type": "array",
+                        "description": "景点列表",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "景点名称"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "景点描述"
+                                },
+                                "images": {
+                                    "type": "array",
+                                    "description": "图片URL列表",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "travelTips": {
+                        "type": "string",
+                        "description": "旅行建议"
+                    },
+                    "bestTravelTime": {
+                        "type": "string",
+                        "description": "最佳旅行时间"
+                    },
+                    "climateInfo": {
+                        "type": "object",
+                        "description": "气候信息",
+                        "properties": {
+                            "spring": {
+                                "type": "string",
+                                "description": "春季气候描述"
+                            },
+                            "summer": {
+                                "type": "string",
+                                "description": "夏季气候描述"
+                            },
+                            "autumn": {
+                                "type": "string",
+                                "description": "秋季气候描述"
+                            },
+                            "winter": {
+                                "type": "string",
+                                "description": "冬季气候描述"
+                            }
+                        }
+                    },
+                    "localCustoms": {
+                        "type": "string",
+                        "description": "风土人情"
+                    },
+                    "shoppingInfo": {
+                        "type": "string",
+                        "description": "购物信息"
+                    }
+                }
+            },
+            "TripResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Trip"
+                    }
+                }
+            },
+            "TripPageResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "list": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Trip"
+                                }
+                            },
+                            "pageNum": {
+                                "type": "integer"
+                            },
+                            "pageSize": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "pages": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "TripScheduleDTO": {
+                "type": "object",
+                "required": [
+                    "dayIndex",
+                    "scheduleType",
+                    "startTime",
+                    "endTime",
+                    "title"
+                ],
+                "properties": {
+                    "dayIndex": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "行程第几天"
+                    },
+                    "scheduleType": {
+                        "type": "integer",
+                        "description": "安排类型(1:景点游览,2:用餐,3:休息,4:交通)"
+                    },
+                    "destinationId": {
+                        "type": "integer",
+                        "description": "目的地ID，仅在scheduleType=1(景点游览)时必填"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "format": "time",
+                        "description": "开始时间"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "format": "time",
+                        "description": "结束时间"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "安排标题"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "地点"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "详细描述"
+                    },
+                    "estimatedCost": {
+                        "type": "number",
+                        "format": "decimal",
+                        "minimum": 0,
+                        "description": "预计费用"
+                    }
+                }
+            },
+            "TripSchedule": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "日程安排ID"
+                    },
+                    "tripId": {
+                        "type": "integer",
+                        "description": "行程ID"
+                    },
+                    "dayIndex": {
+                        "type": "integer",
+                        "description": "行程第几天"
+                    },
+                    "scheduleType": {
+                        "type": "integer",
+                        "description": "安排类型(1:景点游览,2:用餐,3:休息,4:交通)"
+                    },
+                    "destinationId": {
+                        "type": "integer",
+                        "description": "目的地ID，仅在scheduleType=1时有值"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "format": "time",
+                        "description": "开始时间"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "format": "time",
+                        "description": "结束时间"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "安排标题"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "地点"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "详细描述"
+                    },
+                    "estimatedCost": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "预计费用"
+                    },
+                    "createTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "创建时间"
+                    },
+                    "updateTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "更新时间"
+                    }
+                }
+            },
+            "TripScheduleResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/TripSchedule"
+                    }
+                }
+            },
+            "TripScheduleListResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TripSchedule"
+                        }
+                    }
+                }
+            },
+            "WeatherResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "province": {
+                                "type": "string",
+                                "description": "省份"
+                            },
+                            "city": {
+                                "type": "string",
+                                "description": "城市"
+                            },
+                            "temperature": {
+                                "type": "string",
+                                "description": "温度"
+                            },
+                            "weather": {
+                                "type": "string",
+                                "description": "天气状况"
+                            },
+                            "winddirection": {
+                                "type": "string",
+                                "description": "风向"
+                            },
+                            "windpower": {
+                                "type": "string",
+                                "description": "风力"
+                            },
+                            "humidity": {
+                                "type": "string",
+                                "description": "湿度"
+                            },
+                            "reporttime": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "发布时间"
+                            }
+                        }
+                    }
+                }
+            },
+            "WeatherForecastResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "description": "日期"
+                                },
+                                "dayweather": {
+                                    "type": "string",
+                                    "description": "白天天气"
+                                },
+                                "nightweather": {
+                                    "type": "string",
+                                    "description": "夜间天气"
+                                },
+                                "daytemp": {
+                                    "type": "string",
+                                    "description": "白天温度"
+                                },
+                                "nighttemp": {
+                                    "type": "string",
+                                    "description": "夜间温度"
+                                },
+                                "daywind": {
+                                    "type": "string",
+                                    "description": "白天风向"
+                                },
+                                "nightwind": {
+                                    "type": "string",
+                                    "description": "夜间风向"
+                                },
+                                "daypower": {
+                                    "type": "string",
+                                    "description": "白天风力"
+                                },
+                                "nightpower": {
+                                    "type": "string",
+                                    "description": "夜间风力"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "WeatherInfoResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "current": {
+                                "$ref": "#/components/schemas/WeatherResponse/properties/data"
+                            },
+                            "forecast": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/WeatherForecastResponse/properties/data/items"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ImageListResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "list": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "description": "图片URL"
+                                }
+                            },
+                            "pageNum": {
+                                "type": "integer",
+                                "description": "当前页码"
+                            },
+                            "pageSize": {
+                                "type": "integer",
+                                "description": "每页大小"
+                            },
+                            "total": {
+                                "type": "integer",
+                                "description": "总记录数"
+                            },
+                            "pages": {
+                                "type": "integer",
+                                "description": "总页数"
+                            }
+                        }
+                    }
+                }
+            },
+            "ImageAllResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "图片URL"
+                        }
+                    }
+                }
+            },
+            "SmartRouteRequest": {
+                "type": "object",
+                "properties": {
+                    "currentLocation": {
+                        "type": "object",
+                        "properties": {
+                            "longitude": {
+                                "type": "string",
+                                "description": "经度"
+                            },
+                            "latitude": {
+                                "type": "string",
+                                "description": "纬度"
+                            }
+                        }
+                    },
+                    "destinations": {
+                        "type": "array",
+                        "description": "需要规划的目的地ID列表",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "transportType": {
+                        "type": "integer",
+                        "description": "首选交通方式(1:步行,2:公交,3:地铁,4:出租,5:自驾)",
+                        "default": 1
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "description": "计划开始时间",
+                        "default": "09:00"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "description": "计划结束时间",
+                        "default": "18:00"
+                    }
+                },
+                "required": [
+                    "destinations"
+                ]
+            },
+            "SmartRouteResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "feasible": {
+                                "type": "boolean",
+                                "description": "是否可行"
+                            },
+                            "totalTime": {
+                                "type": "integer",
+                                "description": "总时间(分钟)"
+                            },
+                            "totalDistance": {
+                                "type": "integer",
+                                "description": "总距离(米)"
+                            },
+                            "destinations": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/RouteDestination"
+                                }
+                            },
+                            "warnings": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "警告信息"
+                            }
+                        }
+                    }
+                }
+            },
+            "RouteDestination": {
+                "type": "object",
+                "properties": {
+                    "destinationId": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "visitOrder": {
+                        "type": "integer"
+                    },
+                    "startTime": {
+                        "type": "string"
+                    },
+                    "endTime": {
+                        "type": "string"
+                    },
+                    "recommendedDuration": {
+                        "type": "integer",
+                        "description": "建议游览时间(分钟)"
+                    },
+                    "nextDestinationDistance": {
+                        "type": "integer",
+                        "description": "到下一个目的地的距离(米)"
+                    },
+                    "nextDestinationTransportInfo": {
+                        "$ref": "#/components/schemas/TransportInfo"
+                    }
+                }
+            },
+            "TransportInfo": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "integer",
+                        "description": "交通方式"
+                    },
+                    "time": {
+                        "type": "integer",
+                        "description": "预计时间(分钟)"
+                    },
+                    "distance": {
+                        "type": "integer",
+                        "description": "距离(米)"
+                    },
+                    "cost": {
+                        "type": "number",
+                        "description": "预计花费"
+                    },
+                    "route": {
+                        "type": "object",
+                        "properties": {
+                            "steps": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "instruction": {
+                                            "type": "string"
+                                        },
+                                        "distance": {
+                                            "type": "string"
+                                        },
+                                        "duration": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "RatingRequest": {
+                "type": "object",
+                "properties": {
+                    "rating": {
+                        "type": "number",
+                        "format": "double",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "评分(1-5分)"
+                    },
+                    "comment": {
+                        "type": "string",
+                        "description": "评价内容"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "标签"
+                    },
+                    "visitTime": {
+                        "type": "string",
+                        "description": "游览时间"
+                    },
+                    "visitDuration": {
+                        "type": "integer",
+                        "description": "游览时长(分钟)"
+                    },
+                    "crowdLevel": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "人流量级别(1-5)"
+                    },
+                    "costPerPerson": {
+                        "type": "number",
+                        "description": "人均消费"
+                    },
+                    "isAnonymous": {
+                        "type": "boolean",
+                        "description": "是否匿名"
+                    }
+                }
+            },
+            "RatingResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "ratingId": {
+                                "type": "integer",
+                                "description": "评价ID"
+                            }
+                        }
+                    }
+                }
+            },
+            "ClientResult": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "ratingId": {
+                                "type": "integer",
+                                "description": "评价ID"
+                            }
+                        }
+                    }
+                }
+            },
+            "RatingStatsResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "totalCount": {
+                                "type": "integer",
+                                "description": "总评价数"
+                            },
+                            "avgRating": {
+                                "type": "number",
+                                "format": "double",
+                                "description": "平均评分"
+                            },
+                            "avgCrowdLevel": {
+                                "type": "number",
+                                "format": "double",
+                                "description": "平均人流量"
+                            },
+                            "avgCost": {
+                                "type": "number",
+                                "format": "double",
+                                "description": "平均消费"
+                            }
+                        }
+                    }
+                }
+            },
+            "PageInfo": {
+                "type": "object",
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DestinationRating"
+                        }
+                    },
+                    "pageNum": {
+                        "type": "integer"
+                    },
+                    "pageSize": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "pages": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "DestinationRating": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "integer"
+                    },
+                    "destinationId": {
+                        "type": "integer"
+                    },
+                    "rating": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "comment": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "likeCount": {
+                        "type": "integer"
+                    },
+                    "visitTime": {
+                        "type": "string"
+                    },
+                    "visitDuration": {
+                        "type": "integer"
+                    },
+                    "crowdLevel": {
+                        "type": "integer"
+                    },
+                    "costPerPerson": {
+                        "type": "number"
+                    },
+                    "isAnonymous": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "createTime": {
+                        "type": "string"
+                    },
+                    "updateTime": {
+                        "type": "string"
+                    },
+                    "userInfo": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "username": {
+                                "type": "string"
+                            },
+                            "avatar": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "destination": {
+                        "$ref": "#/components/schemas/Destination"
+                    }
+                }
+            },
+            "ChatRequest": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "用户提问的问题",
+                        "minLength": 1,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "question"
+                ]
+            },
+            "ChatResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "description": "状态码，0表示成功"
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "状态信息"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "description": "AI回复的主要内容"
+                            },
+                            "reasoningContent": {
+                                "type": "string",
+                                "description": "AI的推理过程（如果有）"
+                            }
+                        }
+                    }
+                }
+            },
+            "ChatHistory": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "记录ID"
+                    },
+                    "userId": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "用户ID"
+                    },
+                    "conversationId": {
+                        "type": "string",
+                        "description": "会话ID"
+                    },
+                    "messageId": {
+                        "type": "string",
+                        "description": "消息ID"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "对话内容"
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "使用的模型"
+                    },
+                    "systemFingerprint": {
+                        "type": "string",
+                        "description": "系统指纹"
+                    },
+                    "totalTokens": {
+                        "type": "integer",
+                        "description": "总token数"
+                    },
+                    "createTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "创建时间"
+                    },
+                    "updateTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "更新时间"
+                    }
+                }
+            }
+        }
+    },
+    "securitySchemes": {
+        "bearerAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization"
+        }
+    }
+}
