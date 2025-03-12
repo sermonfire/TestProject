@@ -85,7 +85,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['change', 'collapse-change', 'create'])
+const emit = defineEmits(['change', 'collapse-change', 'create', 'conversationHistoryList'])
 
 // 对话列表数据
 const conversations = ref([])
@@ -127,7 +127,6 @@ const fetchConversations = async () => {
         loading.value = true
         const response = await getChatHistory()
 
-        // 直接判断 response 的 code 和 data
         if (response.code === 0 && Array.isArray(response.data)) {
             conversations.value = response.data.map(item => ({
                 conversationId: item.conversationId,
@@ -139,6 +138,7 @@ const fetchConversations = async () => {
                 userId: item.userId,
                 disabled: false
             })).sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+            emit('conversationHistoryList', conversations.value)
         } else {
             conversations.value = []
             if (response.code !== 0) {

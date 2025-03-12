@@ -106,7 +106,51 @@ const resetChat = () => {
  */
 const handleCollapseChange = (isCollapsed) => {
     // 可以在这里添加其他处理逻辑
-    console.log('对话管理器折叠状态:', isCollapsed);
+
+};
+
+/**
+ * 处理新建对话
+ * @param {String} conversationId - 新建对话的ID
+ */
+const handleConversationCreate = (conversationId) => {
+    activeConversationKey.value = conversationId;
+    messageText.value = '';
+    emit('chat-state-change', true);
+    message.success('新建对话成功！');
+};
+
+/**
+ * 对话列表数据
+ * @type {Array}
+ */
+const conversationItems = ref([]);
+
+/**
+ * 处理对话切换
+ * @param {String} key - 对话的key
+ */
+const handleConversationChange = (key) => {
+    activeConversationKey.value = key;
+    // 这里可以根据不同的对话加载不同的内容
+    const currentConversation = conversationItems.value.find(item => item.key === key);
+    message.info(`切换到对话: ${currentConversation?.label || '未知对话'}`);
+};
+
+/**
+ * 处理对话历史列表
+ * @param {Array} conversationHistoryList - 对话历史列表
+ */
+const handleConversationHistoryList = (conversationHistoryList) => {
+    if (Array.isArray(conversationHistoryList)) {
+        conversationItems.value = conversationHistoryList.map(item => ({
+            key: item.conversationId,
+            label: item.title || '新对话',
+            content: item.content,
+            createTime: item.createTime,
+            messageId: item.messageId,
+        }));
+    }
 };
 
 // 组件挂载时添加点击事件监听
@@ -118,39 +162,6 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
 });
-
-/**
- * 对话列表数据
- * @type {Array}
- */
-const conversationItems = ref([
-    {
-        key: 'conversation1',
-        label: '旅游规划对话',
-    },
-    {
-        key: 'conversation2',
-        label: '景点推荐对话',
-    },
-    {
-        key: 'conversation3',
-        label: '美食探索对话',
-    },
-    {
-        key: 'conversation4',
-        label: '历史遗迹探索',
-    }
-]);
-
-/**
- * 处理对话切换
- * @param {String} key - 对话的key
- */
-const handleConversationChange = (key) => {
-    activeConversationKey.value = key;
-    // 这里可以根据不同的对话加载不同的内容
-    message.info(`切换到对话: ${key}`);
-};
 
 /**
  * 是否显示对话管理组件
@@ -168,6 +179,7 @@ const showConversations = computed(() => {
             <!-- 对话管理组件 -->
             <ConversationManager v-if="showConversations" :items="conversationItems" :active-key="activeConversationKey"
                 :visible="showConversations" @change="handleConversationChange" @collapse-change="handleCollapseChange"
+                @create="handleConversationCreate" @conversationHistoryList="handleConversationHistoryList"
                 class="conversation-manager" />
 
             <Welcome v-if="!isChat" variant="borderless"
