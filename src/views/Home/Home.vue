@@ -64,7 +64,7 @@ const handleChatStateChange = (chatState) => {
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: #f5f7fa;
+    background-color: #fff;
 }
 
 .content-wrapper {
@@ -75,7 +75,7 @@ const handleChatStateChange = (chatState) => {
     flex: 1;
     margin: 0;
     width: 100%;
-    background-color: #f5f7fa;
+    background-color: #fff;
     min-height: calc(100vh - 96px);
     transition: all 0.3s ease-in-out;
     position: relative;

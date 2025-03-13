@@ -82,6 +82,10 @@ const responseInterceptors = [
                 };
             }
 
+            if (status === 200) {
+                return response;
+            }
+
             if (status === 401 && response.config.needToken && !response.config.isPublic) {
                 const userStore = useUserStore();
                 userStore.clear();

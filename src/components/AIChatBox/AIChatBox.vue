@@ -63,35 +63,106 @@ watch(loading, () => {
     if (loading.value) {
         messageText.value = '';
         emit('chat-state-change', true);
-
-        const timer = setTimeout(() => {
-            loading.value = false;
-            message.success('消息发送成功!');
-            clearTimeout(timer);
-        }, 2000);
     }
 });
 
 
 const newMessage = ref('');
+// 添加一个临时存储AI回复的ref
+const tempAssistantMessage = ref('');
+
 /**
  * 处理提交消息
  */
 const handleSubmit = async () => {
+    if (!messageText.value.trim()) return;
+
     loading.value = true;
     newMessage.value = messageText.value;
     messageText.value = '';
+    tempAssistantMessage.value = ''; // 重置临时消息
 
-    //将用户消息添加到当前对话中用于渲染
-    conversationItems
+    // 构建用户消息对象
+    const userMessage = {
+        role: 'user',
+        content: newMessage.value
+    };
 
-    // 发送消息
-    const res = await sendStreamChat({
-        content: newMessage.value,
-        conversationId: activeConversationKey.value
-    });
+    // 找到当前对话
+    const currentConversation = conversationItems.value.find(
+        item => item.key === activeConversationKey.value
+    );
 
+    if (currentConversation) {
+        try {
+            // 更新当前对话的内容
+            let currentContent = [];
+            if (currentConversation.content) {
+                currentContent = JSON.parse(currentConversation.content);
+            }
+            currentContent.push(userMessage);
 
+            // 构建AI助手的初始回复消息
+            const assistantMessage = {
+                role: 'assistant',
+                content: ''
+            };
+            currentContent.push(assistantMessage);
+
+            // 发送消息
+            const response = await sendStreamChat({
+                content: newMessage.value,
+                conversationId: activeConversationKey.value
+            });
+
+            // 使用响应数据
+            if (response) {
+                // 按行分割数据
+                const lines = response.split('\n');
+
+                // 遍历每一行
+                lines.forEach(line => {
+                    // 检查是否以 "data:" 开头
+                    if (line.startsWith('data:')) {
+                        // 去掉 "data:" 前缀
+                        const data = line.slice(5).trim();
+
+                        // 忽略连接成功和保活消息
+                        if (data === '连接成功...' || data === 'keep-alive') {
+                            return;
+                        }
+
+                        // 处理实际的消息数据
+                        if (data.startsWith('data:')) {
+                            try {
+                                const jsonStr = data.slice(5).trim();
+                                const jsonData = JSON.parse(jsonStr);
+
+                                // 提取 content 字段
+                                if (jsonData.choices && jsonData.choices[0].delta.content) {
+                                    content += jsonData.choices[0].delta.content;
+
+                                    // 实时更新对话内容
+                                    assistantMessage.content = content;
+                                    currentContent[currentContent.length - 1] = assistantMessage;
+                                    currentConversation.content = JSON.stringify(currentContent);
+                                    loading.value = false;
+
+                                }
+                            } catch (error) {
+                                // 忽略解析错误，继续处理下一行
+                                console.debug('Skipping non-JSON line:', data);
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('发送消息失败:', error);
+            message.error('发送消息失败，请重试');
+            loading.value = false;
+        }
+    }
 };
 
 /**
@@ -117,8 +188,9 @@ const handleClickOutside = (event) => {
     const senderElement = senderRef.value?.$el || senderRef.value;
     const isClickInSender = senderElement && senderElement.contains(event.target);
     const isClickInConversationManager = event.target.closest('.conversation-manager');
+    const isClickInMessageDisplay = event.target.closest('.chat-message-display');
 
-    if (!isClickInSender && !isClickInConversationManager && props.isFocus) {
+    if (!isClickInSender && !isClickInConversationManager && !isClickInMessageDisplay && props.isFocus) {
         emit('focus-change', false);
         if (props.isChat) {
             emit('chat-state-change', false);
@@ -255,7 +327,7 @@ const roleConfig = {
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" style="margin-bottom:20px ;" />
 
-            <div v-else-if="props.isFocus" class="chat-message-display">
+            <scroll-view v-else-if="props.isFocus" class="chat-message-display">
                 <div class="message-container">
                     <div class="conversation-title">
                         {{conversationItems.find(item => item.key === activeConversationKey)?.label}}
@@ -263,9 +335,9 @@ const roleConfig = {
 
                     <!-- 动态消息展示 -->
                     <div class="message-list"
-                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;margin-top: 15vh;">
-                        <Bubble v-for="(msg, index) in currentMessages" :key="index" :content="msg.content"
-                            :placement="roleConfig[msg.role]?.placement || 'start'"
+                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;">
+                        <Bubble v-for="(msg, index) in currentMessages.slice().reverse()" :key="index"
+                            :content="msg.content" :placement="roleConfig[msg.role]?.placement || 'start'"
                             :avatar="roleConfig[msg.role]?.avatar" :header="msg.role === 'assistant' ? '旅游助手' : '你'">
                             <template #footer v-if="msg.role === 'assistant'">
                                 <Space :size="token.paddingXXS">
@@ -292,15 +364,18 @@ const roleConfig = {
                             </template>
                         </Bubble>
 
-                        <!-- 这里用于展示新的对话消息 -->
-
+                        <!-- 加载状态显示，添加打字机效果 -->
+                        <Bubble v-if="tempAssistantMessage" :loading="loading" :typing="{ step: 2, interval: 50 }"
+                            :content="tempAssistantMessage" placement="start" :avatar="roleConfig['assistant'].avatar"
+                            header="旅游助手">
+                        </Bubble>
                     </div>
                 </div>
 
                 <div class="chat-controls">
                     <a @click="resetChat">重新开始对话</a>
                 </div>
-            </div>
+            </scroll-view>
 
             <div class="chat-input">
                 <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter"
@@ -353,14 +428,15 @@ const roleConfig = {
     justify-content: space-between;
     overflow-y: auto;
     max-width: 55vw;
-    padding: 20px 40px;
+    max-height: 70vh;
+    padding: 0 20px 40px 20px;
     background-color: #fff;
     border-radius: 10px;
 }
 
 .chat-input {
     width: 100%;
-    max-width: 55vw;
+    max-width: 60vw;
     padding: 20px 40px;
     background-color: #fff;
 }
@@ -397,14 +473,24 @@ const roleConfig = {
 }
 
 .conversation-title {
-    position: absolute;
-    top: 25px;
-    left: 0;
+    position: sticky;
+    width: 100%;
+    top: 0px;
     font-size: 20px;
     font-weight: bold;
     color: #3b3b3b;
     margin-bottom: 10px;
-    width: 100%;
     text-align: center;
+    z-index: 100;
+    background-color: rgba(255, 255, 255, 1);
+}
+
+.loading-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    color: var(--el-text-color-secondary);
 }
 </style>
