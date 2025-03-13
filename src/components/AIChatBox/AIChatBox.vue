@@ -299,16 +299,16 @@ const currentMessages = computed(() => {
 // 角色映射配置
 const roleConfig = {
     user: {
-        avatar: { icon: h(UserOutlined) },
+        avatar: UserOutlined,
         placement: 'end',
         color: '#fff',
-        backgroundColor: '#fde3cf',
+        backgroundColor: '#87d068',
     },
     assistant: {
-        avatar: { icon: h(RobotOutlined) },
+        avatar: RobotOutlined,
         placement: 'start',
         color: '#f56a00',
-        backgroundColor: '#87d068',
+        backgroundColor: '#fde3cf',
     }
 };
 
@@ -327,7 +327,7 @@ const roleConfig = {
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
                 title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" style="margin-bottom:20px ;" />
 
-            <scroll-view v-else-if="props.isFocus" class="chat-message-display">
+            <div v-else-if="props.isFocus" class="chat-message-display">
                 <div class="message-container">
                     <div class="conversation-title">
                         {{conversationItems.find(item => item.key === activeConversationKey)?.label}}
@@ -335,10 +335,11 @@ const roleConfig = {
 
                     <!-- 动态消息展示 -->
                     <div class="message-list"
-                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 20px;">
+                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 10px;">
                         <Bubble v-for="(msg, index) in currentMessages.slice().reverse()" :key="index"
-                            :content="msg.content" :placement="roleConfig[msg.role]?.placement || 'start'"
-                            :avatar="roleConfig[msg.role]?.avatar" :header="msg.role === 'assistant' ? '旅游助手' : '你'">
+                            :content="msg.content" :placement="roleConfig[msg.role].placement || 'start'"
+                            :avatar="{ icon: h(roleConfig[msg.role].avatar), style: roleConfig[msg.role] }"
+                            :header="msg.role === 'assistant' ? '旅游助手' : '你'">
                             <template #footer v-if="msg.role === 'assistant'">
                                 <Space :size="token.paddingXXS">
                                     <Button type="text" size="small">
@@ -375,7 +376,7 @@ const roleConfig = {
                 <div class="chat-controls">
                     <a @click="resetChat">重新开始对话</a>
                 </div>
-            </scroll-view>
+            </div>
 
             <div class="chat-input">
                 <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter"
@@ -426,12 +427,32 @@ const roleConfig = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    overflow-y: auto;
+    overflow-y: scroll;
     max-width: 55vw;
     max-height: 70vh;
     padding: 0 20px 40px 20px;
     background-color: #fff;
     border-radius: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* 为Webkit浏览器添加自定义滚动条样式 */
+.chat-message-display::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-message-display::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-message-display::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.chat-message-display::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .chat-input {
