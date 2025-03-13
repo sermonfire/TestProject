@@ -244,7 +244,7 @@ const roleConfig = {
 
 <template>
     <div>
-        <Flex justify="center" align="center" vertical class="chat-box" :class="{ 'chat-active': props.isChat }">
+        <Flex justify="center" align="center" vertical class="chat-box">
             <!-- 对话管理组件 -->
             <ConversationManager v-if="showConversations" :items="conversationItems" :active-key="activeConversationKey"
                 :visible="showConversations" @change="handleConversationChange" @collapse-change="handleCollapseChange"
@@ -253,7 +253,7 @@ const roleConfig = {
 
             <Welcome v-if="(!hasHistoryMessages || !props.isFocus) && !props.isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
-                title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" />
+                title="你好,我是你的旅游助手" description="我可以帮助你规划你的旅游路线，并提供相关的旅游信息。" style="margin-bottom:20px ;" />
 
             <div v-else-if="props.isFocus" class="chat-message-display">
                 <div class="message-container">
@@ -302,23 +302,25 @@ const roleConfig = {
                 </div>
             </div>
 
-            <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter" :loading="loading"
-                v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel" @click="handleFocus"
-                style="width: 50%;margin-bottom: 20vh;" :actions="(_, info) => {
-                    const { SendButton, LoadingButton, ClearButton } = info.components;
+            <div class="chat-input">
+                <Sender :class="{ 'sender-ref': props.isChat }" ref="senderRef" submitType="shiftEnter"
+                    :loading="loading" v-model:value="messageText" @submit="handleSubmit" @cancel="handleCancel"
+                    @click="handleFocus" style="width: 100%;margin-bottom: 40px; margin-top: 40px;" :actions="(_, info) => {
+                        const { SendButton, LoadingButton, ClearButton } = info.components;
 
-                    return h(Space, { size: 'small' }, () => [
-                        h(Typography.Text, {
-                            type: 'secondary',
-                            ellipsis: false,
-                            content: 'Shift + Enter 发送'
-                        }),
-                        h(ClearButton),
-                        loading
-                            ? h(LoadingButton, { type: 'default', icon: h(Spin, { size: 'small' }), disabled: true })
-                            : h(SendButton, { type: 'primary', disabled: false })
-                    ]);
-                }" />
+                        return h(Space, { size: 'small' }, () => [
+                            h(Typography.Text, {
+                                type: 'secondary',
+                                ellipsis: false,
+                                content: 'Shift + Enter 发送'
+                            }),
+                            h(ClearButton),
+                            loading
+                                ? h(LoadingButton, { type: 'default', icon: h(Spin, { size: 'small' }), disabled: true })
+                                : h(SendButton, { type: 'primary', disabled: false })
+                        ]);
+                    }" />
+            </div>
         </Flex>
     </div>
 </template>
@@ -328,6 +330,7 @@ const roleConfig = {
     margin: 0 auto;
     transition: all 0.3s ease-in-out;
     min-height: 25vh;
+    max-width: 70vw;
 }
 
 .conversation-manager {
@@ -342,23 +345,24 @@ const roleConfig = {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
-.chat-active {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: calc(100vh - 150px);
-}
-
 .chat-message-display {
     width: 100%;
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px;
     overflow-y: auto;
-    max-width: 900px;
-    margin: 0 auto;
+    max-width: 55vw;
+    padding: 20px 40px;
+    background-color: #fff;
+    border-radius: 10px;
+}
+
+.chat-input {
+    width: 100%;
+    max-width: 55vw;
+    padding: 20px 40px;
+    background-color: #fff;
 }
 
 .message-container {
@@ -387,7 +391,6 @@ const roleConfig = {
     position: sticky;
     bottom: 20px;
     margin-bottom: 20px;
-    margin-top: 20px;
     width: 100% !important;
     max-width: 800px;
     z-index: 10;
@@ -395,11 +398,11 @@ const roleConfig = {
 
 .conversation-title {
     position: absolute;
-    top: 5px;
+    top: 25px;
     left: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
-    color: #1890ff;
+    color: #3b3b3b;
     margin-bottom: 10px;
     width: 100%;
     text-align: center;
