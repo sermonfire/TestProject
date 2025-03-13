@@ -71,6 +71,12 @@ const newMessage = ref('');
 // 添加一个临时存储AI回复的ref
 const tempAssistantMessage = ref('');
 
+// 构建AI助手的初始回复消息
+const assistantMessage = {
+    role: 'assistant',
+    content: ''
+};
+const new_response = ref({});
 /**
  * 处理提交消息
  */
@@ -80,7 +86,7 @@ const handleSubmit = async () => {
     loading.value = true;
     newMessage.value = messageText.value;
     messageText.value = '';
-    tempAssistantMessage.value = ''; // 重置临时消息
+    let content = '';
 
     // 构建用户消息对象
     const userMessage = {
@@ -100,13 +106,11 @@ const handleSubmit = async () => {
             if (currentConversation.content) {
                 currentContent = JSON.parse(currentConversation.content);
             }
+            // 立即添加用户消息并更新对话内容
             currentContent.push(userMessage);
+            currentConversation.content = JSON.stringify(currentContent);
 
-            // 构建AI助手的初始回复消息
-            const assistantMessage = {
-                role: 'assistant',
-                content: ''
-            };
+            // 添加助手消息占位
             currentContent.push(assistantMessage);
 
             // 发送消息
@@ -117,6 +121,7 @@ const handleSubmit = async () => {
 
             // 使用响应数据
             if (response) {
+                tempAssistantMessage.value = ''; // 清空临时消息，准备接收流式响应
                 // 按行分割数据
                 const lines = response.split('\n');
 
@@ -143,9 +148,13 @@ const handleSubmit = async () => {
                                     content += jsonData.choices[0].delta.content;
 
                                     // 实时更新对话内容
-                                    assistantMessage.content = content;
-                                    currentContent[currentContent.length - 1] = assistantMessage;
-                                    currentConversation.content = JSON.stringify(currentContent);
+                                    assistantMessage.content = content;//实时更新助手消息内容
+
+
+
+                                    // currentContent[currentContent.length - 1] = assistantMessage;
+                                    // currentConversation.content = JSON.stringify(currentContent);
+
                                     loading.value = false;
 
                                 }
@@ -160,6 +169,7 @@ const handleSubmit = async () => {
         } catch (error) {
             console.error('发送消息失败:', error);
             message.error('发送消息失败，请重试');
+            tempAssistantMessage.value = ''; // 发生错误时清空临时消息
             loading.value = false;
         }
     }
@@ -195,6 +205,7 @@ const handleClickOutside = (event) => {
         if (props.isChat) {
             emit('chat-state-change', false);
         }
+        assistantMessage.content = '';
     }
 };
 
@@ -312,6 +323,10 @@ const roleConfig = {
     }
 };
 
+const isShow = computed(() => {
+    return loading.value || assistantMessage.content !== '';
+});
+
 </script>
 
 <template>
@@ -336,6 +351,12 @@ const roleConfig = {
                     <!-- 动态消息展示 -->
                     <div class="message-list"
                         style="display: flex;flex-direction: column;justify-content: space-around;gap: 10px;">
+                        <!-- 加载状态显示 -->
+                        <Bubble v-if="isShow" :loading="loading" :content="assistantMessage.content" placement="start"
+                            :avatar="{ icon: h(roleConfig['assistant'].avatar), style: roleConfig['assistant'] }"
+                            :typing="{ step: 2, interval: 50, suffix: '💗' }" header="旅游助手">
+                        </Bubble>
+
                         <Bubble v-for="(msg, index) in currentMessages.slice().reverse()" :key="index"
                             :content="msg.content" :placement="roleConfig[msg.role].placement || 'start'"
                             :avatar="{ icon: h(roleConfig[msg.role].avatar), style: roleConfig[msg.role] }"
@@ -363,12 +384,6 @@ const roleConfig = {
                                     </Button>
                                 </Space>
                             </template>
-                        </Bubble>
-
-                        <!-- 加载状态显示，添加打字机效果 -->
-                        <Bubble v-if="tempAssistantMessage" :loading="loading" :typing="{ step: 2, interval: 50 }"
-                            :content="tempAssistantMessage" placement="start" :avatar="roleConfig['assistant'].avatar"
-                            header="旅游助手">
                         </Bubble>
                     </div>
                 </div>
@@ -456,6 +471,8 @@ const roleConfig = {
 }
 
 .chat-input {
+    display: flex;
+    justify-content: center;
     width: 100%;
     max-width: 60vw;
     padding: 20px 40px;
@@ -489,7 +506,7 @@ const roleConfig = {
     bottom: 20px;
     margin-bottom: 20px;
     width: 100% !important;
-    max-width: 800px;
+    max-width: 60vw;
     z-index: 10;
 }
 
