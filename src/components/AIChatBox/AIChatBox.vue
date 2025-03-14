@@ -76,7 +76,6 @@ const assistantMessage = {
     role: 'assistant',
     content: ''
 };
-const new_response = ref({});
 /**
  * 处理提交消息
  */
@@ -200,6 +199,9 @@ const handleClickOutside = (event) => {
             emit('chat-state-change', false);
         }
         assistantMessage.content = '';
+        loading.value = false;
+        // 刷新当前页面
+        window.location.reload();
     }
 };
 
@@ -318,7 +320,14 @@ const roleConfig = {
 };
 
 const isShow = computed(() => {
-    return loading.value || assistantMessage.content !== '';
+    // 添加更明确的注释说明显示逻辑
+    /**
+     * 控制AI助手消息气泡的显示逻辑
+     * @returns {boolean} 是否显示消息气泡
+     * - 加载状态时显示
+     * - 有AI回复内容时显示
+     */
+    return loading.value || (assistantMessage.content && assistantMessage.content.trim() !== '');
 });
 
 </script>

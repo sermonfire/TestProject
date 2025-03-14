@@ -11,7 +11,7 @@
 
         <!-- 新建对话按钮 -->
         <div class="new-conversation" v-if="!isCollapsed">
-            <el-button type="primary" @click="createNewConversation" :loading="loading">
+            <el-button type="primary" @click="createNewConversation">
                 <el-icon>
                     <Plus />
                 </el-icon>
@@ -85,12 +85,12 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['change', 'collapse-change', 'create', 'conversationHistoryList', 'chat-state-change'])
+const isAcceptedHistory = ref(false)
+
+const emit = defineEmits(['change', 'collapse-change', 'create', 'conversationHistoryList', 'chat-state-change', 'acceptedHistory'])
 
 // 对话列表数据
 const conversations = ref([])
-// 加载状态
-const loading = ref(false)
 // 折叠状态
 const isCollapsed = ref(false)
 // 展开状态
@@ -124,10 +124,11 @@ const parseContent = (contentStr) => {
  */
 const fetchConversations = async () => {
     try {
-        loading.value = true
         const response = await getChatHistory()
 
         if (response.code === 0 && Array.isArray(response.data)) {
+            isAcceptedHistory.value = true
+            emit('acceptedHistory', isAcceptedHistory.value)
             conversations.value = response.data.map(item => ({
                 conversationId: item.conversationId,
                 title: parseContent(item.content),
@@ -155,8 +156,6 @@ const fetchConversations = async () => {
         ElMessage.error('获取对话历史失败')
         console.error('获取对话历史失败:', error)
         conversations.value = []
-    } finally {
-        loading.value = false
     }
 }
 

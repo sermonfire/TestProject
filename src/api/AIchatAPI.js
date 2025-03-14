@@ -25,9 +25,8 @@ export function getChatHistory() {
  */
 export function sendStreamChat(data) {
     return request({
-        url: `/dev-api/ai/chat/stream/deepseek?conversationId=${data.conversationId}`,
-        method: 'post',
-        data: data.content,
+        url: `/dev-api/ai/chat/stream/deepseek?message=${data.content}&conversationId=${data.conversationId}`,
+        method: 'GET',
     })
 }
 
