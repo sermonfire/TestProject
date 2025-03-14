@@ -149,12 +149,6 @@ const handleSubmit = async () => {
 
                                     // 实时更新对话内容
                                     assistantMessage.content = content;//实时更新助手消息内容
-
-
-
-                                    // currentContent[currentContent.length - 1] = assistantMessage;
-                                    // currentConversation.content = JSON.stringify(currentContent);
-
                                     loading.value = false;
 
                                 }
