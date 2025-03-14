@@ -4,7 +4,7 @@
             <div class="header-content">
                 <span :class="['title', { 'hide': isCollapsed, 'fade-in': isExpanding }]">对话列表</span>
                 <el-icon class="collapse-icon" :class="{ 'rotated': isCollapsed }">
-                    <ArrowRight />
+                    <ArrowLeft />
                 </el-icon>
             </div>
         </div>
@@ -54,8 +54,8 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { ChatLineRound, ArrowRight, Plus, Delete } from '@element-plus/icons-vue'
-import { getChatHistory } from '@/api/AIchatAPI'
+import { ChatLineRound, ArrowRight, Plus, Delete, ArrowLeft } from '@element-plus/icons-vue'
+import { getChatHistory, deleteConversation as deleteConversationAPI } from '@/api/AIchatAPI'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -167,11 +167,13 @@ const createNewConversation = () => {
         conversationId: uuidv4(),
         title: '新对话',
         createTime: new Date(),
-        disabled: false
+        disabled: false,
+        content: JSON.stringify([]) // 初始化空的消息数组
     }
     conversations.value.unshift(newConversation)
     emit('create', newConversation.conversationId)
     emit('change', newConversation.conversationId)
+    emit('chat-state-change', true)
 }
 
 /**
@@ -185,13 +187,25 @@ const deleteConversation = async (conversation) => {
             type: 'warning'
         })
 
-        const index = conversations.value.findIndex(item => item.conversationId === conversation.conversationId)
-        if (index > -1) {
-            conversations.value.splice(index, 1)
-            // 如果删除的是当前对话，则切换到第一个对话
-            if (conversation.conversationId === props.activeKey && conversations.value.length > 0) {
-                emit('change', conversations.value[0].conversationId)
+        // 调用API删除服务器上的对话
+        const response = await deleteConversationAPI(conversation.conversationId)
+
+        if (response && response.code === 0) {
+            // 删除成功后，更新本地数据
+            const index = conversations.value.findIndex(item => item.conversationId === conversation.conversationId)
+            if (index > -1) {
+                conversations.value.splice(index, 1)
+                // 如果删除的是当前对话，则切换到第一个对话
+                if (conversation.conversationId === props.activeKey && conversations.value.length > 0) {
+                    emit('change', conversations.value[0].conversationId)
+                } else if (conversations.value.length === 0) {
+                    // 如果没有对话了，创建一个新对话
+                    createNewConversation()
+                }
             }
+            ElMessage.success('删除对话成功')
+        } else {
+            ElMessage.error(response?.message || '删除对话失败')
         }
     } catch (error) {
         if (error !== 'cancel') {
@@ -208,8 +222,11 @@ const handleItemClick = (conversation) => {
     if (conversation.disabled || conversation.conversationId === props.activeKey) return
     emit('change', conversation.conversationId)
 
-    // 新增：如果有历史内容则触发聊天状态
+    // 如果有历史内容则触发聊天状态
     if (conversation.content) {
+        emit('chat-state-change', true)
+    } else {
+        // 如果是新对话，也触发聊天状态
         emit('chat-state-change', true)
     }
 }

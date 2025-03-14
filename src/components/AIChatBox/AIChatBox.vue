@@ -76,6 +76,10 @@ const assistantMessage = {
     role: 'assistant',
     content: ''
 };
+
+// 在script部分添加一个新的ref来控制打字机效果
+const isTyping = ref(false);
+
 /**
  * 处理提交消息
  */
@@ -83,6 +87,7 @@ const handleSubmit = async () => {
     if (!messageText.value.trim()) return;
 
     loading.value = true;
+    isTyping.value = true; // 开始打字机效果
     newMessage.value = messageText.value;
     messageText.value = '';
     let content = '';
@@ -103,14 +108,26 @@ const handleSubmit = async () => {
             // 更新当前对话的内容
             let currentContent = [];
             if (currentConversation.content) {
-                currentContent = JSON.parse(currentConversation.content);
+                try {
+                    currentContent = JSON.parse(currentConversation.content);
+                } catch (error) {
+                    console.error('解析对话内容失败:', error);
+                    currentContent = [];
+                }
             }
+
             // 立即添加用户消息并更新对话内容
             currentContent.push(userMessage);
             currentConversation.content = JSON.stringify(currentContent);
 
+            // 创建助手消息对象
+            const assistantMessageObj = {
+                role: 'assistant',
+                content: ''
+            };
+
             // 添加助手消息占位
-            currentContent.push(assistantMessage);
+            currentContent.push(assistantMessageObj);
 
             // 发送消息
             const response = await sendStreamChat({
@@ -147,9 +164,16 @@ const handleSubmit = async () => {
                                     content += jsonData.choices[0].delta.content;
 
                                     // 实时更新对话内容
-                                    assistantMessage.content = content;//实时更新助手消息内容
-                                    loading.value = false;
+                                    assistantMessage.content = content; // 实时更新助手消息内容
 
+                                    // 更新当前对话中的最后一条消息（助手消息）
+                                    const updatedContent = JSON.parse(currentConversation.content);
+                                    if (updatedContent.length > 0 && updatedContent[updatedContent.length - 1].role === 'assistant') {
+                                        updatedContent[updatedContent.length - 1].content = content;
+                                        currentConversation.content = JSON.stringify(updatedContent);
+                                    }
+
+                                    loading.value = false;
                                 }
                             } catch (error) {
                                 // 忽略解析错误，继续处理下一行
@@ -158,12 +182,18 @@ const handleSubmit = async () => {
                         }
                     }
                 });
+
+                // 当所有响应处理完毕后，关闭打字机效果
+                setTimeout(() => {
+                    isTyping.value = false;
+                }, 500); // 给一点延迟，确保所有内容都已经显示
             }
         } catch (error) {
             console.error('发送消息失败:', error);
             message.error('发送消息失败，请重试');
             tempAssistantMessage.value = ''; // 发生错误时清空临时消息
             loading.value = false;
+            isTyping.value = false; // 出错时关闭打字机效果
         }
     }
 };
@@ -200,8 +230,6 @@ const handleClickOutside = (event) => {
         }
         assistantMessage.content = '';
         loading.value = false;
-        // 刷新当前页面
-        window.location.reload();
     }
 };
 
@@ -210,6 +238,8 @@ const handleClickOutside = (event) => {
  */
 const resetChat = () => {
     emit('chat-state-change', false);
+    isTyping.value = false;
+    assistantMessage.content = '';
 };
 
 /**
@@ -219,30 +249,6 @@ const resetChat = () => {
 const handleCollapseChange = (isCollapsed) => {
     // 可以在这里添加其他处理逻辑
 
-};
-
-/**
- * 处理新建对话
- * @param {String} conversationId - 新建对话的ID
- */
-const handleConversationCreate = (conversationId) => {
-    activeConversationKey.value = conversationId;
-    messageText.value = '';
-    emit('chat-state-change', true);
-    message.success('新建对话成功！');
-};
-
-
-
-/**
- * 处理对话切换
- * @param {String} key - 对话的key
- */
-const handleConversationChange = (key) => {
-    activeConversationKey.value = key;
-    // 这里可以根据不同的对话加载不同的内容
-    const currentConversation = conversationItems.value.find(item => item.key === key);
-    message.info(`切换到对话: ${currentConversation?.label || '未知对话'}`);
 };
 
 /**
@@ -258,7 +264,50 @@ const handleConversationHistoryList = (conversationHistoryList) => {
             createTime: item.createTime,
             messageId: item.messageId,
         }));
+
+        // 如果有对话历史，默认选中第一个
+        if (conversationItems.value.length > 0 && !activeConversationKey.value) {
+            activeConversationKey.value = conversationItems.value[0].key;
+        }
     }
+};
+
+/**
+ * 处理新建对话
+ * @param {String} conversationId - 新建对话的ID
+ */
+const handleConversationCreate = (conversationId) => {
+    activeConversationKey.value = conversationId;
+    // 将新对话添加到conversationItems中
+    const newConversation = {
+        key: conversationId,
+        label: '新对话',
+        content: JSON.stringify([]), // 初始化为空数组的JSON字符串
+        createTime: new Date()
+    };
+
+    // 确保不重复添加
+    if (!conversationItems.value.some(item => item.key === conversationId)) {
+        conversationItems.value.unshift(newConversation);
+    }
+
+    messageText.value = '';
+    emit('chat-state-change', true);
+    message.success('新建对话成功！');
+};
+
+/**
+ * 处理对话切换
+ * @param {String} key - 对话的key
+ */
+const handleConversationChange = (key) => {
+    activeConversationKey.value = key;
+    isTyping.value = false; // 切换对话时重置打字机效果
+    assistantMessage.content = ''; // 清空当前显示的助手消息
+
+    // 这里可以根据不同的对话加载不同的内容
+    const currentConversation = conversationItems.value.find(item => item.key === key);
+    message.info(`切换到对话: ${currentConversation?.label || '未知对话'}`);
 };
 
 // 组件挂载时添加点击事件监听
@@ -276,7 +325,8 @@ onUnmounted(() => {
  * @type {Boolean}
  */
 const showConversations = computed(() => {
-    return !props.isChat && props.isFocus;
+    // 修改显示逻辑，只要聚焦就显示对话管理组件
+    return props.isFocus;
 });
 
 // 在script部分添加计算属性
@@ -284,7 +334,16 @@ const hasHistoryMessages = computed(() => {
     const currentConversation = conversationItems.value.find(
         item => item.key === activeConversationKey.value
     );
-    return currentConversation?.content?.length > 0;
+
+    if (!currentConversation?.content) return false;
+
+    try {
+        const content = JSON.parse(currentConversation.content);
+        return content.length > 0;
+    } catch (error) {
+        console.error('解析对话内容失败:', error);
+        return false;
+    }
 });
 
 const currentMessages = computed(() => {
@@ -294,11 +353,12 @@ const currentMessages = computed(() => {
     if (!currentConversation?.content) return [];
 
     try {
-        //去掉content中的system消息
+        // 解析对话内容
         const content = JSON.parse(currentConversation.content);
+        // 过滤掉system消息
         return content.filter(item => item.role !== 'system');
     } catch (error) {
-        console.error('消息解析失败:', error);
+        console.error('消息解析失败:', error, currentConversation.content);
         return [];
     }
 });
@@ -330,16 +390,31 @@ const isShow = computed(() => {
     return loading.value || (assistantMessage.content && assistantMessage.content.trim() !== '');
 });
 
+/**
+ * 复制消息内容到剪贴板
+ * @param {string} text - 要复制的文本
+ */
+const copyMessage = (text) => {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            message.success('复制成功');
+        })
+        .catch(() => {
+            message.error('复制失败，请手动复制');
+        });
+};
+
 </script>
 
 <template>
     <div>
         <Flex justify="center" align="center" vertical class="chat-box">
             <!-- 对话管理组件 -->
-            <ConversationManager v-if="showConversations" :items="conversationItems" :active-key="activeConversationKey"
-                :visible="showConversations" @change="handleConversationChange" @collapse-change="handleCollapseChange"
+            <ConversationManager v-if="props.isFocus" :active-key="activeConversationKey" :visible="props.isFocus"
+                @change="handleConversationChange" @collapse-change="handleCollapseChange"
                 @create="handleConversationCreate" @conversationHistoryList="handleConversationHistoryList"
-                class="conversation-manager" />
+                @chat-state-change="(state) => emit('chat-state-change', state)"
+                @acceptedHistory="(value) => isAcceptedHistory = value" class="conversation-manager" />
 
             <Welcome v-if="(!hasHistoryMessages || !props.isFocus) && !props.isChat" variant="borderless"
                 icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
@@ -348,16 +423,15 @@ const isShow = computed(() => {
             <div v-else-if="props.isFocus" class="chat-message-display">
                 <div class="message-container">
                     <div class="conversation-title">
-                        {{conversationItems.find(item => item.key === activeConversationKey)?.label}}
+                        {{conversationItems.find(item => item.key === activeConversationKey)?.label || '新对话'}}
                     </div>
 
                     <!-- 动态消息展示 -->
-                    <div class="message-list"
-                        style="display: flex;flex-direction: column;justify-content: space-around;gap: 10px;">
+                    <div class="message-list">
                         <!-- 加载状态显示 -->
                         <Bubble v-if="isShow" :loading="loading" :content="assistantMessage.content" placement="start"
                             :avatar="{ icon: h(roleConfig['assistant'].avatar), style: roleConfig['assistant'] }"
-                            :typing="{ step: 2, interval: 50, suffix: '💗' }" header="旅游助手">
+                            :typing="isTyping ? { step: 2, interval: 50, suffix: '💗' } : null" header="旅游助手">
                         </Bubble>
 
                         <Bubble v-for="(msg, index) in currentMessages.slice().reverse()" :key="index"
@@ -366,7 +440,7 @@ const isShow = computed(() => {
                             :header="msg.role === 'assistant' ? '旅游助手' : '你'">
                             <template #footer v-if="msg.role === 'assistant'">
                                 <Space :size="token.paddingXXS">
-                                    <Button type="text" size="small">
+                                    <Button type="text" size="small" @click="copyMessage(msg.content)">
                                         <template #icon>
                                             <CopyOutlined />
                                         </template>
@@ -380,7 +454,7 @@ const isShow = computed(() => {
                             </template>
                             <template #footer v-if="msg.role === 'user'">
                                 <Space :size="token.paddingXXS">
-                                    <Button type="text" size="small">
+                                    <Button type="text" size="small" @click="copyMessage(msg.content)">
                                         <template #icon>
                                             <CopyOutlined />
                                         </template>
@@ -430,13 +504,16 @@ const isShow = computed(() => {
 .conversation-manager {
     position: absolute;
     top: 0px;
-    right: 0px;
+    left: 0px;
     z-index: 10;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(8px);
     background-color: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 .chat-message-display {
@@ -533,5 +610,13 @@ const isShow = computed(() => {
     gap: 8px;
     padding: 12px;
     color: var(--el-text-color-secondary);
+}
+
+.message-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 10px;
+    width: 100%;
 }
 </style>

@@ -30,6 +30,20 @@ export function sendStreamChat(data) {
     })
 }
 
+/**
+ * 删除对话
+ * @param {string} conversationId - 会话ID
+ * @returns {Promise} 返回删除结果
+ */
+export function deleteConversation(conversationId) {
+    return request({
+        url: `/dev-api/ai/chat/history/${conversationId}`,
+        method: 'DELETE'
+    })
+}
+
+
+
 
 
 
