@@ -38,7 +38,7 @@
                     </div>
 
                     <!-- 目的地选择 -->
-                    <el-form-item label="目的地" prop="destinationId">
+                    <el-form-item label="首选目的地" prop="destinationId">
                         <el-input v-model="form.destinationName" placeholder="请选择收藏目的地" readonly
                             @click="handleShowDestinationSelector">
                             <template #prefix>

@@ -5,7 +5,7 @@
             <div class="custom-dialog-header">
                 <h2 class="dialog-title">{{ dialogTitle }}</h2>
                 <div class="dialog-actions">
-                    <el-button type="primary" @click="handleDeleteAllSchedule" class="add-schedule-button">
+                    <el-button type="primary" @click="handleDeleteAllSchedule">
                         <el-icon>
                             <Delete />
                         </el-icon>删除所有日程
@@ -58,6 +58,11 @@
                                     <el-icon>
                                         <Plus />
                                     </el-icon>添加日程
+                                </el-button>
+                                <el-button type="primary" @click="handleDeleteDaySchedule">
+                                    <el-icon>
+                                        <Delete />
+                                    </el-icon>删除当天日程
                                 </el-button>
                             </div>
                         </div>
@@ -256,7 +261,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete', 'deleteAll', 'update:loading'])
+const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete', 'deleteAll', 'deleteDay', 'update:loading'])
 
 // 当前选中的天数
 const currentDay = ref(1)
@@ -418,6 +423,44 @@ const handleDeleteAllSchedule = async () => {
         emit('deleteAll')
         ElMessage.success({
             message: '所有日程已删除',
+            type: 'success',
+            duration: 2000
+        })
+    } catch (error) {
+        if (error !== 'cancel') {
+            ElMessage.error({
+                message: '删除失败，请重试',
+                duration: 2000
+            })
+        }
+    }
+}
+
+/**
+ * 删除当天日程
+ */
+const handleDeleteDaySchedule = async () => {
+    // 检查是否有日程数据
+    if (!props.schedules || props.schedules.length === 0) {
+        ElMessage.info('当前行程暂无日程安排')
+        return
+    }
+
+    try {
+        await ElMessageBox.confirm(
+            `确定要删除第${currentDay.value}天的所有日程安排吗？此操作不可恢复。`,
+            '删除确认',
+            {
+                confirmButtonText: '确定删除',
+                cancelButtonText: '取消',
+                type: 'warning',
+                draggable: true
+            }
+        )
+        // 传递当前选中的天数
+        emit('deleteDay', currentDay.value)
+        ElMessage.success({
+            message: '当天日程已删除',
             type: 'success',
             duration: 2000
         })

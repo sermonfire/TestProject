@@ -14,7 +14,8 @@ import {
     updateScheduleAPI,
     deleteScheduleAPI,
     getDaySchedulesAPI,
-    deleteAllSchedulesAPI
+    deleteAllSchedulesAPI,
+    deleteDayScheduleAPI
 } from '@/api/scheduleApi'
 import dayjs from 'dayjs'
 
@@ -234,6 +235,16 @@ export const useTripStore = defineStore('trip', () => {
         throw new Error(res.message || '获取当天日程失败')
     }
 
+    // 删除当天日程
+    const deleteDaySchedules = async (tripId, dayIndex) => {
+        const res = await deleteDayScheduleAPI(tripId, dayIndex)
+        if (res.code === 0) {
+            clearTripScheduleCache(tripId)
+            return true
+        }
+        throw new Error(res.message || '删除当天日程失败')
+    }
+
     return {
         trips,
         loading,
@@ -251,6 +262,7 @@ export const useTripStore = defineStore('trip', () => {
         updateSchedule,
         deleteSchedule,
         getDaySchedules,
-        deleteAllSchedules
+        deleteAllSchedules,
+        deleteDaySchedules
     }
 }) 
