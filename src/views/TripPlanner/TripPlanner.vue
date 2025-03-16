@@ -4,13 +4,21 @@
             <div class="planner-header-left">
                 <h2>行程规划</h2>
             </div>
+
+            <!-- 这里显示分页组件 -->
+            <div class="pagination-container" v-if="total > 0">
+                <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 30, 50]" :total="total" layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+            </div>
+
             <div class="planner-header-right">
                 <el-button type="primary" @click="createNewTrip">新建行程</el-button>
             </div>
         </div>
         <div class="planner-content">
             <!-- 行程列表 -->
-            <el-row v-loading="loading" :gutter="20">
+            <el-row v-loading="loading" :gutter="20" class="trip-list">
                 <el-col v-if="trips?.length" :xs="24" :sm="12" :md="8" :lg="6" v-for="trip in trips" :key="trip.id">
                     <TripCard :trip="trip" :has-ongoing-trip="!!currentOngoingTrip" @status-change="handleStatusChange"
                         @edit="editTrip" @view-schedule="viewSchedule" @delete="deleteTrip" />
@@ -22,12 +30,8 @@
                 <el-button type="primary" @click="createNewTrip">立即创建</el-button>
             </el-empty>
 
-            <!-- 添加分页组件 -->
-            <div class="pagination-container" v-if="total > 0">
-                <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
-                    :page-sizes="[10, 20, 30, 50]" :total="total" layout="total, sizes, prev, pager, next, jumper"
-                    @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-            </div>
+            <!-- 分页组件 -->
+            <!-- 已移动到页面顶部 -->
         </div>
 
         <!-- 新建/编辑行程对话框 -->
@@ -357,6 +361,13 @@ onMounted(async () => {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+
+        .planner-header-left {
+            display: flex;
+            align-items: center;
+            line-height: 1;
+        }
+
     }
 
     .trip-card {
@@ -478,10 +489,16 @@ onMounted(async () => {
     }
 
     .pagination-container {
-        margin-top: 20px;
         display: flex;
         justify-content: center;
-        margin-bottom: 80px;
     }
+}
+
+.trip-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 10vh;
 }
 </style>
