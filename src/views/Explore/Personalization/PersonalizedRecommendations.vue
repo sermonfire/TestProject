@@ -1,8 +1,8 @@
 <template>
     <div v-if="recommendations?.length" class="section">
         <div class="section-header">
-            <span class="section-title">为你推荐</span>
-            <span class="section-subtitle">根据你的偏好精选({{ recommendations.length }})</span>
+            <span class="section-title">{{ title || '为你推荐' }}</span>
+            <span class="section-subtitle">{{ subtitle || `根据你的偏好精选(${recommendations.length})` }}</span>
         </div>
         <div class="recommendations-grid">
             <div v-for="item in recommendations" :key="item.id" class="destination-card"
@@ -59,17 +59,25 @@
 import { Calendar, Wallet, Picture } from '@element-plus/icons-vue';
 import CollectionButton from '@/components/CollectionButton/CollectionButton.vue';
 
-defineProps({
+const props = defineProps({
     recommendations: {
         type: Array,
         default: () => []
+    },
+    subtitle: {
+        type: String,
+        default: ''
+    },
+    title: {
+        type: String,
+        default: '为你推荐'
     }
 });
 
-const emit = defineEmits(['destinationClick']);
+const emit = defineEmits(['destination-click']);
 
-const handleDestinationClick = (destination) => {
-    emit('destinationClick', destination);
+const handleDestinationClick = (item) => {
+    emit('destination-click', item);
 };
 
 // 格式化推荐时长

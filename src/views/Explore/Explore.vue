@@ -24,24 +24,65 @@
 
             <!-- 推荐内容 -->
             <div v-else class="recommendations-container">
-                <!-- 个性化推荐 -->
-                <PersonalizedRecommendations :recommendations="recommendations"
-                    @destination-click="handleDestinationClick" />
-                <!-- 加载更多触发器 -->
-                <div ref="loadTrigger" class="load-trigger">
-                    <div v-if="isLoading" class="load-more loading">
-                        <el-icon class="icon-spin">
-                            <Loading />
-                        </el-icon>
-                        <span>加载中...</span>
-                    </div>
-                    <div v-else-if="hasMore" class="load-more">
-                        <span>更多推荐加载中...</span>
-                    </div>
-                    <div v-else class="no-more">
-                        没有更多推荐了
-                    </div>
-                </div>
+                <el-tabs v-model="activeTab" type="demo-tabs" @tab-click="handleTabClick">
+                    <el-tab-pane label="个性化推荐" name="personalized">
+                        <!-- 个性化推荐 -->
+                        <PersonalizedRecommendations :recommendations="recommendations"
+                            :subtitle="getSubtitleForTab('personalized')" :title="getTitleForTab('personalized')"
+                            @destination-click="handleDestinationClick" />
+                        <!-- 加载更多触发器 -->
+                        <div ref="loadTrigger" class="load-trigger">
+                            <div v-if="isLoading" class="load-more loading">
+                                <el-icon class="icon-spin">
+                                    <Loading />
+                                </el-icon>
+                                <span>加载中...</span>
+                            </div>
+                            <div v-else-if="hasMore" class="load-more">
+                                <span>更多推荐加载中...</span>
+                            </div>
+                            <div v-else class="no-more">
+                                没有更多推荐了
+                            </div>
+                        </div>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="猜你喜欢" name="collaborative">
+                        <div v-if="loadingCollaborative" class="loading-state">
+                            <el-icon class="icon-spin">
+                                <Loading />
+                            </el-icon>
+                            <span>加载推荐中...</span>
+                        </div>
+                        <div v-else-if="collaborativeRecommendations && collaborativeRecommendations.length > 0">
+                            <!-- 协同过滤推荐 -->
+                            <PersonalizedRecommendations :recommendations="collaborativeRecommendations"
+                                :subtitle="getSubtitleForTab('collaborative')" :title="getTitleForTab('collaborative')"
+                                @destination-click="handleDestinationClick" />
+                        </div>
+                        <div v-else class="empty-state">
+                            <el-empty description="暂无推荐数据" />
+                        </div>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="相似用户喜欢" name="similarUsers">
+                        <div v-if="loadingSimilarUsers" class="loading-state">
+                            <el-icon class="icon-spin">
+                                <Loading />
+                            </el-icon>
+                            <span>加载推荐中...</span>
+                        </div>
+                        <div v-else-if="similarUsersRecommendations && similarUsersRecommendations.length > 0">
+                            <!-- 相似用户推荐 -->
+                            <PersonalizedRecommendations :recommendations="similarUsersRecommendations"
+                                :subtitle="getSubtitleForTab('similarUsers')" :title="getTitleForTab('similarUsers')"
+                                @destination-click="handleDestinationClick" />
+                        </div>
+                        <div v-else class="empty-state">
+                            <el-empty description="暂无推荐数据" />
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
             </div>
         </div>
 
@@ -55,7 +96,12 @@
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Loading, CircleClose } from '@element-plus/icons-vue';
-import { getPersonalizedRecommendationsAPI } from '@/api/api';
+import {
+    getPersonalizedRecommendationsAPI,
+    getCollaborativeFilteringRecommendationsAPI,
+    getSimilarUsersRecommendationsAPI
+} from '@/api/recommendApi';
+import { useRecommendStore } from '@/stores/recommendStore';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
@@ -72,18 +118,107 @@ const selectedDestination = ref(null);
 const { push, replace } = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const recommendStore = useRecommendStore()
+
+// 添加缺失的状态变量
+const activeTab = ref('personalized');
 
 // 推荐数据
 const recommendations = ref([]);
+const collaborativeRecommendations = ref([]);
+const similarUsersRecommendations = ref([]);
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+// 加载状态
+const loadingCollaborative = ref(false);
+const loadingSimilarUsers = ref(false);
 
 // 加载触发器
 const loadTrigger = ref(null);
 let observer = null;
 
 const searchBarRef = ref(null);
+
+/**
+ * 处理标签页点击事件
+ * @param {Object} tab - 被点击的标签页对象
+ */
+const handleTabClick = (tab) => {
+    // 调用原有的 handleTabChange 方法
+    handleTabChange(tab.props.name);
+};
+
+/**
+ * 处理标签页切换事件
+ * @param {string} tab - 当前激活的标签页名称
+ */
+const handleTabChange = async (tab) => {
+    switch (tab) {
+        case 'personalized':
+            if (recommendations.value.length === 0) {
+                await fetchAllRecommendations();
+            }
+            break;
+        case 'collaborative':
+            if (collaborativeRecommendations.value.length === 0) {
+                await fetchCollaborativeRecommendations();
+            }
+            break;
+        case 'similarUsers':
+            if (similarUsersRecommendations.value.length === 0) {
+                await fetchSimilarUsersRecommendations();
+            }
+            break;
+        default:
+            console.log('未知标签页:', tab);
+    }
+};
+
+// 获取协同过滤推荐
+const fetchCollaborativeRecommendations = async () => {
+    if (loadingCollaborative.value) return;
+
+    loadingCollaborative.value = true;
+    try {
+        // 直接调用 API 而不是通过 store
+        const response = await getCollaborativeFilteringRecommendationsAPI();
+        if (response?.code === 0 && response?.data) {
+            // 修改这里，使用 response.data.list 而不是 response.data
+            collaborativeRecommendations.value = response.data.list || [];
+        } else {
+            console.error('协同过滤推荐数据格式错误:', response);
+        }
+    } catch (err) {
+        console.error('获取协同过滤推荐失败:', err);
+        handleError(err);
+    } finally {
+        loadingCollaborative.value = false;
+    }
+};
+
+// 获取相似用户推荐
+const fetchSimilarUsersRecommendations = async () => {
+    if (loadingSimilarUsers.value) return;
+
+    loadingSimilarUsers.value = true;
+    try {
+        // 直接调用 API 而不是通过 store
+        const response = await getSimilarUsersRecommendationsAPI();
+        if (response?.code === 0 && response?.data) {
+            // 修改这里，使用 response.data.list 而不是 response.data
+            similarUsersRecommendations.value = response.data.list || [];
+        } else {
+            console.error('相似用户推荐数据格式错误:', response);
+        }
+    } catch (err) {
+        console.error('获取相似用户推荐失败:', err);
+        handleError(err);
+    } finally {
+        loadingSimilarUsers.value = false;
+    }
+};
 
 // 从路由获取初始标签
 const initialTags = computed(() => {
@@ -288,6 +423,11 @@ const loadMore = async () => {
     }
 };
 
+// 监听 activeTab 的变化
+watch(activeTab, (newTab, oldTab) => {
+    handleTabChange(newTab);
+});
+
 // 组件挂载逻辑
 onMounted(async () => {
     try {
@@ -299,6 +439,10 @@ onMounted(async () => {
 
         await nextTick();
         await fetchAllRecommendations();
+
+        // 预加载其他推荐数据
+        fetchCollaborativeRecommendations();
+        fetchSimilarUsersRecommendations();
 
         if (!error.value) {
             nextTick(() => {
@@ -324,6 +468,34 @@ onUnmounted(() => {
     currentPage.value = 1;
     recommendations.value = [];
 });
+
+// 计算属性：根据不同标签页生成不同的副标题
+const getSubtitleForTab = (tabName) => {
+    switch (tabName) {
+        case 'personalized':
+            return `根据你的偏好精选(${recommendations.value.length})`;
+        case 'collaborative':
+            return `基于你的浏览历史推荐(${collaborativeRecommendations.value.length})`;
+        case 'similarUsers':
+            return `与你相似的用户也喜欢(${similarUsersRecommendations.value.length})`;
+        default:
+            return '';
+    }
+};
+
+// 计算属性：根据不同标签页生成不同的标题
+const getTitleForTab = (tabName) => {
+    switch (tabName) {
+        case 'personalized':
+            return '为你推荐';
+        case 'collaborative':
+            return '猜你喜欢';
+        case 'similarUsers':
+            return '相似用户喜欢';
+        default:
+            return '为你推荐';
+    }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -461,5 +633,17 @@ onUnmounted(() => {
     to {
         transform: rotate(360deg);
     }
+}
+
+// 添加空状态样式
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
 }
 </style>
