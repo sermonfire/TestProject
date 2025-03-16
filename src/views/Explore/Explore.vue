@@ -101,7 +101,6 @@ import {
     getCollaborativeFilteringRecommendationsAPI,
     getSimilarUsersRecommendationsAPI
 } from '@/api/recommendApi';
-import { useRecommendStore } from '@/stores/recommendStore';
 import SearchBar from '@/components/Search/SearchBar.vue';
 import PersonalizedRecommendations from './Personalization/PersonalizedRecommendations.vue';
 import DestinationDetailDialog from './popUp/DestinationDetailDialog.vue';
@@ -118,7 +117,6 @@ const selectedDestination = ref(null);
 const { push, replace } = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const recommendStore = useRecommendStore()
 
 // 添加缺失的状态变量
 const activeTab = ref('personalized');
@@ -505,12 +503,15 @@ const getTitleForTab = (tabName) => {
     min-height: 100vh;
     padding-bottom: 50px;
     user-select: none;
+    position: relative; // 确保相对定位
 }
 
 // 内容区域
 .content-wrapper {
     padding: 16px 20px;
     overflow-y: auto;
+    position: relative; // 确保相对定位
+    z-index: 1; // 降低内容区域的z-index，确保不会遮挡搜索栏的下拉菜单
 
     &::-webkit-scrollbar {
         display: none;
