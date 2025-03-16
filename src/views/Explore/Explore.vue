@@ -24,7 +24,7 @@
 
             <!-- 推荐内容 -->
             <div v-else class="recommendations-container">
-                <el-tabs v-model="activeTab" type="demo-tabs" @tab-click="handleTabClick">
+                <el-tabs v-model="activeTab" @tab-click="handleTabClick" class="demo-tabs">
                     <el-tab-pane label="个性化推荐" name="personalized">
                         <!-- 个性化推荐 -->
                         <PersonalizedRecommendations :recommendations="recommendations"
@@ -645,5 +645,12 @@ const getTitleForTab = (tabName) => {
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     margin: 20px 0;
+}
+
+.demo-tabs>.el-tabs__content {
+    padding: 32px;
+    color: #6b778c;
+    font-size: 32px;
+    font-weight: 600;
 }
 </style>
