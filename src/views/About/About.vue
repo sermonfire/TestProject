@@ -54,7 +54,7 @@
 
             <!-- 技术栈 -->
             <div class="section">
-                <h2>技术栈</h2>
+                <h2>前端技术栈</h2>
                 <div class="tech-stack">
                     <div class="tech-item" v-for="(tech, index) in techStack" :key="index">
                         <div class="tech-icon" :style="{ backgroundColor: '#f0f0f0' }">
