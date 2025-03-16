@@ -58,6 +58,19 @@ export const deleteScheduleAPI = (tripId, scheduleId) => {
 }
 
 /**
+ * 删除所有日程安排
+ * @param {number|string} tripId - 行程ID
+ * @returns {Promise} 返回删除结果
+ */
+export const deleteAllSchedulesAPI = (tripId) => {
+    return request({
+        url: `/dev-api/trip/${tripId}/schedule/deleteAll`,
+        method: 'DELETE',
+        needToken: true
+    })
+}
+
+/**
  * 获取某天的日程安排
  * @param {number|string} tripId - 行程ID
  * @param {number} dayIndex - 第几天

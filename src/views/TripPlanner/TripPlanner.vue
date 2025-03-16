@@ -38,7 +38,8 @@
 
         <!-- 日程安排对话框 -->
         <TripScheduleDialog v-model="scheduleDialogVisible" :trip="selectedTrip" :schedules="selectedTripSchedules"
-            :loading="loading" @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule" />
+            :loading="loading" @add="handleAddSchedule" @edit="handleEditSchedule" @delete="handleDeleteSchedule"
+            @deleteAll="handleDeleteAllSchedule" />
 
         <!-- 位置信息悬浮展示 -->
         <LocationDisplay />
@@ -281,6 +282,25 @@ const handleDeleteSchedule = async (schedule) => {
         loading.value = false
     }
 }
+
+// 删除所有日程
+const handleDeleteAllSchedule = async () => {
+    try {
+        loading.value = true
+        // 删除所有日程
+        await tripStore.deleteAllSchedules(selectedTrip.value.id)
+        ElMessage.success('删除所有日程成功')
+        // 重新加载日程数据
+        const result = await tripStore.getTripSchedules(selectedTrip.value.id, true)
+        selectedTripSchedules.value = result
+    } catch (error) {
+        console.error('删除所有日程失败:', error)
+        ElMessage.error(error.message || '删除所有日程失败')
+    } finally {
+        loading.value = false
+    }
+}
+
 
 onMounted(async () => {
     try {

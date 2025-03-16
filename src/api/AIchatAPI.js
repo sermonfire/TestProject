@@ -42,6 +42,15 @@ export function deleteConversation(conversationId) {
     })
 }
 
+//获取自动行程规划
+export function getAItripGenerateAPI(data) {
+    return request({
+        url: `/dev-api/ai/chat/json`,
+        method: 'POST',
+        data: data,
+    })
+}
+
 
 
 

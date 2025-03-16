@@ -5,6 +5,17 @@
             <div class="custom-dialog-header">
                 <h2 class="dialog-title">{{ dialogTitle }}</h2>
                 <div class="dialog-actions">
+                    <el-button type="primary" @click="handleDeleteAllSchedule" class="add-schedule-button">
+                        <el-icon>
+                            <Delete />
+                        </el-icon>删除所有日程
+                    </el-button>
+                    <el-button type="primary" style="background-color: #00EE00; border: 1px solid #00EE76;"
+                        @click="handleAIgenerate">
+                        <el-icon>
+                            <Plus />
+                        </el-icon>行程规划
+                    </el-button>
                     <el-button class="fullscreen-btn" circle @click="toggleFullscreen">
                         <el-icon>
                             <component :is="fullscreenIcon" />
@@ -42,11 +53,13 @@
                                     总花费: ¥{{ currentDayTotalCost }}
                                 </span>
                             </h3>
-                            <el-button type="primary" @click="handleAddSchedule" class="add-schedule-button">
-                                <el-icon>
-                                    <Plus />
-                                </el-icon>添加日程
-                            </el-button>
+                            <div class="schedule-header-right">
+                                <el-button type="primary" @click="handleAddSchedule">
+                                    <el-icon>
+                                        <Plus />
+                                    </el-icon>添加日程
+                                </el-button>
+                            </div>
                         </div>
 
                         <div class="schedule-selfcustom">
@@ -97,9 +110,8 @@
                                                     </el-icon>
                                                     {{ schedule.location }}
                                                 </div>
-                                                <div class="description" v-if="schedule.description">{{
-                                                    schedule.description
-                                                    }}
+                                                <div class="description" v-if="schedule.description">
+                                                    {{ schedule.description }}
                                                 </div>
                                                 <div class="estimated-cost" v-if="schedule.estimatedCost">
                                                     <el-icon>
@@ -134,6 +146,13 @@
         <TripScheduleForm v-model="scheduleFormVisible" :schedule="currentSchedule" :date="getDayDate(currentDay)"
             :day-index="currentDay" :loading="loading" @submit="handleScheduleSubmit"
             @update:loading="handleLoadingChange" />
+
+        <!-- AI行程生成对话框 -->
+        <AIScheduleGeneratorDialog v-model="aiGeneratorVisible" :trip-info="props.trip"
+            @update:loading="handleLoadingChange" @generated="handleAIgenerated" />
+        <div>
+
+        </div>
     </div>
 </template>
 
@@ -145,13 +164,11 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import TripScheduleForm from './TripScheduleForm.vue'
+import AIScheduleGeneratorDialog from './AIScheduleGeneratorDialog.vue'
 
 // 扩展 dayjs 以支持时区处理
 dayjs.extend(utc)
 dayjs.extend(timezone)
-
-// 设置默认时区为本地时区
-const localTimezone = dayjs.tz.guess()
 
 /**
  * @typedef {Object} Trip
@@ -206,7 +223,7 @@ const SCHEDULE_TYPES = {
     },
     5: {
         label: '其他',
-        type: 'default',
+        type: 'info',
         tagType: 'info',
         icon: 'More'
     }
@@ -239,13 +256,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete'])
-
-// 对话框可见性
-const dialogVisible = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-})
+const emit = defineEmits(['update:modelValue', 'add', 'edit', 'delete', 'deleteAll', 'update:loading'])
 
 // 当前选中的天数
 const currentDay = ref(1)
@@ -321,6 +332,9 @@ const handleDayChange = (day) => {
 const scheduleFormVisible = ref(false)
 const currentSchedule = ref(null)
 
+// AI生成器对话框
+const aiGeneratorVisible = ref(false)
+
 /**
  * 打开添加日程对话框
  */
@@ -380,6 +394,43 @@ const handleDeleteSchedule = async (schedule) => {
     }
 }
 
+/**
+ * 删除所有日程
+ */
+const handleDeleteAllSchedule = async () => {
+    // 检查是否有日程数据
+    if (!props.schedules || props.schedules.length === 0) {
+        ElMessage.info('当前行程暂无日程安排')
+        return
+    }
+
+    try {
+        await ElMessageBox.confirm(
+            `确定要删除当前行程的所有日程安排吗？此操作不可恢复。`,
+            '删除确认',
+            {
+                confirmButtonText: '确定删除',
+                cancelButtonText: '取消',
+                type: 'warning',
+                draggable: true
+            }
+        )
+        emit('deleteAll')
+        ElMessage.success({
+            message: '所有日程已删除',
+            type: 'success',
+            duration: 2000
+        })
+    } catch (error) {
+        if (error !== 'cancel') {
+            ElMessage.error({
+                message: '删除失败，请重试',
+                duration: 2000
+            })
+        }
+    }
+}
+
 // 对话框标题
 const dialogTitle = computed(() => {
     return props.trip?.name ? `${props.trip.name} 的日程安排` : '日程安排'
@@ -413,6 +464,184 @@ const handleLoadingChange = (value) => {
     emit('update:loading', value)
 }
 
+/**
+ * 处理AI生成的日程数据
+ * @param {{ schedules: Array, addToSchedule: boolean }} data - 生成的日程数据和是否直接添加的标志
+ */
+const handleAIgenerated = (data) => {
+    if (data.schedules && Array.isArray(data.schedules)) {
+        if (data.addToSchedule) {
+            // 遍历每一天的日程安排
+            let successCount = 0;
+            let errorCount = 0;
+
+            data.schedules.forEach(daySchedule => {
+                const dayIndex = daySchedule.dayIndex;
+
+                if (Array.isArray(daySchedule.schedules)) {
+                    daySchedule.schedules.forEach(schedule => {
+                        try {
+                            // 确保日程数据格式正确
+                            const scheduleData = {
+                                ...schedule,
+                                tripId: props.trip.id,
+                                dayIndex: dayIndex,
+                                location: schedule.location || '',
+                            };
+
+                            // 检查必要字段
+                            if (!scheduleData.title) {
+                                console.warn('日程缺少标题，跳过添加');
+                                errorCount++;
+                                return;
+                            }
+
+                            // 如果是景点游览类型但没有destinationId，则修改为"其他"类型
+                            if (scheduleData.scheduleType === 1 && !scheduleData.destinationId) {
+                                console.warn('景点游览类型缺少destinationId，修改为其他类型');
+                                scheduleData.scheduleType = 5; // 修改为"其他"类型
+                            }
+
+                            emit('add', scheduleData);
+                            successCount++;
+                        } catch (error) {
+                            console.error('添加日程项出错:', error);
+                            errorCount++;
+                        }
+                    });
+                }
+            });
+
+            if (successCount > 0) {
+                ElMessage.success(`已成功添加${successCount}个AI生成的日程安排`);
+
+                // 自动切换到第一天的日程
+                if (data.schedules.length > 0 && data.schedules[0].dayIndex) {
+                    handleDayChange(data.schedules[0].dayIndex);
+                }
+            }
+
+            if (errorCount > 0) {
+                ElMessage.warning(`${errorCount}个日程项添加失败，请检查数据格式`);
+            }
+        } else {
+            // 实现预览功能
+            ElMessage.info(`AI已生成日程安排，正在预览中`);
+
+            // 创建预览数据，但不添加到实际日程中
+            const previewSchedules = [];
+
+            // 处理预览数据
+            data.schedules.forEach(daySchedule => {
+                const dayIndex = daySchedule.dayIndex;
+
+                if (Array.isArray(daySchedule.schedules)) {
+                    daySchedule.schedules.forEach(schedule => {
+                        previewSchedules.push({
+                            ...schedule,
+                            dayIndex: dayIndex,
+                            isPreview: true // 标记为预览
+                        });
+                    });
+                }
+            });
+
+            // 显示预览对话框或内容
+            showSchedulePreview(previewSchedules);
+        }
+    }
+}
+
+/**
+ * 显示日程预览
+ * @param {Array} schedules - 预览的日程数据
+ */
+const showSchedulePreview = (schedules) => {
+    // 这里可以实现预览逻辑，例如：
+    // 1. 显示一个新的对话框
+    // 2. 在当前界面的某个区域显示预览内容
+    // 3. 使用ElMessageBox显示预览内容
+
+    // 示例：使用ElMessageBox显示预览内容
+    const previewContent = schedules.map(schedule => {
+        return `<div style="margin-bottom: 10px; padding: 8px; border: 1px solid #eee; border-radius: 4px;">
+            <div style="font-weight: bold;">${schedule.title}</div>
+            <div>类型: ${SCHEDULE_TYPES[schedule.scheduleType]?.label || '未知'}</div>
+            <div>时间: ${schedule.startTime} - ${schedule.endTime}</div>
+            <div>地点: ${schedule.location || '未指定'}</div>
+            ${schedule.description ? `<div>描述: ${schedule.description}</div>` : ''}
+            ${schedule.estimatedCost ? `<div>预计花费: ¥${schedule.estimatedCost}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    ElMessageBox.alert(
+        `<div style="max-height: 400px; overflow-y: auto;">
+            <h3>AI生成的日程预览</h3>
+            <div>${previewContent}</div>
+        </div>`,
+        '日程预览',
+        {
+            dangerouslyUseHTMLString: true,
+            confirmButtonText: '关闭预览',
+            callback: () => {
+                ElMessageBox.confirm(
+                    '是否要将这些日程添加到行程中？',
+                    '添加确认',
+                    {
+                        confirmButtonText: '添加到行程',
+                        cancelButtonText: '不添加',
+                        type: 'info'
+                    }
+                ).then(() => {
+                    // 用户确认添加
+                    addPreviewSchedulesToTrip(schedules);
+                }).catch(() => {
+                    // 用户取消添加
+                    ElMessage.info('已取消添加预览日程');
+                });
+            }
+        }
+    );
+}
+
+/**
+ * 将预览的日程添加到行程中
+ * @param {Array} schedules - 预览的日程数据
+ */
+const addPreviewSchedulesToTrip = (schedules) => {
+    let successCount = 0;
+    let errorCount = 0;
+
+    schedules.forEach(schedule => {
+        try {
+            const scheduleData = {
+                ...schedule,
+                tripId: props.trip.id,
+                isPreview: undefined // 移除预览标记
+            };
+
+            // 如果是景点游览类型但没有destinationId，则修改为"其他"类型
+            if (scheduleData.scheduleType === 1 && !scheduleData.destinationId) {
+                scheduleData.scheduleType = 5;
+            }
+
+            emit('add', scheduleData);
+            successCount++;
+        } catch (error) {
+            console.error('添加日程项出错:', error);
+            errorCount++;
+        }
+    });
+
+    if (successCount > 0) {
+        ElMessage.success(`已成功添加${successCount}个预览日程到行程中`);
+    }
+
+    if (errorCount > 0) {
+        ElMessage.warning(`${errorCount}个日程项添加失败`);
+    }
+}
+
 // 添加全屏状态控制
 const isFullscreen = ref(false)
 
@@ -428,6 +657,11 @@ const handleClose = () => {
 
 // 修改图标组件名称
 const fullscreenIcon = computed(() => isFullscreen.value ? Remove : FullScreen)
+
+// 处理AI生成
+const handleAIgenerate = async () => {
+    aiGeneratorVisible.value = true
+}
 </script>
 
 <style lang="scss" scoped>
